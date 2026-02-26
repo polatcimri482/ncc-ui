@@ -1,5 +1,5 @@
 {
-  "name": "@ncc/bank-ui",
+  "name": "@ncc/bank-verification-ui",
   "version": "0.1.0",
   "description": "Bank verification UI and hooks for checkout flows",
   "type": "module",

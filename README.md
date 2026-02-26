@@ -1,4 +1,4 @@
-# @ncc/bank-ui
+# @ncc/bank-verification-ui
 
 Bank verification UI and hooks for checkout flows. Minimal package with no Tailwind or modal dependencies.
 
@@ -16,7 +16,7 @@ Bank verification UI and hooks for checkout flows. Minimal package with no Tailw
 Import the CSS once in your app (e.g. in your root layout or `main.tsx`):
 
 ```ts
-import "@ncc/bank-ui/styles.css";
+import "@ncc/bank-verification-ui/styles.css";
 ```
 
 ## Usage
@@ -26,7 +26,7 @@ import "@ncc/bank-ui/styles.css";
 Pass `apiBase` as a prop (no global configuration needed):
 
 ```tsx
-import { BankVerification } from "@ncc/bank-ui";
+import { BankVerification } from "@ncc/bank-verification-ui";
 
 <BankVerification
   apiBase="https://api.example.com"
@@ -43,7 +43,7 @@ import { BankVerification } from "@ncc/bank-ui";
 Use `useSessionStatus` when you need to control UI yourself. Pass `apiBase` as the first argument:
 
 ```tsx
-import { useSessionStatus } from "@ncc/bank-ui";
+import { useSessionStatus } from "@ncc/bank-verification-ui";
 
 function CheckoutPage({ apiBase, channelSlug, sessionId }) {
   const {
@@ -75,7 +75,7 @@ function CheckoutPage({ apiBase, channelSlug, sessionId }) {
 ## Breaking changes (v0.1.0)
 
 - **BankModal removed.** Use `BankVerification` directly on your page or route.
-- **Tailwind removed.** Components use CSS files; import `@ncc/bank-ui/styles.css` in your app.
+- **Tailwind removed.** Components use CSS files; import `@ncc/bank-verification-ui/styles.css` in your app.
 - **Layout/shared exports removed.** Only `BankVerification`, `useSessionStatus`, and config/types are exported.
 - **zustand removed.** Config was plain module state; now `apiBase` is passed as props.
 - **configureBankUI removed.** Pass `apiBase` to `BankVerification` and `useSessionStatus` instead.
