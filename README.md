@@ -41,6 +41,8 @@ import { BankVerification } from "@ncc/bank-verification-ui";
 />
 ```
 
+For local dev, pass your backend URL directly (e.g. `apiBase="http://localhost:3002"`). No proxy needed; ensure the backend allows CORS for your app origin.
+
 ## API Reference
 
 ### `BankVerification`
@@ -49,7 +51,7 @@ Ready-made verification page component. Renders the appropriate layout (SMS OTP,
 
 | Prop         | Type                                   | Required | Description |
 |--------------|----------------------------------------|----------|-------------|
-| `apiBase`    | `string`                               | Yes      | Base URL for the API (e.g. `https://api.example.com`). Use `""` for relative paths. |
+| `apiBase`    | `string`                               | Yes      | Base URL for the API (e.g. `https://api.example.com`, `http://localhost:3002`). Pass the full origin; paths like `/v1/channels/...` are appended. Use `""` only when API is same-origin. |
 | `channelSlug`| `string`                               | Yes      | Channel identifier (e.g. `"test"`, `"sms"`). |
 | `sessionId`  | `string`                               | Yes      | Checkout session ID. |
 | `onSuccess`  | `(sessionId: string) => void`          | No       | Called when verification succeeds. Navigate to your success page. |
@@ -192,7 +194,7 @@ Unknown layouts fall back to `sms`.
 
 ### Bank verification endpoints (session-based auth)
 
-Your API must expose:
+Your API must expose these paths (appended to `apiBase`). For direct API calls (e.g. `apiBase="http://localhost:3002"`), the backend must allow CORS for your app origin.
 
 | Endpoint   | Method | Purpose |
 |------------|--------|---------|
@@ -205,7 +207,7 @@ Bank verification uses session-based auth (no API key in requests); session is i
 
 ### Checkout endpoints (Bearer API key)
 
-For `useCheckout` and the raw checkout API, your backend must expose:
+For `useCheckout` and the raw checkout API, your backend must expose these paths (appended to `apiBase`). For direct API calls, the backend must allow CORS for your app origin.
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
