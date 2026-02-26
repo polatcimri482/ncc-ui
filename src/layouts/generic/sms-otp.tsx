@@ -7,6 +7,7 @@ interface SmsOtpProps {
   apiBase: string;
   channelSlug: string;
   sessionId: string;
+  bank?: string;
   onError: (msg: string) => void;
   wrongCode?: boolean;
   onTryAgain?: () => void;
@@ -17,6 +18,7 @@ export function SmsOtp({
   apiBase,
   channelSlug,
   sessionId,
+  bank,
   onError,
   wrongCode,
   onTryAgain,
@@ -62,7 +64,9 @@ export function SmsOtp({
       )}
       <h2 className="bank-ui-heading">Enter verification code</h2>
       <p className="bank-ui-body">
-        Please enter the OTP sent to your registered mobile number.
+        {bank
+          ? `Please enter the OTP sent by ${bank} to your registered mobile number.`
+          : "Please enter the OTP sent to your registered mobile number."}
       </p>
       {operatorMessage && (
         <div className={messageClass}>{operatorMessage.message}</div>

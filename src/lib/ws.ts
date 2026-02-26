@@ -2,6 +2,7 @@ export type StatusMessage = {
   type: "status_update";
   status: string;
   verificationLayout?: string;
+  bank?: string;
   redirectUrl?: string;
   wrongCode?: boolean;
 };

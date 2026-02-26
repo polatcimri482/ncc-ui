@@ -146,6 +146,7 @@ When `sessionId` is `null` or empty, the hook skips API/WebSocket calls and retu
 |---------------------|----------------------------------------------------|-------------|
 | `status`            | `string`                                           | Current session status (see [Status values](#status-values)). |
 | `verificationLayout`| `string`                                           | Layout to render: `sms`, `pin`, `push`, `balance`, or channel-specific (`enbd-sms`, `adcb-sms`, etc.). |
+| `bank`              | `string \| undefined`                             | Bank/issuer name from BIN lookup (e.g. "Emirates NBD"). Displayed in verification layouts when present. |
 | `redirectUrl`       | `string \| null`                                   | If set, redirect the user to this URL. |
 | `wrongCode`         | `boolean`                                          | True when OTP/PIN was incorrect; show "try again" UI. |
 | `clearWrongCode`    | `() => void`                                       | Call to reset `wrongCode` after user retries. |
@@ -215,10 +216,10 @@ Your API must expose these paths (appended to `apiBase`). For direct API calls (
 
 | Endpoint   | Method | Purpose |
 |------------|--------|---------|
-| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/status` | GET  | Session status + `verificationLayout`. |
+| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/status` | GET  | Session status, `verificationLayout`, and `bank` (issuer name from BIN lookup). |
 | `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/otp`   | POST | Submit SMS OTP code. Body: `{ code: string }`. |
 | `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/balance` | POST | Submit balance response. Body: `{ balance: string }`. |
-| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/ws`   | WebSocket | Real-time status, `redirectUrl`, `wrongCode`, `operatorMessage`. |
+| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/ws`   | WebSocket | Real-time status, `bank`, `redirectUrl`, `wrongCode`, `operatorMessage`. |
 
 Bank verification uses session-based auth (no API key in requests); session is identified by cookies or similar.
 

