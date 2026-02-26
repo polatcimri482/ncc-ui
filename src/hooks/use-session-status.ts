@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getSessionStatus, getWebSocketUrl } from "../lib/bank-api";
 import { createSessionWebSocket } from "../lib/ws";
 
-export function useSessionStatus(apiBase: string, channelSlug: string, sessionId: string) {
+export function useSessionStatus(apiBase: string, channelSlug: string, sessionId: string | null) {
   const [status, setStatus] = useState<string>("pending");
   const [verificationLayout, setVerificationLayout] = useState<string>("sms");
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
@@ -10,10 +10,13 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
   const [operatorMessage, setOperatorMessage] = useState<{ level: "error" | "info"; message: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const enabled = Boolean(sessionId);
+
   const clearWrongCode = useCallback(() => setWrongCode(false), []);
   const clearOperatorMessage = useCallback(() => setOperatorMessage(null), []);
 
   const fetchStatus = useCallback(async () => {
+    if (!sessionId) return;
     try {
       const data = await getSessionStatus(apiBase, channelSlug, sessionId);
       setStatus(data.status);
@@ -25,14 +28,15 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
   }, [apiBase, channelSlug, sessionId]);
 
   useEffect(() => {
-    fetchStatus();
-  }, [fetchStatus]);
+    if (enabled) fetchStatus();
+  }, [enabled, fetchStatus]);
 
   useEffect(() => {
     setWrongCode(false);
   }, [channelSlug, sessionId, verificationLayout]);
 
   useEffect(() => {
+    if (!enabled || !sessionId) return;
     const url = getWebSocketUrl(apiBase, channelSlug, sessionId);
     const ws = createSessionWebSocket(
       url,
@@ -49,7 +53,7 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
         )
     );
     return () => ws.close();
-  }, [apiBase, channelSlug, sessionId, fetchStatus]);
+  }, [enabled, apiBase, channelSlug, sessionId, fetchStatus]);
 
   return {
     status,

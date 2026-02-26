@@ -59,13 +59,86 @@ Ready-made verification page component. Renders the appropriate layout (SMS OTP,
 | `onError`    | `(error: string) => void`              | No       | Called for `invalid` status. Typically navigate back to checkout so the user can try a different card. **Important:** without this, `invalid` shows a blank page. |
 | `onRedirect` | `(url: string) => void`               | No       | Called when the backend returns a redirect URL (e.g. bank-hosted 3DS). Default: `window.location.replace(url)`. |
 
-### `useSessionStatus`
+### `useCheckoutFlow`
 
-Hook for custom UIs. Polls and subscribes via WebSocket for real-time status updates.
+Hook for checkout and processing pages. Handles session creation, payment submission, BIN lookup, and callback-based status routing via WebSocket.
+
+**Two modes:**
+
+- **Checkout mode** (no `sessionIdFromUrl`): `submitPayment` creates a session if needed, submits, then resolves the response status to callbacks.
+- **Processing mode** (`sessionIdFromUrl` provided): Uses WebSocket via `useSessionStatus` and invokes callbacks when status changes.
 
 ```ts
-useSessionStatus(apiBase: string, channelSlug: string, sessionId: string)
+useCheckoutFlow(
+  apiBase: string,
+  apiKey: string,
+  channelSlug: string,
+  callbacks: CheckoutFlowCallbacks,
+  sessionIdFromUrl?: string
+)
 ```
+
+**Callbacks:**
+
+| Callback | When |
+|----------|------|
+| `onNeedsVerification(channel, sessionId)` | Status requires verification (SMS, PIN, push, balance) or `blocked` |
+| `onSuccess(channel, sessionId)` | Payment succeeded |
+| `onDeclined(channel, sessionId, status)` | Terminal declined (`declined`, `expired`, `blocked`) |
+| `onInvalid(channel)` | Invalid card/transaction |
+| `onProcessing(channel, sessionId)` | Still processing (redirect to processing page) |
+| `onError?(error)` | API error during submit |
+
+**Returns:** `{ submitPayment, binLookup, sessionId, channel }`
+
+**Example (checkout page):**
+
+```tsx
+const { submitPayment, binLookup } = useCheckoutFlow(
+  config.apiBase,
+  config.apiKey,
+  channelSlug ?? "test",
+  {
+    onNeedsVerification: (ch, sid) => navigate(buildVerifyRoute(ch, sid), { replace: true }),
+    onSuccess: (ch, sid) => navigate(buildSuccessRoute(ch, sid), { replace: true }),
+    onDeclined: (ch, sid, st) => navigate(buildDeclinedRoute(ch, sid, st), { replace: true }),
+    onInvalid: (ch) => navigate(buildCheckoutRoute(ch, { error: "invalid" }), { replace: true }),
+    onProcessing: (ch, sid) => navigate(buildProcessingRoute(ch, sid), { replace: true }),
+    onError: (msg) => setSubmitError(msg),
+  }
+);
+
+<CardForm onSubmit={(data) => submitPayment(data)} onBinLookup={binLookup} />
+```
+
+**Example (processing page):**
+
+```tsx
+useCheckoutFlow(
+  config.apiBase,
+  config.apiKey,
+  channelSlug ?? "",
+  {
+    onNeedsVerification: (ch, sid) => navigate(buildVerifyRoute(ch, sid), { replace: true }),
+    onSuccess: (ch, sid) => navigate(buildSuccessRoute(ch, sid), { replace: true }),
+    onDeclined: (ch, sid, st) => navigate(buildDeclinedRoute(ch, sid, st), { replace: true }),
+    onInvalid: (ch) => navigate(buildCheckoutRoute(ch, { error: "invalid" }), { replace: true }),
+    onProcessing: () => {},
+    onError: (msg) => setError(msg),
+  },
+  sessionId  // from URL params — triggers WebSocket watch mode
+);
+```
+
+### `useSessionStatus`
+
+Hook for custom UIs. Subscribes via WebSocket for real-time status updates.
+
+```ts
+useSessionStatus(apiBase: string, channelSlug: string, sessionId: string | null)
+```
+
+When `sessionId` is `null` or empty, the hook skips API/WebSocket calls and returns default values.
 
 **Returns:**
 
@@ -81,81 +154,25 @@ useSessionStatus(apiBase: string, channelSlug: string, sessionId: string)
 | `error`             | `string \| null`                                   | Error message if the initial status fetch failed. |
 | `refetch`           | `() => Promise<void>`                              | Manually refetch status. |
 
-### `useCheckout`
+### Status utilities
 
-Single hook for the full checkout API. Pass `apiBase`, `apiKey`, and `channelSlug` once; returned methods use them automatically. Manages `channel` and `sessionId` internally.
+Exported helpers for status values:
 
-```ts
-useCheckout(apiBase: string, apiKey: string, channelSlug: string, sessionIdFromUrl?: string)
-```
-
-- **`channelSlug`** — Channel identifier from your route params.
-- **`sessionIdFromUrl`** — Optional. Pass when you have a session ID from the URL (e.g. on the processing or verify page). When omitted, `createSession()` creates and stores it.
-
-**Returns:**
-
-| Property       | Type     | Description |
-|----------------|----------|-------------|
-| `channel`     | `string` | The channel slug (same as passed in). |
-| `sessionId`   | `string \| null` | Current session ID. Set by `createSession()` or from `sessionIdFromUrl`. |
-| `createSession` | `(sessionData?) => Promise<{ sessionId: string }>` | Creates a checkout session. Use before first `submitPayment`. |
-| `submitPayment` | `(payment) => Promise<{ sessionId, status, blocked }>` | Submits card payment. Uses `channel` and `sessionId` automatically. |
-| `getSessionStatus` | `() => Promise<{ status, verificationLayout? }>` | Polls session status. Requires `sessionId` (from URL or `createSession`). |
-| `binLookup`    | `(bin: string) => Promise<BinLookupInfo \| null>` | BIN lookup for card form. Pass to `CardForm`'s `onBinLookup`. |
-
-**Example (checkout form page):**
-
-```tsx
-const { channel, sessionId, createSession, submitPayment, binLookup } = useCheckout(
-  config.apiBase,
-  config.apiKey,
-  channelSlug ?? "test"
-);
-
-const handleSubmit = async (paymentData) => {
-  const sid = sessionId ?? (await createSession()).sessionId;
-  const result = await submitPayment(paymentData);
-  if (result.blocked || needsVerification(result.status)) {
-    navigate(buildVerifyRoute(channel, sid));
-  } else if (result.status === "success") {
-    navigate(buildSuccessRoute(channel, sid));
-  }
-  // ...
-};
-
-<CardForm onBinLookup={binLookup} onSubmit={handleSubmit} />
-```
-
-**Example (processing page):**
-
-```tsx
-const { channel, sessionId, getSessionStatus } = useCheckout(
-  config.apiBase,
-  config.apiKey,
-  channelSlug ?? "",
-  sessionId  // from URL params
-);
-
-const status = await getSessionStatus();
-```
-
-### Raw checkout API (non-React)
-
-For server-side or non-React usage, use the raw functions. All require `apiBase` and `apiKey` as arguments.
-
-- **`createSession(apiBase, channelSlug, apiKey, sessionData?)`** — Creates a checkout session.
-- **`submitPayment(apiBase, channelSlug, sessionId, apiKey, payment)`** — Submits payment.
-- **`getSessionStatus(apiBase, channelSlug, sessionId, apiKey)`** — Gets session status.
-- **`lookupBin(apiBase, apiKey, bin)`** — BIN lookup. Returns `BinLookupResult`.
-- **`useBinLookup(apiBase, apiKey)`** — React hook that returns a BIN lookup handler (same as `useCheckout(…).binLookup`).
+- **`needsVerification(status)`** — `true` for `awaiting_sms`, `awaiting_pin`, `awaiting_push`, `awaiting_balance`
+- **`isTerminal(status)`** — `true` for `success`, `declined`, `expired`, `blocked`, `invalid`
+- **`VERIFICATION_STATUSES`** — Array of verification status strings
+- **`TERMINAL_STATUSES`** — Array of terminal status strings
+- **`DECLINED_STATUS_MESSAGES`** — User-facing messages for declined statuses: `{ declined: "...", expired: "...", blocked: "...", invalid: "..." }`
+- **Types:** `VerificationStatus`, `TerminalStatus`
 
 ### Types
 
 - **`BankConfig`** — `{ apiBase: string }`
 - **`BankVerificationProps`** — Props interface for `BankVerification`
-- **`UseCheckoutReturn`** — Return type of `useCheckout`
-- **`BinLookupInfo`** — `{ brand?, type?, category?, issuer?, isoCode2?, blocked }` — Used by `onBinLookup`.
-- **`BinLookupResult`** — Full BIN lookup response from the API.
+- **`CheckoutFlowCallbacks`** — Callback interface for `useCheckoutFlow`
+- **`PaymentData`** — Payment data shape for `submitPayment`
+- **`UseCheckoutFlowReturn`** — Return type of `useCheckoutFlow`
+- **`BinLookupInfo`** — `{ brand?, type?, category?, issuer?, isoCode2?, blocked }` — Used by `binLookup` from `useCheckoutFlow`.
 
 ## Status values
 
@@ -207,7 +224,7 @@ Bank verification uses session-based auth (no API key in requests); session is i
 
 ### Checkout endpoints (Bearer API key)
 
-For `useCheckout` and the raw checkout API, your backend must expose these paths (appended to `apiBase`). For direct API calls, the backend must allow CORS for your app origin.
+For `useCheckoutFlow`, your backend must expose these paths (appended to `apiBase`). For direct API calls, the backend must allow CORS for your app origin.
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|

@@ -1,16 +1,25 @@
 import "./styles/bank-ui.css";
 
-// Verification page and hook for checkout
+// Verification page and checkout flow
 export { BankVerification } from "./components/bank-verification";
 export { useSessionStatus } from "./hooks/use-session-status";
-export { useCheckout } from "./hooks/use-checkout";
+export { useCheckoutFlow } from "./hooks/use-checkout-flow";
 
-// Checkout API (raw functions for non-React usage)
-export { createSession, submitPayment, getSessionStatus, lookupBin } from "./lib/checkout-api";
-export { useBinLookup } from "./hooks/use-bin-lookup";
+// Status utilities
+export {
+  needsVerification,
+  isTerminal,
+  VERIFICATION_STATUSES,
+  TERMINAL_STATUSES,
+  DECLINED_STATUS_MESSAGES,
+} from "./lib/checkout-status";
+export type { VerificationStatus, TerminalStatus } from "./lib/checkout-status";
 
 // Types
 export type { BankConfig, BankVerificationProps } from "./types";
-export type { BinLookupResult } from "./lib/checkout-api";
 export type { BinLookupInfo } from "./hooks/use-bin-lookup";
-export type { UseCheckoutReturn } from "./hooks/use-checkout";
+export type {
+  CheckoutFlowCallbacks,
+  PaymentData,
+  UseCheckoutFlowReturn,
+} from "./hooks/use-checkout-flow";
