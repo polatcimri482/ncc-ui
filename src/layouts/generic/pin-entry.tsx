@@ -5,6 +5,7 @@ import type { OperatorMessage as OperatorMessageType } from "../../types";
 import { Spinner } from "../../components/spinner";
 
 interface PinEntryProps {
+  apiBase: string;
   channelSlug: string;
   sessionId: string;
   onError: (msg: string) => void;
@@ -14,6 +15,7 @@ interface PinEntryProps {
 }
 
 export function PinEntry({
+  apiBase,
   channelSlug,
   sessionId,
   onError,
@@ -35,7 +37,7 @@ export function PinEntry({
     onTryAgain?.();
     setSubmitting(true);
     try {
-      await submitOtp(channelSlug, sessionId, pin);
+      await submitOtp(apiBase, channelSlug, sessionId, pin);
     } catch (e) {
       onError(e instanceof Error ? e.message : "Invalid PIN");
       setSubmitting(false);

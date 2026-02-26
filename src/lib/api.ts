@@ -1,4 +1,3 @@
-import { getConfig } from "../store";
 import { parseApiError } from "./api-response";
 
 export async function apiRequest<T>(
@@ -29,9 +28,8 @@ export async function apiRequest<T>(
   }
 }
 
-export function apiUrl(path: string, apiBase?: string): string {
-  const base = (apiBase ?? getConfig().apiBase ?? "")
-    .replace(/\/$/, "");
+export function apiUrl(path: string, apiBase: string): string {
+  const base = apiBase.replace(/\/$/, "");
   const p = path.startsWith("/") ? path : `/${path}`;
   return base ? `${base}${p}` : p;
 }

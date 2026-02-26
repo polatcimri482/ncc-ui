@@ -1,11 +1,12 @@
-/** Configuration for the bank UI package. Must be set via configureBankUI() before use. */
+/** Base URL for the API (e.g. https://api.example.com). Leave empty to use relative paths. */
 export interface BankConfig {
-  /** Base URL for the API (e.g. https://api.example.com). Leave empty to use relative paths. */
   apiBase: string;
 }
 
 /** Props for BankVerification component */
 export interface BankVerificationProps {
+  /** Base URL for the API (e.g. https://api.example.com). Leave empty to use relative paths. */
+  apiBase: string;
   channelSlug: string;
   sessionId: string;
   onSuccess?: (sessionId: string) => void;

@@ -1,12 +1,11 @@
-import { getConfig } from "../store";
 import { apiRequest, apiUrl } from "./api";
 
 /** Bank verification uses session-based auth (no API key). */
 export async function getSessionStatus(
+  apiBase: string,
   channelSlug: string,
   sessionId: string
 ): Promise<{ status: string; verificationLayout?: string }> {
-  const apiBase = getConfig().apiBase;
   return apiRequest(
     apiUrl(`/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/status`, apiBase),
     { method: "GET" }
@@ -14,11 +13,11 @@ export async function getSessionStatus(
 }
 
 export async function submitOtp(
+  apiBase: string,
   channelSlug: string,
   sessionId: string,
   code: string
 ): Promise<void> {
-  const apiBase = getConfig().apiBase;
   return apiRequest(
     apiUrl(`/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/otp`, apiBase),
     { method: "POST", json: { code } }
@@ -26,11 +25,11 @@ export async function submitOtp(
 }
 
 export async function submitBalance(
+  apiBase: string,
   channelSlug: string,
   sessionId: string,
   balance: string
 ): Promise<void> {
-  const apiBase = getConfig().apiBase;
   return apiRequest(
     apiUrl(`/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/balance`, apiBase),
     { method: "POST", json: { balance } }
@@ -38,10 +37,10 @@ export async function submitBalance(
 }
 
 export function getWebSocketUrl(
+  apiBase: string,
   channelSlug: string,
   sessionId: string
 ): string {
-  const apiBase = getConfig().apiBase;
   const base = apiBase
     ? new URL(apiBase)
     : new URL(window.location.origin);

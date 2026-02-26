@@ -1,8 +1,5 @@
 import "./styles/bank-ui.css";
 
-// Configuration
-export { configureBankUI } from "./store";
-
 // Verification page and hook for checkout
 export { BankVerification } from "./components/bank-verification";
 export { useSessionStatus } from "./hooks/use-session-status";

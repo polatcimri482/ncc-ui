@@ -6,10 +6,9 @@ Bank verification UI and hooks for checkout flows. Minimal package with no Tailw
 
 | Export | Description |
 |--------|-------------|
-| `configureBankUI` | Set API base URL. Call once at app startup before using bank components or hooks. |
 | `BankVerification` | Ready-made verification page component (SMS OTP, PIN, push, balance layouts). |
 | `useSessionStatus` | Hook for checkout pages to consume verification status, layout, redirects, and errors. |
-| `BankConfig` | Type for configuration. |
+| `BankConfig` | Type for configuration (apiBase). |
 | `BankVerificationProps` | Props type for `BankVerification`. |
 
 ## Setup
@@ -20,22 +19,17 @@ Import the CSS once in your app (e.g. in your root layout or `main.tsx`):
 import "@ncc/bank-ui/styles.css";
 ```
 
-Then configure the API base:
-
-```ts
-import { configureBankUI } from "@ncc/bank-ui";
-
-configureBankUI({ apiBase: "https://api.example.com" });
-```
-
 ## Usage
 
 ### Verification page component
+
+Pass `apiBase` as a prop (no global configuration needed):
 
 ```tsx
 import { BankVerification } from "@ncc/bank-ui";
 
 <BankVerification
+  apiBase="https://api.example.com"
   channelSlug="sms"
   sessionId={sessionId}
   onSuccess={(id) => navigate("/success")}
@@ -46,12 +40,12 @@ import { BankVerification } from "@ncc/bank-ui";
 
 ### Custom hook (checkout pages)
 
-Use `useSessionStatus` when you need to control UI yourself:
+Use `useSessionStatus` when you need to control UI yourself. Pass `apiBase` as the first argument:
 
 ```tsx
 import { useSessionStatus } from "@ncc/bank-ui";
 
-function CheckoutPage({ channelSlug, sessionId }) {
+function CheckoutPage({ apiBase, channelSlug, sessionId }) {
   const {
     status,
     verificationLayout,
@@ -61,7 +55,7 @@ function CheckoutPage({ channelSlug, sessionId }) {
     operatorMessage,
     error,
     refetch,
-  } = useSessionStatus(channelSlug, sessionId);
+  } = useSessionStatus(apiBase, channelSlug, sessionId);
 
   if (redirectUrl) window.location.assign(redirectUrl);
   if (status === "success") return <SuccessScreen />;
@@ -83,5 +77,6 @@ function CheckoutPage({ channelSlug, sessionId }) {
 - **BankModal removed.** Use `BankVerification` directly on your page or route.
 - **Tailwind removed.** Components use CSS files; import `@ncc/bank-ui/styles.css` in your app.
 - **Layout/shared exports removed.** Only `BankVerification`, `useSessionStatus`, and config/types are exported.
-- **zustand removed.** Config is plain module state.
+- **zustand removed.** Config was plain module state; now `apiBase` is passed as props.
+- **configureBankUI removed.** Pass `apiBase` to `BankVerification` and `useSessionStatus` instead.
 - **react-dom** is no longer a peer dependency (only `react` is required).

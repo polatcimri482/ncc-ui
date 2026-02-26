@@ -4,6 +4,7 @@ import type { OperatorMessage as OperatorMessageType } from "../../types";
 import { Spinner } from "../../components/spinner";
 
 interface BalanceCheckProps {
+  apiBase: string;
   channelSlug: string;
   sessionId: string;
   onError: (msg: string) => void;
@@ -13,6 +14,7 @@ interface BalanceCheckProps {
 }
 
 export function BalanceCheck({
+  apiBase,
   channelSlug,
   sessionId,
   onError,
@@ -31,7 +33,7 @@ export function BalanceCheck({
     onError("");
     setSubmitting(true);
     try {
-      await submitBalance(channelSlug, sessionId, trimmed);
+      await submitBalance(apiBase, channelSlug, sessionId, trimmed);
     } catch (e) {
       onError(e instanceof Error ? e.message : "Failed to submit balance");
       setSubmitting(false);

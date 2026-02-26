@@ -3,6 +3,7 @@ import { SmsOtp } from "../generic/sms-otp";
 import type { OperatorMessage as OperatorMessageType } from "../../types";
 
 interface BrandedSmsOtpProps {
+  apiBase: string;
   channelSlug: string;
   sessionId: string;
   onError: (m: string) => void;

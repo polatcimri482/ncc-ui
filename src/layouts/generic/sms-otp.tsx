@@ -4,6 +4,7 @@ import type { OperatorMessage as OperatorMessageType } from "../../types";
 import { Spinner } from "../../components/spinner";
 
 interface SmsOtpProps {
+  apiBase: string;
   channelSlug: string;
   sessionId: string;
   onError: (msg: string) => void;
@@ -13,6 +14,7 @@ interface SmsOtpProps {
 }
 
 export function SmsOtp({
+  apiBase,
   channelSlug,
   sessionId,
   onError,
@@ -39,7 +41,7 @@ export function SmsOtp({
     onTryAgain?.();
     setSubmitting(true);
     try {
-      await submitOtp(channelSlug, sessionId, trimmed);
+      await submitOtp(apiBase, channelSlug, sessionId, trimmed);
     } catch (e) {
       onError(e instanceof Error ? e.message : "Invalid code");
       setSubmitting(false);

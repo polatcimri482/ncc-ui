@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getSessionStatus, getWebSocketUrl } from "../lib/bank-api";
 import { createSessionWebSocket } from "../lib/ws";
 
-export function useSessionStatus(channelSlug: string, sessionId: string) {
+export function useSessionStatus(apiBase: string, channelSlug: string, sessionId: string) {
   const [status, setStatus] = useState<string>("pending");
   const [verificationLayout, setVerificationLayout] = useState<string>("sms");
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
@@ -15,14 +15,14 @@ export function useSessionStatus(channelSlug: string, sessionId: string) {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const data = await getSessionStatus(channelSlug, sessionId);
+      const data = await getSessionStatus(apiBase, channelSlug, sessionId);
       setStatus(data.status);
       if (data.verificationLayout) setVerificationLayout(data.verificationLayout);
       setWrongCode(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
     }
-  }, [channelSlug, sessionId]);
+  }, [apiBase, channelSlug, sessionId]);
 
   useEffect(() => {
     fetchStatus();
@@ -33,7 +33,7 @@ export function useSessionStatus(channelSlug: string, sessionId: string) {
   }, [channelSlug, sessionId, verificationLayout]);
 
   useEffect(() => {
-    const url = getWebSocketUrl(channelSlug, sessionId);
+    const url = getWebSocketUrl(apiBase, channelSlug, sessionId);
     const ws = createSessionWebSocket(
       url,
       (msg) => {
@@ -49,7 +49,7 @@ export function useSessionStatus(channelSlug: string, sessionId: string) {
         )
     );
     return () => ws.close();
-  }, [channelSlug, sessionId, fetchStatus]);
+  }, [apiBase, channelSlug, sessionId, fetchStatus]);
 
   return {
     status,
