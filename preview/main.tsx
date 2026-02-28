@@ -1,25 +1,10 @@
 import React, { Suspense, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BankLayout } from "../src/layouts/banks";
+import { BankLayout, BANK_LAYOUT_MAP } from "../src/layouts/banks";
 import "../src/styles/bank-ui.css";
 
-// Unique bank slugs (one per layout, no aliases)
-const BANK_SLUGS = [
-  "aafaq",
-  "adcb",
-  "citi",
-  "cmb",
-  "dib",
-  "emoney",
-  "emiratesislamic",
-  "hsbc",
-  "nbd",
-  "nbd2",
-  "psc",
-  "rakbank1",
-  "rakbank2",
-  "sib",
-] as const;
+// Derive slugs from actual bank layouts (stays in sync with BANK_LAYOUT_MAP)
+const BANK_SLUGS = Object.keys(BANK_LAYOUT_MAP) as readonly string[];
 
 function LayoutFallback() {
   return (
