@@ -10,8 +10,13 @@ const PLACEHOLDER_DATE = "11/12/2025";
 const PLACEHOLDER_CARD = "************4522";
 const IMAGE_BASE = "/bank-images";
 
+/**
+ * Bank/issuer name to logo filename. Keys are lowercase for case-insensitive lookup.
+ * Issuer names come from BIN lookup (HandyAPI, card_bins) - run `bun run list-bank-issuers` in ncc-api to see DB values.
+ */
 const BANK_TO_LOGO: Record<string, string> = {
   "emirates nbd": "nbd.png",
+  "emirates nbd bank (p.j.s.c.)": "nbd.png",
   enbd: "nbd.png",
   nbd: "nbd.png",
   rakbank: "RAKBANK.png",
@@ -32,9 +37,11 @@ const BANK_TO_LOGO: Record<string, string> = {
   psc: "psc.png",
   cmb: "cmb.png",
   "commercial bank of dubai": "cmb.png",
+  "commercial bank of dubai(psc)": "cmb.png",
   cbd: "cmb.png",
   afaq: "afaq.jpg",
   emoney: "Emoney.jpg",
+  "digital financial services llc": "nbd.png",
 };
 
 function getBankLogoPath(bank: string | undefined): string {
