@@ -74,33 +74,17 @@ function CardDisplay({
   cardBrand?: "visa" | "mastercard";
 }) {
   const brand = cardBrand ?? inferCardBrand(cardNumber) ?? "visa";
-  const logoPath = getCardLogoPath(brand);
   const displayNumber =
     cardNumber.includes("XXXX") || cardNumber.includes("****")
       ? cardNumber.replace(/\*+/g, "••••").replace(/X+/g, "••••")
       : cardNumber;
   return (
-    <div
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "12px 16px",
-        borderRadius: 8,
-        border: "1px solid #e0e0e0",
-        background: "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
-        marginTop: 12,
-      }}
-    >
+
       <span id="contentBlock-maskedpan" className="always-left-to-right" style={{ fontFamily: "monospace", letterSpacing: 2 }}>
         {displayNumber}
       </span>
-      <img
-        src={logoPath}
-        alt={brand}
-        style={{ height: 24, width: "auto", objectFit: "contain" }}
-      />
-    </div>
+    
+
   );
 }
 
