@@ -4,6 +4,9 @@ node_modules/
 # Build output
 dist/
 
+# Generated (from scripts/generate-css-string.js)
+src/styles/bank-ui-css.ts
+
 # IDE
 .idea/
 .vscode/

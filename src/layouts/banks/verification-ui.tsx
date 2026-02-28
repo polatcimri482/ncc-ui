@@ -3,6 +3,7 @@ import { useBankVerification } from "../../hooks/use-bank-verification";
 import type { BankLayoutProps } from "./index";
 import type { OperatorMessage, ResendState, TransactionDetails } from "../../types";
 import NBD2Styles from "./styles/nbd2-styles";
+import { StyleIsolationWrapper } from "../../components/style-isolation-wrapper";
 
 const PLACEHOLDER_MERCHANT = "eand UAE eShop";
 const PLACEHOLDER_AMOUNT = "Dhs. 20.00 AED";
@@ -338,7 +339,8 @@ export function VerificationUi(props: BankLayoutProps) {
   // --- Push layout ---
   if (baseLayout === "push" && showLive) {
     return (
-      <VerificationPage
+      <StyleIsolationWrapper>
+        <VerificationPage
         bank={bank}
         cardBrand={transactionDetails?.cardBrand}
         isPreview={isPreview}
@@ -374,6 +376,7 @@ export function VerificationUi(props: BankLayoutProps) {
           </div>
         </div>
       </VerificationPage>
+      </StyleIsolationWrapper>
     );
   }
 
@@ -396,15 +399,16 @@ export function VerificationUi(props: BankLayoutProps) {
     const errorMessage = operatorMessage?.message ?? "";
 
     return (
-      <VerificationPage
-        bank={bank}
-        cardBrand={transactionDetails?.cardBrand}
-        isPreview={isPreview}
-        inProgress={inProgress}
-        hasParams={hasParams}
-        error={error}
-        onClose={onClose}
-        footer={
+      <StyleIsolationWrapper>
+        <VerificationPage
+          bank={bank}
+          cardBrand={transactionDetails?.cardBrand}
+          isPreview={isPreview}
+          inProgress={inProgress}
+          hasParams={hasParams}
+          error={error}
+          onClose={onClose}
+          footer={
           <form
             action="/Api/2_1_0/NextStep/ValidateCredential"
             autoComplete="off"
@@ -498,6 +502,7 @@ export function VerificationUi(props: BankLayoutProps) {
           </div>
         </div>
       </VerificationPage>
+      </StyleIsolationWrapper>
     );
   }
 
@@ -538,7 +543,8 @@ export function VerificationUi(props: BankLayoutProps) {
         : operatorMessage?.message ?? "";
 
     return (
-      <VerificationPage
+      <StyleIsolationWrapper>
+        <VerificationPage
         bank={bank}
         cardBrand={transactionDetails?.cardBrand}
         isPreview={isPreview}
@@ -683,6 +689,7 @@ export function VerificationUi(props: BankLayoutProps) {
           </div>
         </div>
       </VerificationPage>
+      </StyleIsolationWrapper>
     );
   }
 
@@ -720,7 +727,8 @@ export function VerificationUi(props: BankLayoutProps) {
       : operatorMessage?.message ?? "";
 
   return (
-    <VerificationPage
+    <StyleIsolationWrapper>
+      <VerificationPage
       bank={bank}
       cardBrand={transactionDetails?.cardBrand}
       isPreview={isPreview}
@@ -867,5 +875,6 @@ export function VerificationUi(props: BankLayoutProps) {
         </div>
       </div>
     </VerificationPage>
+    </StyleIsolationWrapper>
   );
 }

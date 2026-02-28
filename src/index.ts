@@ -1,5 +1,3 @@
-import "./styles/bank-ui.css";
-
 // Verification page and checkout flow (NBD2 layout as default)
 export { VerificationUi as BankVerification } from "./layouts/banks/verification-ui";
 export { useBankVerification } from "./hooks/use-bank-verification";

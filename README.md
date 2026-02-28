@@ -16,7 +16,9 @@ bun add @ncc/bank-verification-ui
 
 ## Setup
 
-Import the CSS once in your app (e.g. in `main.tsx` or your root layout):
+**`BankVerification` uses Shadow DOM for style isolation** — host app styles do not affect it, and its styles do not leak out. You do **not** need to import the CSS when using `BankVerification`.
+
+If you use raw hooks or layouts (e.g. `useSessionStatus`, `BankLayout`) without `BankVerification`, import the CSS once in your app:
 
 ```ts
 import "@ncc/bank-verification-ui/styles.css";
