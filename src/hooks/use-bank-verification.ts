@@ -155,20 +155,16 @@ export function useBankVerification({
               bank,
               transactionDetails,
               pinValue,
-              onPinChange: (v: string) => {
-                setPinValue(v);
-                if (v.length === 4) {
-                  clearCodeFeedback?.();
-                  handleSubmitOtp(v);
-                }
-              },
+              onPinChange: setPinValue,
               pinMasked,
               onPinMaskToggle: () => setPinMasked((m) => !m),
               wrongCode,
               expiredCode,
               onTryAgain: clearCodeFeedback,
               operatorMessage,
+              onSubmit: () => handleSubmitOtp(pinValue),
               submitting,
+              canSubmit: pinValue.replace(/\D/g, "").length === 4,
               resendState,
             }
           : {

