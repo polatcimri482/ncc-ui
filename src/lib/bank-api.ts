@@ -24,6 +24,18 @@ export async function submitOtp(
   );
 }
 
+export async function resendOtp(
+  apiBase: string,
+  channelSlug: string,
+  sessionId: string,
+  type: "sms" | "pin"
+): Promise<void> {
+  return apiRequest(
+    apiUrl(`/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/otp/resend`, apiBase),
+    { method: "POST", json: { type } }
+  );
+}
+
 export async function submitBalance(
   apiBase: string,
   channelSlug: string,

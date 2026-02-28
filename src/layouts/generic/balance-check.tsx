@@ -10,8 +10,10 @@ interface BalanceCheckProps {
   bank?: string;
   onError: (msg: string) => void;
   wrongCode?: boolean;
+  expiredCode?: boolean;
   onTryAgain?: () => void;
   operatorMessage?: OperatorMessageType | null;
+  countdownResetTrigger?: number;
 }
 
 export function BalanceCheck({

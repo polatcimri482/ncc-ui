@@ -8,12 +8,19 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
   const [bank, setBank] = useState<string | undefined>(undefined);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [wrongCode, setWrongCode] = useState(false);
+  const [expiredCode, setExpiredCode] = useState(false);
   const [operatorMessage, setOperatorMessage] = useState<{ level: "error" | "info"; message: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [countdownResetTrigger, setCountdownResetTrigger] = useState(0);
 
   const enabled = Boolean(sessionId);
 
   const clearWrongCode = useCallback(() => setWrongCode(false), []);
+  const clearExpiredCode = useCallback(() => setExpiredCode(false), []);
+  const clearCodeFeedback = useCallback(() => {
+    setWrongCode(false);
+    setExpiredCode(false);
+  }, []);
   const clearOperatorMessage = useCallback(() => setOperatorMessage(null), []);
 
   const fetchStatus = useCallback(async () => {
@@ -24,6 +31,7 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
       if (data.verificationLayout) setVerificationLayout(data.verificationLayout);
       if (data.bank !== undefined) setBank(data.bank);
       setWrongCode(false);
+      setExpiredCode(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
     }
@@ -35,6 +43,7 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
 
   useEffect(() => {
     setWrongCode(false);
+    setExpiredCode(false);
   }, [channelSlug, sessionId, verificationLayout]);
 
   useEffect(() => {
@@ -48,6 +57,8 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
         if (msg.bank !== undefined) setBank(msg.bank);
         if (msg.redirectUrl) setRedirectUrl(msg.redirectUrl);
         if (msg.wrongCode !== undefined) setWrongCode(msg.wrongCode);
+        if (msg.expiredCode !== undefined) setExpiredCode(msg.expiredCode);
+        if (msg.countdownReset === true) setCountdownResetTrigger((t) => t + 1);
       },
       () => fetchStatus(),
       (msg) =>
@@ -64,9 +75,13 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
     bank,
     redirectUrl,
     wrongCode,
+    expiredCode,
     clearWrongCode,
+    clearExpiredCode,
+    clearCodeFeedback,
     operatorMessage,
     clearOperatorMessage,
+    countdownResetTrigger,
     error,
     refetch: fetchStatus,
   };

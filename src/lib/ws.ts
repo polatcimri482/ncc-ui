@@ -5,6 +5,8 @@ export type StatusMessage = {
   bank?: string;
   redirectUrl?: string;
   wrongCode?: boolean;
+  expiredCode?: boolean;
+  countdownReset?: boolean;
 };
 
 export type OperatorMessage = {

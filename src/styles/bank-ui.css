@@ -230,6 +230,37 @@
   color: #4b5563;
 }
 
+/* Resend countdown / button */
+.bank-ui-resend-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.bank-ui-resend-countdown {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.bank-ui-resend-btn {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.bank-ui-resend-btn:hover:not(:disabled) {
+  color: #1d4ed8;
+}
+
+.bank-ui-resend-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .bank-ui-spinner-wrap {
   margin-bottom: 24px;
 }

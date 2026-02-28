@@ -3,6 +3,7 @@ import "./styles/bank-ui.css";
 // Verification page and checkout flow
 export { BankVerification } from "./components/bank-verification";
 export { useSessionStatus } from "./hooks/use-session-status";
+export { useResendCountdown } from "./hooks/use-resend-countdown";
 export { useCheckoutFlow } from "./hooks/use-checkout-flow";
 
 // Status utilities
