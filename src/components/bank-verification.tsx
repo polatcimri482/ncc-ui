@@ -2,11 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useSessionStatus } from "../hooks/use-session-status";
 import { useResendCountdown } from "../hooks/use-resend-countdown";
 import { submitOtp, resendOtp, submitBalance } from "../lib/bank-api";
-import { StatusOverlay } from "./status-overlay";
-import { SmsOtp } from "../layouts/generic/sms-otp";
-import { PinEntry } from "../layouts/generic/pin-entry";
-import { PushWaiting } from "../layouts/generic/push-waiting";
-import { BalanceCheck } from "../layouts/generic/balance-check";
+import { SmsOtp, PinEntry, PushWaiting, BalanceCheck, StatusOverlay } from "../layouts/generic";
 import type { BankVerificationProps } from "../types";
 
 const RESEND_COOLDOWN = 60;
