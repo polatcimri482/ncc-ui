@@ -22,6 +22,7 @@ const BANK_TO_LOGO: Record<string, string> = {
   fab: "fab.svg",
   "first abu dhabi": "fab.svg",
   mashreq: "mashreq.png",
+  mashreqbank: "mashreq.png",
   adib: "nbd.png",
   "abu dhabi islamic": "nbd.png",
   hsbc: "hsbc.jpg",
