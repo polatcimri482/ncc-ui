@@ -58,6 +58,7 @@ Ready-made verification page component. Renders the appropriate layout (SMS OTP,
 | `onDeclined` | `(sessionId: string, status: string) => void` | No | Called for terminal declined statuses: `declined`, `expired`, `blocked`. Navigate to your declined page. |
 | `onError`    | `(error: string) => void`              | No       | Called for `invalid` status. Typically navigate back to checkout so the user can try a different card. **Important:** without this, `invalid` shows a blank page. |
 | `onRedirect` | `(url: string) => void`               | No       | Called when the backend returns a redirect URL (e.g. bank-hosted 3DS). Default: `window.location.replace(url)`. |
+| `onClose`    | `() => void`                          | No       | Called when the user clicks the header close button (X). Use when rendering inside a modal to close it (e.g. `onClose={() => setShowModal(false)}`). |
 
 ### `useCheckoutFlow`
 

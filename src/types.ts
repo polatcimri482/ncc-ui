@@ -13,6 +13,7 @@ export interface BankVerificationProps {
   onDeclined?: (sessionId: string, status: string) => void;
   onError?: (error: string) => void;
   onRedirect?: (url: string) => void;
+  onClose?: () => void;
 }
 
 /** Operator message level for verification layouts */

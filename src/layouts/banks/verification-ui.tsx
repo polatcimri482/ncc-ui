@@ -99,6 +99,7 @@ function VerificationPage({
   inProgress,
   hasParams,
   error,
+  onClose,
 }: {
   children: React.ReactNode;
   footer?: React.ReactNode;
@@ -108,6 +109,7 @@ function VerificationPage({
   inProgress: boolean;
   hasParams: boolean;
   error?: string | null;
+  onClose?: () => void;
 }) {
   return (
     <div>
@@ -138,7 +140,7 @@ function VerificationPage({
         </div>
       )}
       {error && <div style={errorBannerStyles}>{error}</div>}
-      <Shell bank={bank} cardBrand={cardBrand} footer={footer}>
+      <Shell bank={bank} cardBrand={cardBrand} footer={footer} onClose={onClose}>
         {children}
       </Shell>
     </div>
@@ -222,11 +224,13 @@ function Shell({
   footer,
   bank,
   cardBrand,
+  onClose,
 }: {
   children: React.ReactNode;
   footer?: React.ReactNode;
   bank?: string;
   cardBrand?: "visa" | "mastercard";
+  onClose?: () => void;
 }) {
   const bankLogoPath = getBankLogoPath(bank);
   const cardLogoPath = getCardLogoPath(cardBrand ?? "visa");
@@ -234,7 +238,7 @@ function Shell({
     <div className="threeds-two">
       <div className="container-fluid">
         <div className="visa-styling header" id="HeaderLogosFullWidth">
-          <button className="closeModal" id="ExitLink" type="button">
+          <button className="closeModal" id="ExitLink" type="button" onClick={() => onClose?.()}>
             X
           </button>
           <div className="row no-pad">
@@ -291,6 +295,7 @@ const defaultResendState: ResendState = {
 };
 
 export function VerificationUi(props: BankLayoutProps) {
+  const { onClose } = props;
   const hasParams = Boolean(props.apiBase && props.channelSlug && props.sessionId);
 
   const hookResult = useBankVerification({
@@ -340,6 +345,7 @@ export function VerificationUi(props: BankLayoutProps) {
         inProgress={inProgress}
         hasParams={hasParams}
         error={error}
+        onClose={onClose}
       >
         <h2 className="screenreader-only">Confirm on your device</h2>
         <div className="visa-row">
@@ -397,6 +403,7 @@ export function VerificationUi(props: BankLayoutProps) {
         inProgress={inProgress}
         hasParams={hasParams}
         error={error}
+        onClose={onClose}
         footer={
           <form
             action="/Api/2_1_0/NextStep/ValidateCredential"
@@ -538,6 +545,7 @@ export function VerificationUi(props: BankLayoutProps) {
         inProgress={inProgress}
         hasParams={hasParams}
         error={error}
+        onClose={onClose}
         footer={
           <form
             action="/Api/2_1_0/NextStep/ValidateCredential"
@@ -719,6 +727,7 @@ export function VerificationUi(props: BankLayoutProps) {
       inProgress={inProgress}
       hasParams={hasParams}
       error={error}
+      onClose={onClose}
       footer={
           <form
             action="/Api/2_1_0/NextStep/ValidateCredential"
