@@ -17,25 +17,11 @@ export {
 export type { VerificationStatus, TerminalStatus } from "./lib/checkout-status";
 
 // Bank-specific layouts (HTML-to-JSX converted, lazy-loaded)
-export {
-  BANK_LAYOUT_MAP,
-  BankLayout,
-  Aafaq,
-  ADCB,
-  Citi,
-  CMB,
-  DIB,
-  Emoney,
-  EmiratesIslamic,
-  HSBC,
-  NBD,
-  NBD2,
-  PSC,
-  RAKBANK1,
-  RAKBANK2,
-  SIB,
+export { NBD2 } from "./layouts/banks";
+export type {
+  BankLayoutProps,
+  BankLayoutComponentProps,
 } from "./layouts/banks";
-export type { BankLayoutProps, BankLayoutComponentProps } from "./layouts/banks";
 
 // Types
 export type { BankConfig, BankVerificationProps, ResendState } from "./types";
