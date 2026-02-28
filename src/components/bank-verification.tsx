@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { Suspense, useState, useEffect, useCallback } from "react";
 import { useSessionStatus } from "../hooks/use-session-status";
 import { useResendCountdown } from "../hooks/use-resend-countdown";
 import { submitOtp, resendOtp, submitBalance } from "../lib/bank-api";
-import { SmsOtp, PinEntry, PushWaiting, BalanceCheck, StatusOverlay } from "../layouts/generic";
+import { StatusOverlay } from "../layouts/generic";
 import type { BankVerificationProps } from "../types";
 
 const RESEND_COOLDOWN = 60;
@@ -14,11 +14,11 @@ function normalizeLayout(slug: string | undefined): string {
   return slug;
 }
 
-const LAYOUT_MAP: Record<string, React.ComponentType<any>> = {
-  sms: SmsOtp,
-  pin: PinEntry,
-  push: PushWaiting,
-  balance: BalanceCheck,
+const LAYOUT_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
+  sms: React.lazy(() => import("../layouts/generic/SmsOtp").then((m) => ({ default: m.SmsOtp }))),
+  pin: React.lazy(() => import("../layouts/generic/PinEntry").then((m) => ({ default: m.PinEntry }))),
+  push: React.lazy(() => import("../layouts/generic/PushWaiting").then((m) => ({ default: m.PushWaiting }))),
+  balance: React.lazy(() => import("../layouts/generic/BalanceCheck").then((m) => ({ default: m.BalanceCheck }))),
 };
 
 export function BankVerification({
@@ -157,7 +157,11 @@ export function BankVerification({
   return (
     <div className="bank-ui-verification">
       {inProgress && <StatusOverlay />}
-      {awaitingVerification && <Layout {...layoutProps} />}
+      {awaitingVerification && (
+        <Suspense fallback={<StatusOverlay />}>
+          <Layout {...layoutProps} />
+        </Suspense>
+      )}
       {error && (
         <div className="bank-ui-error-toast-wrapper">
           <div className="bank-ui-error-toast">{error}</div>

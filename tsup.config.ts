@@ -6,6 +6,7 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
+  splitting: true,
   external: ["react"],
   minify: true,
 });
