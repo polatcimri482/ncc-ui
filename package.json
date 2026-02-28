@@ -14,18 +14,23 @@
     },
     "./styles.css": "./dist/index.css"
   },
-  "files": ["dist"],
-  "sideEffects": ["**/*.css"],
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
     "build": "tsup",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "html-to-tsx": "node scripts/html-to-tsx.js"
   },
   "peerDependencies": {
     "react": "^18.0.0"
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/react": "^18.3.0",
+    "htmltojsx": "^0.3.0",
     "react": "^18.3.0",
     "tsup": "^8.0.0",
     "typescript": "^5.6.0"
