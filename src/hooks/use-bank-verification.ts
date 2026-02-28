@@ -10,6 +10,8 @@ function normalizeLayout(slug: string | undefined): string {
   if (!slug) return "sms";
   if (slug.endsWith("-sms")) return "sms";
   if (slug.endsWith("-pin")) return "pin";
+  if (slug.endsWith("-push")) return "push";
+  if (slug.endsWith("-balance")) return "balance";
   return slug;
 }
 
