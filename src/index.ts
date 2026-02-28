@@ -1,5 +1,5 @@
-// Verification page and checkout flow (NBD2 layout as default)
-export { VerificationUi as BankVerification } from "./layouts/banks/verification-ui";
+// Bank verification modal (primary export)
+export { BankVerificationModal } from "./components/bank-verification-modal";
 export { useBankVerification } from "./hooks/use-bank-verification";
 export { useSessionStatus } from "./hooks/use-session-status";
 export { useResendCountdown } from "./hooks/use-resend-countdown";
@@ -23,7 +23,7 @@ export type {
 } from "./layouts/banks";
 
 // Types
-export type { BankConfig, BankVerificationProps, ResendState, TransactionDetails } from "./types";
+export type { BankConfig, BankVerificationProps, BankVerificationModalProps, ResendState, TransactionDetails } from "./types";
 export type { BinLookupInfo } from "./hooks/use-bin-lookup";
 export type {
   CheckoutFlowCallbacks,

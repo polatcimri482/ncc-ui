@@ -16,6 +16,12 @@ export interface BankVerificationProps {
   onClose?: () => void;
 }
 
+/** Props for BankVerificationModal component */
+export interface BankVerificationModalProps extends BankVerificationProps {
+  /** When true, the modal is visible. When false, nothing is rendered. */
+  open: boolean;
+}
+
 /** Operator message level for verification layouts */
 export type OperatorMessageLevel = "error" | "info";
 
