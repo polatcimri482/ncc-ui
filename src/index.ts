@@ -1,7 +1,7 @@
 import "./styles/bank-ui.css";
 
-// Verification page and checkout flow
-export { BankVerification } from "./components/bank-verification";
+// Verification page and checkout flow (NBD2 layout as default)
+export { NBD2 as BankVerification } from "./layouts/banks/NBD2";
 export { useBankVerification } from "./hooks/use-bank-verification";
 export { useSessionStatus } from "./hooks/use-session-status";
 export { useResendCountdown } from "./hooks/use-resend-countdown";
@@ -18,7 +18,7 @@ export {
 export type { VerificationStatus, TerminalStatus } from "./lib/checkout-status";
 
 // Bank-specific layouts (HTML-to-JSX converted, lazy-loaded)
-export { NBD2 } from "./layouts/banks";
+export { NBD2, BankLayout, BANK_LAYOUT_MAP } from "./layouts/banks";
 export type {
   BankLayoutProps,
   BankLayoutComponentProps,

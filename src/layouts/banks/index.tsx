@@ -1,6 +1,14 @@
 import React, { Suspense } from "react";
+import type { BankVerificationProps } from "../../types";
 
-export type BankLayoutProps = Record<string, unknown>;
+/** Props for bank-specific layouts. Verification fields are optional for preview mode. */
+export type BankLayoutProps = Partial<
+  Pick<
+    BankVerificationProps,
+    "apiBase" | "channelSlug" | "sessionId" | "onSuccess" | "onDeclined" | "onError" | "onRedirect"
+  >
+> &
+  Record<string, unknown>;
 
 const NBD2 = React.lazy(() => import("./NBD2").then((m) => ({ default: m.NBD2 })));
 
