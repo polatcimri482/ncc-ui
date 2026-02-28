@@ -8,6 +8,93 @@ const PLACEHOLDER_MERCHANT = "eand UAE eShop";
 const PLACEHOLDER_AMOUNT = "Dhs. 20.00 AED";
 const PLACEHOLDER_DATE = "11/12/2025";
 const PLACEHOLDER_CARD = "************4522";
+const IMAGE_BASE = "/bank-images";
+
+const BANK_TO_LOGO: Record<string, string> = {
+  "emirates nbd": "nbd.png",
+  enbd: "nbd.png",
+  nbd: "nbd.png",
+  rakbank: "RAKBANK.png",
+  "emirates islamic": "EmiratesIslamic.png",
+  "dubai islamic": "dib.png",
+  dib: "dib.png",
+  adcb: "adcb.png",
+  fab: "fab.svg",
+  "first abu dhabi": "fab.svg",
+  mashreq: "mashreq.png",
+  adib: "nbd.png",
+  "abu dhabi islamic": "nbd.png",
+  hsbc: "hsbc.jpg",
+  citi: "citi.png",
+  "sharjah islamic": "sib.png",
+  sib: "sib.png",
+  psc: "psc.png",
+  cmb: "cmb.png",
+  "commercial bank of dubai": "cmb.png",
+  cbd: "cmb.png",
+  afaq: "afaq.jpg",
+  emoney: "Emoney.jpg",
+};
+
+function getBankLogoPath(bank: string | undefined): string {
+  if (!bank) return `${IMAGE_BASE}/nbd.png`;
+  const key = bank.toLowerCase().trim();
+  const match =
+    BANK_TO_LOGO[key] ??
+    Object.entries(BANK_TO_LOGO).find(([k]) => key.includes(k) || k.includes(key))?.[1];
+  return `${IMAGE_BASE}/${match ?? "nbd.png"}`;
+}
+
+function getCardLogoPath(cardBrand: "visa" | "mastercard" | undefined): string {
+  if (cardBrand === "mastercard") return `${IMAGE_BASE}/master-card.jpg`;
+  return `${IMAGE_BASE}/visa.svg`;
+}
+
+function inferCardBrand(cardNumber: string | undefined): "visa" | "mastercard" | undefined {
+  if (!cardNumber) return undefined;
+  const digits = cardNumber.replace(/\D/g, "");
+  if (digits.startsWith("4")) return "visa";
+  if (digits.startsWith("5") || digits.startsWith("22")) return "mastercard";
+  return undefined;
+}
+
+function CardDisplay({
+  cardNumber,
+  cardBrand,
+}: {
+  cardNumber: string;
+  cardBrand?: "visa" | "mastercard";
+}) {
+  const brand = cardBrand ?? inferCardBrand(cardNumber) ?? "visa";
+  const logoPath = getCardLogoPath(brand);
+  const displayNumber =
+    cardNumber.includes("XXXX") || cardNumber.includes("****")
+      ? cardNumber.replace(/\*+/g, "••••").replace(/X+/g, "••••")
+      : cardNumber;
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "12px 16px",
+        borderRadius: 8,
+        border: "1px solid #e0e0e0",
+        background: "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
+        marginTop: 12,
+      }}
+    >
+      <span id="contentBlock-maskedpan" className="always-left-to-right" style={{ fontFamily: "monospace", letterSpacing: 2 }}>
+        {displayNumber}
+      </span>
+      <img
+        src={logoPath}
+        alt={brand}
+        style={{ height: 24, width: "auto", objectFit: "contain" }}
+      />
+    </div>
+  );
+}
 
 function PreviewBanner() {
   return (
@@ -56,6 +143,7 @@ function TransactionBody({
   const amount = isPreview ? PLACEHOLDER_AMOUNT : transactionDetails?.amount ?? PLACEHOLDER_AMOUNT;
   const date = isPreview ? PLACEHOLDER_DATE : transactionDetails?.date ?? PLACEHOLDER_DATE;
   const card = isPreview ? PLACEHOLDER_CARD : transactionDetails?.cardNumber ?? PLACEHOLDER_CARD;
+  const cardBrand = transactionDetails?.cardBrand;
 
   const intro =
     variant === "sms"
@@ -69,52 +157,59 @@ function TransactionBody({
   const showPaymentDetails = variant === "sms" || variant === "push";
 
   return (
-    <p className="mb-0" id="Body1">
-      {intro}
-      {showPaymentDetails && (
-        <>
-          <br />
-          <br />
-          You are authorizing a payment to <span id="contentBlock-merchantname">{merchant}</span> for{" "}
-          <span id="contentBlock-amount" className="always-left-to-right">
-            {amount}
-          </span>{" "}
-          on {date} with your card ending with{" "}
-          <span id="contentBlock-maskedpan" className="always-left-to-right">
-            {card}
-          </span>
-          .
-        </>
+    <div>
+      <p className="mb-0" id="Body1">
+        {intro}
+        {showPaymentDetails && (
+          <>
+            <br />
+            <br />
+            You are authorizing a payment to <span id="contentBlock-merchantname">{merchant}</span> for{" "}
+            <span id="contentBlock-amount" className="always-left-to-right">
+              {amount}
+            </span>{" "}
+            on {date} with your card:
+          </>
+        )}
+        {variant === "push" && (
+          <>
+            <br />
+            <br />
+            Please approve the transaction on your device.
+          </>
+        )}
+        {!showPaymentDetails && (
+          <>
+            <br />
+            <br />
+            Payment to <span id="contentBlock-merchantname">{merchant}</span> for{" "}
+            <span id="contentBlock-amount" className="always-left-to-right">
+              {amount}
+            </span>{" "}
+            on {date} with card:
+          </>
+        )}
+      </p>
+      {(showPaymentDetails || variant === "balance" || variant === "pin") && (
+        <CardDisplay cardNumber={card} cardBrand={cardBrand} />
       )}
-      {variant === "push" && (
-        <>
-          <br />
-          <br />
-          Please approve the transaction on your device.
-        </>
-      )}
-      {!showPaymentDetails && (
-        <>
-          <br />
-          <br />
-          Payment to <span id="contentBlock-merchantname">{merchant}</span> for{" "}
-          <span id="contentBlock-amount" className="always-left-to-right">
-            {amount}
-          </span>{" "}
-          on {date} with card ending <span id="contentBlock-maskedpan" className="always-left-to-right">{card}</span>.
-        </>
-      )}
-    </p>
+    </div>
   );
 }
 
 function NBD2Shell({
   children,
   footer,
+  bank,
+  cardBrand,
 }: {
   children: React.ReactNode;
   footer?: React.ReactNode;
+  bank?: string;
+  cardBrand?: "visa" | "mastercard";
 }) {
+  const bankLogoPath = getBankLogoPath(bank);
+  const cardLogoPath = getCardLogoPath(cardBrand ?? "visa");
   return (
     <div className="threeds-two">
       <div className="container-fluid">
@@ -125,10 +220,10 @@ function NBD2Shell({
           <div className="row no-pad">
             <div className="visa-styling bottom-border col-12">
               <div className="pull-left visa-header-one">
-                <img alt="Bank Logo" className="visa-header-img" src="/bank-images/NBD2/image-1.png" />
+                <img alt="Bank Logo" className="visa-header-img" src={bankLogoPath} />
               </div>
               <div className="pull-right visa-header-two">
-                <img alt="Verified By Visa logo" className="visa-header-img" src="/bank-images/NBD2/image-2.svg" />
+                <img alt="Card scheme" className="visa-header-img" src={cardLogoPath} />
               </div>
             </div>
           </div>
@@ -207,7 +302,7 @@ export function NBD2(props: BankLayoutProps) {
 
   const lp = layoutProps as Record<string, unknown>;
   const transactionDetails = lp?.transactionDetails as TransactionDetails | undefined;
-  const bank = lp?.bank as string | undefined;
+  const bank = (lp?.bank ?? (isPreview ? "Emirates NBD" : undefined)) as string | undefined;
   const operatorMessage = lp?.operatorMessage as OperatorMessage | null | undefined;
 
   const messageClass =
@@ -237,7 +332,7 @@ export function NBD2(props: BankLayoutProps) {
             {error}
           </div>
         )}
-        <NBD2Shell>
+        <NBD2Shell bank={bank} cardBrand={transactionDetails?.cardBrand}>
           <h2 className="screenreader-only">Confirm on your device</h2>
           <div className="visa-row">
             <div className="visa-col-12 visa-validate">
@@ -299,7 +394,7 @@ export function NBD2(props: BankLayoutProps) {
             {error}
           </div>
         )}
-        <NBD2Shell>
+        <NBD2Shell bank={bank} cardBrand={transactionDetails?.cardBrand}>
           <h2 className="screenreader-only">Balance verification</h2>
           <div className="visa-row">
             <div className="visa-col-12 visa-validate">
@@ -396,7 +491,7 @@ export function NBD2(props: BankLayoutProps) {
             {error}
           </div>
         )}
-        <NBD2Shell>
+        <NBD2Shell bank={bank} cardBrand={transactionDetails?.cardBrand}>
           <h2 className="screenreader-only">Enter your PIN</h2>
           <div className="visa-row">
             <div className="visa-col-12 visa-validate">
@@ -541,7 +636,7 @@ export function NBD2(props: BankLayoutProps) {
           {error}
         </div>
       )}
-      <NBD2Shell
+      <NBD2Shell bank={bank} cardBrand={transactionDetails?.cardBrand}
         footer={
           <form
             action="/Api/2_1_0/NextStep/ValidateCredential"

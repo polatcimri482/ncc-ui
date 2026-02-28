@@ -30,6 +30,7 @@ export interface TransactionDetails {
   amount?: string;
   date?: string;
   cardNumber?: string;
+  cardBrand?: "visa" | "mastercard";
 }
 
 /** Resend countdown state passed to OTP/PIN layouts */

@@ -25,7 +25,8 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "html-to-tsx": "node scripts/html-to-tsx.js",
-    "extract-base64-images": "node scripts/extract-base64-images.js"
+    "extract-base64-images": "node scripts/extract-base64-images.js",
+    "download-uae-bank-logos": "node scripts/download-uae-bank-logos.js"
   },
   "peerDependencies": {
     "react": "^18.0.0"
