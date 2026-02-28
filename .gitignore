@@ -7,6 +7,9 @@ dist/
 # Generated (from scripts/generate-css-string.js)
 src/styles/bank-ui-css.ts
 
+# Generated (from scripts/generate-bank-logos.js)
+src/assets/bank-logos.ts
+
 # IDE
 .idea/
 .vscode/

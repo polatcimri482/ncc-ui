@@ -21,7 +21,7 @@
     "**/*.css"
   ],
   "scripts": {
-    "build": "node scripts/generate-css-string.js && tsup && cp src/styles/bank-ui.css dist/index.css",
+    "build": "node scripts/generate-css-string.js && node scripts/generate-bank-logos.js && tsup && cp src/styles/bank-ui.css dist/index.css",
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "html-to-tsx": "node scripts/html-to-tsx.js",

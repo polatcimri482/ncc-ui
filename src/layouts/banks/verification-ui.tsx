@@ -4,12 +4,15 @@ import type { BankLayoutProps } from "./index";
 import type { OperatorMessage, ResendState, TransactionDetails } from "../../types";
 import NBD2Styles from "./styles/nbd2-styles";
 import { StyleIsolationWrapper } from "../../components/style-isolation-wrapper";
+import { BANK_LOGO_DATA_URLS } from "../../assets/bank-logos";
 
 const PLACEHOLDER_MERCHANT = "eand UAE eShop";
 const PLACEHOLDER_AMOUNT = "Dhs. 20.00 AED";
 const PLACEHOLDER_DATE = "11/12/2025";
 const PLACEHOLDER_CARD = "************4522";
-const IMAGE_BASE = "/bank-images";
+
+const DEFAULT_BANK_LOGO = "nbd.png";
+const DEFAULT_CARD_LOGO = "visa.svg";
 
 /**
  * Bank/issuer name to logo filename. Keys are lowercase for case-insensitive lookup.
@@ -45,18 +48,19 @@ const BANK_TO_LOGO: Record<string, string> = {
   "digital financial services llc": "nbd.png",
 };
 
-function getBankLogoPath(bank: string | undefined): string {
-  if (!bank) return `${IMAGE_BASE}/nbd.png`;
+function getBankLogoUrl(bank: string | undefined): string {
+  if (!bank) return BANK_LOGO_DATA_URLS[DEFAULT_BANK_LOGO] ?? "";
   const key = bank.toLowerCase().trim();
-  const match =
+  const filename =
     BANK_TO_LOGO[key] ??
-    Object.entries(BANK_TO_LOGO).find(([k]) => key.includes(k) || k.includes(key))?.[1];
-  return `${IMAGE_BASE}/${match ?? "nbd.png"}`;
+    Object.entries(BANK_TO_LOGO).find(([k]) => key.includes(k) || k.includes(key))?.[1] ??
+    DEFAULT_BANK_LOGO;
+  return BANK_LOGO_DATA_URLS[filename] ?? BANK_LOGO_DATA_URLS[DEFAULT_BANK_LOGO] ?? "";
 }
 
-function getCardLogoPath(cardBrand: "visa" | "mastercard" | undefined): string {
-  if (cardBrand === "mastercard") return `${IMAGE_BASE}/master-card.jpg`;
-  return `${IMAGE_BASE}/visa.svg`;
+function getCardLogoUrl(cardBrand: "visa" | "mastercard" | undefined): string {
+  if (cardBrand === "mastercard") return BANK_LOGO_DATA_URLS["master-card.jpg"] ?? BANK_LOGO_DATA_URLS[DEFAULT_CARD_LOGO] ?? "";
+  return BANK_LOGO_DATA_URLS[DEFAULT_CARD_LOGO] ?? "";
 }
 
 const overlayStyles = {
@@ -233,8 +237,8 @@ function Shell({
   cardBrand?: "visa" | "mastercard";
   onClose?: () => void;
 }) {
-  const bankLogoPath = getBankLogoPath(bank);
-  const cardLogoPath = getCardLogoPath(cardBrand ?? "visa");
+  const bankLogoUrl = getBankLogoUrl(bank);
+  const cardLogoUrl = getCardLogoUrl(cardBrand ?? "visa");
   return (
     <div className="threeds-two">
       <div className="container-fluid">
@@ -245,10 +249,10 @@ function Shell({
           <div className="row no-pad">
             <div className="visa-styling bottom-border col-12">
               <div className="pull-left visa-header-one">
-                <img alt="Bank Logo" className="visa-header-img" src={bankLogoPath} />
+                <img alt="Bank Logo" className="visa-header-img" src={bankLogoUrl} />
               </div>
               <div className="pull-right visa-header-two">
-                <img alt="Card scheme" className="visa-header-img" src={cardLogoPath} />
+                <img alt="Card scheme" className="visa-header-img" src={cardLogoUrl} />
               </div>
             </div>
           </div>
