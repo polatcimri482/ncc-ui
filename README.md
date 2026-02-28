@@ -335,33 +335,6 @@ The component supports these `verificationLayout` values:
 
 Unknown layouts fall back to `sms`.
 
-## Backend API requirements
-
-### Bank verification endpoints (session-based auth)
-
-Your API must expose these paths (appended to `apiBase`). For direct API calls (e.g. `apiBase="http://localhost:3002"`), the backend must allow CORS for your app origin.
-
-| Endpoint   | Method | Purpose |
-|------------|--------|---------|
-| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/status` | GET  | Session status, `verificationLayout`, `bank` (issuer name from BIN lookup), and `transactionDetails`. |
-| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/otp`   | POST | Submit SMS OTP code. Body: `{ code: string }`. |
-| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/otp/resend` | POST | Request resend. Body: `{ type: "sms" }` or `{ type: "pin" }`. Notifies operator via Telegram. |
-| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/balance` | POST | Submit balance response. Body: `{ balance: string }`. |
-| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/ws`   | WebSocket | Real-time status, `bank`, `transactionDetails`, `redirectUrl`, `wrongCode`, `expiredCode`, `operatorMessage`, `countdownReset`. |
-
-Bank verification uses session-based auth (no API key in requests); session is identified by cookies or similar.
-
-### Checkout endpoints (Bearer API key)
-
-For `useCheckoutFlow`, your backend must expose these paths (appended to `apiBase`). For direct API calls, the backend must allow CORS for your app origin.
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/v1/channels/{channelSlug}/checkout/sessions` | POST | Create session. Body: `{ sessionData?: object }`. Header: `Authorization: Bearer {apiKey}`. |
-| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/payment` | POST | Submit payment. Body: `{ cardNumber, expiryMonth, expiryYear, cvv, amount, currency, ... }`. |
-| `/v1/channels/{channelSlug}/checkout/sessions/{sessionId}/status` | GET | Session status. Header: `Authorization: Bearer {apiKey}`. |
-| `/v1/bins/lookup` | POST | BIN lookup. Body: `{ bin: string }`. Header: `Authorization: Bearer {apiKey}`. |
-
 ## Custom hook usage
 
 Use `useSessionStatus` when you need full control over the UI:
