@@ -1,47 +1,57 @@
-import React, { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import React, { useEffect, useRef } from "react";
+import { createRoot } from "react-dom/client";
 import { bankUiCss } from "../styles/bank-ui-css";
 
 /**
- * Wraps children in a Shadow DOM to isolate package styles from host styles.
- * Host CSS cannot penetrate; package CSS does not leak out.
+ * Wraps children in an iframe for full style isolation from the host.
+ * Host CSS cannot affect the content; package CSS does not leak out.
  */
 export function StyleIsolationWrapper({ children }: { children: React.ReactNode }) {
-  const hostRef = useRef<HTMLDivElement>(null);
-  const [mountNode, setMountNode] = useState<HTMLDivElement | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const rootRef = useRef<ReturnType<typeof createRoot> | null>(null);
 
   useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return;
+    const iframe = iframeRef.current;
+    if (!iframe) return;
 
-    // Reuse existing shadow root (React Strict Mode double-mounts in dev)
-    let shadow = host.shadowRoot;
-    if (!shadow) {
-      shadow = host.attachShadow({ mode: "open" });
-      // Base reset so host dark theme doesn't inherit into shadow (color/background flow through)
-      const reset = document.createElement("style");
-      reset.textContent = `:host{color:#1f2937;background-color:#ffffff;}`;
-      shadow.appendChild(reset);
-      const style = document.createElement("style");
-      style.textContent = bankUiCss;
-      shadow.appendChild(style);
-    }
+    const doc = iframe.contentDocument;
+    if (!doc) return;
 
-    // Container for portaled content
-    const container = document.createElement("div");
-    shadow.appendChild(container);
+    doc.open();
+    doc.write(
+      `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${bankUiCss}</style></head><body><div id="root"></div></body></html>`
+    );
+    doc.close();
 
-    setMountNode(container);
+    const rootEl = doc.getElementById("root");
+    if (!rootEl) return;
+
+    rootRef.current = createRoot(rootEl);
+    rootRef.current.render(children);
 
     return () => {
-      container.remove();
-      setMountNode(null);
+      rootRef.current?.unmount();
+      rootRef.current = null;
     };
   }, []);
 
+  useEffect(() => {
+    if (rootRef.current) {
+      rootRef.current.render(children);
+    }
+  }, [children]);
+
   return (
-    <div ref={hostRef}>
-      {mountNode ? createPortal(children, mountNode) : null}
-    </div>
+    <iframe
+      ref={iframeRef}
+      style={{
+        width: "100%",
+        border: "none",
+        minHeight: "100vh",
+        display: "block",
+      }}
+      title="Bank verification"
+      sandbox="allow-same-origin allow-scripts"
+    />
   );
 }

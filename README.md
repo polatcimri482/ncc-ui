@@ -16,7 +16,7 @@ bun add @ncc/bank-verification-ui
 
 ## Setup
 
-**`BankVerification` uses Shadow DOM for style isolation** — host app styles do not affect it, and its styles do not leak out. You do **not** need to import the CSS when using `BankVerification`.
+**`BankVerification` uses an iframe for style isolation** — host app styles do not affect it, and its styles do not leak out. You do **not** need to import the CSS when using `BankVerification`.
 
 If you use raw hooks or layouts (e.g. `useSessionStatus`, `BankLayout`) without `BankVerification`, import the CSS once in your app:
 
