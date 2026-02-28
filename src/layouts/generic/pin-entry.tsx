@@ -1,74 +1,44 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React from "react";
 import { PinInput } from "../../components/pin-input";
-import { submitOtp, resendOtp } from "../../lib/bank-api";
 import type { OperatorMessage as OperatorMessageType } from "../../types";
 import { Spinner } from "../../components/spinner";
-import { useResendCountdown } from "../../hooks/use-resend-countdown";
+import type { ResendState } from "../../types";
 
 interface PinEntryProps {
-  apiBase: string;
-  channelSlug: string;
-  sessionId: string;
   bank?: string;
   onError: (msg: string) => void;
   wrongCode?: boolean;
   expiredCode?: boolean;
   onTryAgain?: () => void;
   operatorMessage?: OperatorMessageType | null;
-  countdownResetTrigger?: number;
-  resendCooldownSeconds?: number;
+  onSubmit: (code: string) => void;
+  submitting: boolean;
+  resendState: ResendState;
+  resetKey: number;
 }
 
-const DEFAULT_RESEND_COOLDOWN = 60;
-
 export function PinEntry({
-  apiBase,
-  channelSlug,
-  sessionId,
   bank,
-  onError,
   wrongCode,
   expiredCode,
   onTryAgain,
   operatorMessage,
-  countdownResetTrigger,
-  resendCooldownSeconds = DEFAULT_RESEND_COOLDOWN,
+  onSubmit,
+  submitting,
+  resendState,
+  resetKey,
 }: PinEntryProps) {
-  const [submitting, setSubmitting] = useState(false);
-  const [resetKey, setResetKey] = useState(0);
-
-  const resendFn = useCallback(
-    () => resendOtp(apiBase, channelSlug, sessionId, "pin"),
-    [apiBase, channelSlug, sessionId]
-  );
-  const { secondsLeft, canResend, onResend, resending } = useResendCountdown(
-    resendCooldownSeconds,
-    countdownResetTrigger,
-    resendFn
-  );
-
-  useEffect(() => {
-    if (wrongCode || expiredCode) {
-      setSubmitting(false);
-      setResetKey((k) => k + 1);
-    }
-  }, [wrongCode, expiredCode]);
-
-  const handleComplete = async (pin: string) => {
+  const handleComplete = (pin: string) => {
     onTryAgain?.();
-    setSubmitting(true);
-    try {
-      await submitOtp(apiBase, channelSlug, sessionId, pin);
-    } catch (e) {
-      onError(e instanceof Error ? e.message : "Invalid PIN");
-      setSubmitting(false);
-    }
+    onSubmit(pin);
   };
 
   const messageClass =
     operatorMessage?.level === "error"
       ? "bank-ui-message bank-ui-message-error"
       : "bank-ui-message bank-ui-message-info";
+
+  const { secondsLeft, canResend, onResend, resending } = resendState;
 
   return (
     <div className="bank-ui-layout">

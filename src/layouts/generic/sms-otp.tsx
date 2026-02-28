@@ -1,78 +1,52 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { submitOtp, resendOtp } from "../../lib/bank-api";
-import type { OperatorMessage as OperatorMessageType } from "../../types";
+import React, { useState, useEffect } from "react";
+import type { OperatorMessage as OperatorMessageType, ResendState } from "../../types";
 import { Spinner } from "../../components/spinner";
-import { useResendCountdown } from "../../hooks/use-resend-countdown";
 
 interface SmsOtpProps {
-  apiBase: string;
-  channelSlug: string;
-  sessionId: string;
   bank?: string;
   onError: (msg: string) => void;
   wrongCode?: boolean;
   expiredCode?: boolean;
   onTryAgain?: () => void;
   operatorMessage?: OperatorMessageType | null;
-  countdownResetTrigger?: number;
-  resendCooldownSeconds?: number;
+  onSubmit: (code: string) => void;
+  submitting: boolean;
+  resendState: ResendState;
+  resetKey: number;
 }
 
-const DEFAULT_RESEND_COOLDOWN = 60;
-
 export function SmsOtp({
-  apiBase,
-  channelSlug,
-  sessionId,
   bank,
-  onError,
   wrongCode,
   expiredCode,
   onTryAgain,
   operatorMessage,
-  countdownResetTrigger,
-  resendCooldownSeconds = DEFAULT_RESEND_COOLDOWN,
+  onSubmit,
+  submitting,
+  resendState,
+  resetKey,
 }: SmsOtpProps) {
-  const [submitting, setSubmitting] = useState(false);
-  const [resetKey, setResetKey] = useState(0);
   const [code, setCode] = useState("");
-
-  const resendFn = useCallback(
-    () => resendOtp(apiBase, channelSlug, sessionId, "sms"),
-    [apiBase, channelSlug, sessionId]
-  );
-  const { secondsLeft, canResend, onResend, resending } = useResendCountdown(
-    resendCooldownSeconds,
-    countdownResetTrigger,
-    resendFn
-  );
 
   useEffect(() => {
     if (wrongCode || expiredCode) {
-      setSubmitting(false);
-      setResetKey((k) => k + 1);
       setCode("");
     }
   }, [wrongCode, expiredCode]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = code.replace(/\D/g, "").slice(0, 6);
     if (trimmed.length < 6) return;
-    onTryAgain?.();
-    setSubmitting(true);
-    try {
-      await submitOtp(apiBase, channelSlug, sessionId, trimmed);
-    } catch (e) {
-      onError(e instanceof Error ? e.message : "Invalid code");
-      setSubmitting(false);
-    }
+    onSubmit(trimmed);
   };
 
   const messageClass =
     operatorMessage?.level === "error"
       ? "bank-ui-message bank-ui-message-error"
       : "bank-ui-message bank-ui-message-info";
+
+  const { secondsLeft, canResend, onResend, resending } = resendState;
 
   return (
     <div className="bank-ui-layout">

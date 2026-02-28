@@ -17,7 +17,7 @@ export {
 export type { VerificationStatus, TerminalStatus } from "./lib/checkout-status";
 
 // Types
-export type { BankConfig, BankVerificationProps } from "./types";
+export type { BankConfig, BankVerificationProps, ResendState } from "./types";
 export type { BinLookupInfo } from "./hooks/use-bin-lookup";
 export type {
   CheckoutFlowCallbacks,

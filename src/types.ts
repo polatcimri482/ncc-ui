@@ -23,3 +23,11 @@ export interface OperatorMessage {
   level: OperatorMessageLevel;
   message: string;
 }
+
+/** Resend countdown state passed to OTP/PIN layouts */
+export interface ResendState {
+  secondsLeft: number;
+  canResend: boolean;
+  onResend: () => void;
+  resending: boolean;
+}

