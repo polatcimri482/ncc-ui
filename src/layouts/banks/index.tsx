@@ -10,7 +10,7 @@ export type BankLayoutProps = Partial<
 > &
   Record<string, unknown>;
 
-const NBD2 = React.lazy(() => import("./verification-ui").then((m) => ({ default: m.NBD2 })));
+const NBD2 = React.lazy(() => import("./verification-ui").then((m) => ({ default: m.VerificationUi })));
 
 /** Map bank slugs (lowercase) to lazy bank-specific layout components */
 export const BANK_LAYOUT_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<BankLayoutProps>>> = {
