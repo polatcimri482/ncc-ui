@@ -1,3 +1,5 @@
+import type { TransactionDetails } from "../types";
+
 export type StatusMessage = {
   type: "status_update";
   status: string;
@@ -7,6 +9,7 @@ export type StatusMessage = {
   wrongCode?: boolean;
   expiredCode?: boolean;
   countdownReset?: boolean;
+  transactionDetails?: TransactionDetails;
 };
 
 export type OperatorMessage = {

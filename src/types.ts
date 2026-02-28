@@ -24,6 +24,14 @@ export interface OperatorMessage {
   message: string;
 }
 
+/** Transaction details for display in bank verification layouts */
+export interface TransactionDetails {
+  merchantName?: string;
+  amount?: string;
+  date?: string;
+  cardNumber?: string;
+}
+
 /** Resend countdown state passed to OTP/PIN layouts */
 export interface ResendState {
   secondsLeft: number;

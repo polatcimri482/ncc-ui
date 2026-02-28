@@ -1,11 +1,18 @@
 import { apiRequest, apiUrl } from "./api";
 
+import type { TransactionDetails } from "../types";
+
 /** Bank verification uses session-based auth (no API key). */
 export async function getSessionStatus(
   apiBase: string,
   channelSlug: string,
   sessionId: string
-): Promise<{ status: string; verificationLayout?: string; bank?: string }> {
+): Promise<{
+  status: string;
+  verificationLayout?: string;
+  bank?: string;
+  transactionDetails?: TransactionDetails;
+}> {
   return apiRequest(
     apiUrl(`/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/status`, apiBase),
     { method: "GET" }
