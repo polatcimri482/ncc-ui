@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { needsVerification, isTerminal } from "../lib/checkout-status";
 import { useCheckout } from "./use-checkout";
 import { useSessionStatus } from "./use-session-status";
@@ -71,6 +71,7 @@ export function useCheckoutFlow(
 ): UseCheckoutFlowReturn {
   const callbacksRef = useRef(callbacks);
   callbacksRef.current = callbacks;
+  const [processingSessionId, setProcessingSessionId] = useState<string | null>(null);
 
   const {
     channel,
@@ -80,11 +81,12 @@ export function useCheckoutFlow(
     binLookup,
   } = useCheckout(apiBase, apiKey, channelSlug, sessionIdFromUrl);
 
-  const sid = sessionIdFromUrl ?? sessionId;
+  const sid = sessionIdFromUrl ?? processingSessionId ?? sessionId;
+  const isProcessingMode = Boolean(sessionIdFromUrl || processingSessionId);
   const { status } = useSessionStatus(
     apiBase,
     channelSlug,
-    sessionIdFromUrl ? sid : null
+    isProcessingMode ? sid : null
   );
 
   const submitPayment = useCallback(
@@ -103,6 +105,7 @@ export function useCheckoutFlow(
         );
 
         if (!handled) {
+          setProcessingSessionId(result.sessionId);
           cbs.onProcessing(channelSlug, result.sessionId);
         }
       } catch (e) {
@@ -116,7 +119,7 @@ export function useCheckoutFlow(
   const lastHandledStatusRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!sessionIdFromUrl || !sid) return;
+    if (!isProcessingMode || !sid) return;
 
     const shouldHandle =
       needsVerification(status) ||
@@ -130,7 +133,10 @@ export function useCheckoutFlow(
 
     const cbs = callbacksRef.current;
     resolveStatus(status, false, channelSlug, sid, cbs);
-  }, [sessionIdFromUrl, sid, channelSlug, status]);
+    if (processingSessionId) {
+      setProcessingSessionId(null);
+    }
+  }, [isProcessingMode, sid, channelSlug, status, processingSessionId]);
 
   return {
     submitPayment,
