@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="10px" height="10px" viewBox="0 0 10 10" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 53.2 (72643) - https://sketchapp.com -->
+    <title>icon / content / plus copy</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <path d="M8.83333333,7.16666667 L12.1666667,7.16666667 C12.626904,7.16666667 13,7.53976271 13,8 C13,8.46023729 12.626904,8.83333333 12.1666667,8.83333333 L8.83333333,8.83333333 L8.83333333,12.1666667 C8.83333333,12.626904 8.46023729,13 8,13 C7.53976271,13 7.16666667,12.626904 7.16666667,12.1666667 L7.16666667,8.83333333 L3.83333333,8.83333333 C3.37309604,8.83333333 3,8.46023729 3,8 C3,7.53976271 3.37309604,7.16666667 3.83333333,7.16666667 L7.16666667,7.16666667 L7.16666667,3.83333333 C7.16666667,3.37309604 7.53976271,3 8,3 C8.46023729,3 8.83333333,3.37309604 8.83333333,3.83333333 L8.83333333,7.16666667 Z" id="path-1"></path>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="icon-/-content-/-plus" transform="translate(-3.000000, -3.000000)">
+            <mask id="mask-2" fill="white">
+                <use xlink:href="#path-1"></use>
+            </mask>
+            <use id="Combined-Shape" fill="#000000" fill-rule="evenodd" xlink:href="#path-1"></use>
+            <g id="Utilities-/-color-/-gray" mask="url(#mask-2)" fill="#58606E" fill-rule="evenodd">
+                <g id="🎨-color-/-gray-/-80">
+                    <rect id="DO-NOT-CHANGE" x="0" y="0" width="16" height="16"></rect>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

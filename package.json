@@ -24,7 +24,8 @@
     "build": "tsup",
     "dev": "vite",
     "typecheck": "tsc --noEmit",
-    "html-to-tsx": "node scripts/html-to-tsx.js"
+    "html-to-tsx": "node scripts/html-to-tsx.js",
+    "extract-base64-images": "node scripts/extract-base64-images.js"
   },
   "peerDependencies": {
     "react": "^18.0.0"
