@@ -1,5 +1,43 @@
 /* @ncc/bank-verification-ui styles - prefixed to avoid consumer clashes */
 
+/* Verification modal */
+.bank-ui-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.bank-ui-modal-content {
+  background: #fff;
+  border-radius: 8px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 60vh;
+  overflow: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 16px;
+}
+
+@media (max-width: 640px) {
+  .bank-ui-modal-overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .bank-ui-modal-content {
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
 @keyframes bank-ui-spin {
   to {
     transform: rotate(360deg);
