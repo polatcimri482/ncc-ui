@@ -18,6 +18,10 @@ export function StyleIsolationWrapper({ children }: { children: React.ReactNode 
     let shadow = host.shadowRoot;
     if (!shadow) {
       shadow = host.attachShadow({ mode: "open" });
+      // Base reset so host dark theme doesn't inherit into shadow (color/background flow through)
+      const reset = document.createElement("style");
+      reset.textContent = `:host{color:#1f2937;background-color:#ffffff;}`;
+      shadow.appendChild(reset);
       const style = document.createElement("style");
       style.textContent = bankUiCss;
       shadow.appendChild(style);
