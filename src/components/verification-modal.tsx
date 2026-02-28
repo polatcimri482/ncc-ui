@@ -17,7 +17,7 @@ const contentStyles: React.CSSProperties = {
   borderRadius: 8,
   maxWidth: 480,
   width: "100%",
-  maxHeight: "90vh",
+  maxHeight: "60vh",
   overflow: "auto",
   boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
 };
