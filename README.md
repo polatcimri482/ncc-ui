@@ -259,7 +259,7 @@ When `sessionId` is `null` or empty, the hook skips API/WebSocket calls and retu
 | `status`              | `string`                                           | Current session status (see [Status values](#status-values)). |
 | `verificationLayout`  | `string`                                           | Layout to render: `sms`, `pin`, `push`, `balance`, or channel-specific (`enbd-sms`, `adcb-sms`, etc.). |
 | `bank`                | `string \| undefined`                              | Bank/issuer name from BIN lookup (e.g. "Emirates NBD"). Displayed in verification layouts when present. |
-| `redirectUrl`         | `string \| null`                                   | If set, redirect the user to this URL. |
+| `redirectUrl`         | `string \| null`                                   | Sent only when `status` is `blocked` and the channel has `blockedRedirectUrl` configured. Redirect the visitor to this URL (e.g. merchant's "card declined" page). |
 | `transactionDetails`  | `TransactionDetails \| undefined`                  | Merchant, amount, date, card info for display in verification layouts. |
 | `wrongCode`           | `boolean`                                          | True when OTP/PIN was incorrect; show "try again" UI. |
 | `expiredCode`         | `boolean`                                          | True when OTP/PIN was expired; show "Code expired" message. |
@@ -386,7 +386,7 @@ function CustomVerifyPage({ apiBase, channelSlug, sessionId }) {
     refetch,
   } = useSessionStatus(apiBase, channelSlug, sessionId);
 
-  if (redirectUrl) {
+  if (status === "blocked" && redirectUrl) {
     window.location.assign(redirectUrl);
     return null;
   }

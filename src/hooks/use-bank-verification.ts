@@ -73,7 +73,7 @@ export function useBankVerification({
 
   useEffect(() => {
     if (!channelSlug || !sessionId) return;
-    if (redirectUrl) {
+    if (status === "blocked" && redirectUrl) {
       if (onRedirect) {
         onRedirect(redirectUrl);
       } else {
