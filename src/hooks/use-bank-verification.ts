@@ -72,6 +72,10 @@ export function useBankVerification({
   }, [wrongCode, expiredCode]);
 
   useEffect(() => {
+    setSubmitting(false);
+  }, [status]);
+
+  useEffect(() => {
     if (!channelSlug || !sessionId) return;
     if (status === "blocked" && redirectUrl) {
       if (onRedirect) {
