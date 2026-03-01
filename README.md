@@ -14,6 +14,8 @@ bun add @ncc/bank-verification-ui
 
 **Peer dependency:** `react` ^18.0.0
 
+Install from npm or GitHub so the package is copied into your project's `node_modules` (avoid workspace or `file:` links to prevent Vite "outside serving allow list" errors).
+
 ## Setup
 
 **`BankVerificationModal` uses an iframe for style isolation** — host app styles do not affect it, and its styles do not leak out. You do **not** need to import the CSS when using this component.
