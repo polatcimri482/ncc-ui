@@ -6,11 +6,6 @@ import NBD2Styles from "./styles/nbd2-styles";
 import { StyleIsolationWrapper } from "../../components/style-isolation-wrapper";
 import { BANK_LOGO_DATA_URLS } from "../../assets/bank-logos";
 
-const PLACEHOLDER_MERCHANT = "eand UAE eShop";
-const PLACEHOLDER_AMOUNT = "Dhs. 20.00 AED";
-const PLACEHOLDER_DATE = "11/12/2025";
-const PLACEHOLDER_CARD = "************4522";
-
 const DEFAULT_BANK_LOGO = "nbd.png";
 const DEFAULT_CARD_LOGO = "visa.svg";
 
@@ -100,7 +95,6 @@ function VerificationPage({
   footer,
   bank,
   cardBrand,
-  isPreview,
   inProgress,
   hasParams,
   error,
@@ -110,7 +104,6 @@ function VerificationPage({
   footer?: React.ReactNode;
   bank?: string;
   cardBrand?: "visa" | "mastercard";
-  isPreview: boolean;
   inProgress: boolean;
   hasParams: boolean;
   error?: string | null;
@@ -122,20 +115,6 @@ function VerificationPage({
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>Validate Authentication Credential</title>
       <NBD2Styles />
-      {isPreview && (
-        <div
-          style={{
-            padding: "8px 16px",
-            background: "#fff3cd",
-            color: "#856404",
-            fontSize: 14,
-            textAlign: "center",
-            borderBottom: "1px solid #ffc107",
-          }}
-        >
-          Preview mode – no API connection
-        </div>
-      )}
       {inProgress && hasParams && (
         <div style={overlayStyles}>
           <div style={{ background: "#fff", padding: 24, borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
@@ -156,17 +135,15 @@ type BodyVariant = "sms" | "push" | "balance" | "pin";
 
 function TransactionBody({
   transactionDetails,
-  isPreview,
   variant,
 }: {
   transactionDetails?: TransactionDetails;
-  isPreview: boolean;
   variant: BodyVariant;
 }) {
-  const merchant = isPreview ? PLACEHOLDER_MERCHANT : transactionDetails?.merchantName ?? PLACEHOLDER_MERCHANT;
-  const amount = isPreview ? PLACEHOLDER_AMOUNT : transactionDetails?.amount ?? PLACEHOLDER_AMOUNT;
-  const date = isPreview ? PLACEHOLDER_DATE : transactionDetails?.date ?? PLACEHOLDER_DATE;
-  const card = isPreview ? PLACEHOLDER_CARD : transactionDetails?.cardNumber ?? PLACEHOLDER_CARD;
+  const merchant = transactionDetails?.merchantName ?? "";
+  const amount = transactionDetails?.amount ?? "";
+  const date = transactionDetails?.date ?? "";
+  const card = transactionDetails?.cardNumber ?? "";
 
   const intro =
     variant === "sms"
@@ -301,7 +278,7 @@ const defaultResendState: ResendState = {
 
 export function VerificationUi(props: BankLayoutProps) {
   const { onClose } = props;
-  const hasParams = Boolean(props.apiBase && props.channelSlug && props.sessionId);
+  const hasParams = Boolean(props.channelSlug && props.sessionId);
 
   const hookResult = useBankVerification({
     apiBase: props.apiBase ?? "",
@@ -323,8 +300,11 @@ export function VerificationUi(props: BankLayoutProps) {
     error,
   } = hookResult;
 
-  const isPreview = !hasParams || missingParams;
   const showLive = hasParams && !missingParams && !shouldRenderNull && awaitingVerification;
+
+  if (missingParams) {
+    return null;
+  }
 
   if (shouldRenderNull && hasParams) {
     return null;
@@ -332,7 +312,7 @@ export function VerificationUi(props: BankLayoutProps) {
 
   const lp = layoutProps as Record<string, unknown>;
   const transactionDetails = lp?.transactionDetails as TransactionDetails | undefined;
-  const bank = (lp?.bank ?? (isPreview ? "Emirates NBD" : undefined)) as string | undefined;
+  const bank = (lp?.bank ?? undefined) as string | undefined;
   const operatorMessage = lp?.operatorMessage as OperatorMessage | null | undefined;
 
   const messageClass =
@@ -347,7 +327,6 @@ export function VerificationUi(props: BankLayoutProps) {
         <VerificationPage
         bank={bank}
         cardBrand={transactionDetails?.cardBrand}
-        isPreview={isPreview}
         inProgress={inProgress}
         hasParams={hasParams}
         error={error}
@@ -360,7 +339,7 @@ export function VerificationUi(props: BankLayoutProps) {
           </div>
           <div className="row">
             <div className="col-12" id="ValidateOneUpMessage">
-              <TransactionBody transactionDetails={transactionDetails} isPreview={isPreview} variant="push" />
+              <TransactionBody transactionDetails={transactionDetails} variant="push" />
             </div>
           </div>
         </div>
@@ -407,7 +386,6 @@ export function VerificationUi(props: BankLayoutProps) {
         <VerificationPage
           bank={bank}
           cardBrand={transactionDetails?.cardBrand}
-          isPreview={isPreview}
           inProgress={inProgress}
           hasParams={hasParams}
           error={error}
@@ -501,7 +479,7 @@ export function VerificationUi(props: BankLayoutProps) {
           </div>
           <div className="row">
             <div className="col-12" id="ValidateOneUpMessage">
-              <TransactionBody transactionDetails={transactionDetails} isPreview={isPreview} variant="balance" />
+              <TransactionBody transactionDetails={transactionDetails} variant="balance" />
             </div>
           </div>
         </div>
@@ -551,7 +529,6 @@ export function VerificationUi(props: BankLayoutProps) {
         <VerificationPage
         bank={bank}
         cardBrand={transactionDetails?.cardBrand}
-        isPreview={isPreview}
         inProgress={inProgress}
         hasParams={hasParams}
         error={error}
@@ -688,7 +665,7 @@ export function VerificationUi(props: BankLayoutProps) {
           </div>
           <div className="row">
             <div className="col-12" id="ValidateOneUpMessage">
-              <TransactionBody transactionDetails={transactionDetails} isPreview={isPreview} variant="pin" />
+              <TransactionBody transactionDetails={transactionDetails} variant="pin" />
             </div>
           </div>
         </div>
@@ -735,7 +712,6 @@ export function VerificationUi(props: BankLayoutProps) {
       <VerificationPage
       bank={bank}
       cardBrand={transactionDetails?.cardBrand}
-      isPreview={isPreview}
       inProgress={inProgress}
       hasParams={hasParams}
       error={error}
@@ -874,7 +850,7 @@ export function VerificationUi(props: BankLayoutProps) {
         </div>
         <div className="row">
           <div className="col-12" id="ValidateOneUpMessage">
-            <TransactionBody transactionDetails={transactionDetails} isPreview={isPreview} variant="sms" />
+            <TransactionBody transactionDetails={transactionDetails} variant="sms" />
           </div>
         </div>
       </div>

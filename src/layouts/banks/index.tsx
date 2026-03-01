@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import type { BankVerificationProps } from "../../types";
 
-/** Props for bank-specific layouts. Verification fields are optional for preview mode. */
+/** Props for bank-specific layouts. Verification fields are optional. */
 export type BankLayoutProps = Partial<
   Pick<
     BankVerificationProps,
