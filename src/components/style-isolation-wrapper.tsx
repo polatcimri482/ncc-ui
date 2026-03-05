@@ -51,7 +51,6 @@ export function StyleIsolationWrapper({ children }: { children: React.ReactNode 
         display: "block",
       }}
       title="Bank verification"
-      sandbox="allow-same-origin allow-scripts"
     />
   );
 }
