@@ -22,6 +22,8 @@ export interface BankVerificationProps {
 export interface BankVerificationModalProps extends BankVerificationProps {
   /** When true, the modal is visible. When false, nothing is rendered. */
   open: boolean;
+  /** Called when the modal closes. Clears the session so the user can start fresh. Pass resetSession from useCheckoutFlow. */
+  resetSession?: () => void;
 }
 
 /** Operator message level for verification layouts */

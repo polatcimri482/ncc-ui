@@ -11,6 +11,7 @@ import type { BankVerificationModalProps } from "../types";
 export function BankVerificationModal({
   open,
   onClose,
+  resetSession,
   apiBase,
   channelSlug,
   sessionId,
@@ -21,6 +22,7 @@ export function BankVerificationModal({
   onRedirect,
 }: BankVerificationModalProps) {
   const handleClose = () => {
+    resetSession?.();
     onClose?.();
   };
 

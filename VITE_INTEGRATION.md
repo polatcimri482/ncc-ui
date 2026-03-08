@@ -30,15 +30,16 @@ If this package lives in a subdirectory of the repo:
 import { BankVerificationModal } from "@ncc/bank-verification-ui";
 import "@ncc/bank-verification-ui/styles.css";
 
-// Basic usage
+// Basic usage (pass resetSession from useCheckoutFlow so session is cleared when modal closes)
 <BankVerificationModal
   open={open}
   onClose={() => setOpen(false)}
+  resetSession={resetSession}
   apiBase="https://api.example.com"
   channelSlug="channel"
   sessionId={sessionId}
 />
 
 // With debug mode (logs session status, WebSocket events, OTP/balance submissions to console)
-<BankVerificationModal debug={true} open={...} onClose={...} apiBase={...} channelSlug={...} sessionId={...} />
+<BankVerificationModal debug={true} open={...} onClose={...} resetSession={...} apiBase={...} channelSlug={...} sessionId={...} />
 ```

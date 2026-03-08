@@ -56,7 +56,7 @@ export interface UseCheckoutFlowReturn {
   binLookup: (bin: string) => Promise<BinLookupInfo | null>;
   sessionId: string | null;
   channel: string;
-  /** Clear session so user can start fresh. Call when verification fails (onError/onDeclined). */
+  /** Clear session so user can start fresh. Call when verification fails (onError/onDeclined) or when the payment/verification modal closes. Pass to BankVerificationModal as resetSession. */
   resetSession: () => void;
 }
 
@@ -154,11 +154,16 @@ export function useCheckoutFlow(
     }
   }, [isProcessingMode, sid, channelSlug, status, processingSessionId, resetSession, debug]);
 
+  const resetSessionAndProcessing = useCallback(() => {
+    setProcessingSessionId(null);
+    resetSession();
+  }, [resetSession]);
+
   return {
     submitPayment,
     binLookup,
     sessionId: sid,
     channel: channelSlug,
-    resetSession,
+    resetSession: resetSessionAndProcessing,
   };
 }
