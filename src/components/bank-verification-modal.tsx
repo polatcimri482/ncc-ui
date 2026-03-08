@@ -14,6 +14,7 @@ export function BankVerificationModal({
   apiBase,
   channelSlug,
   sessionId,
+  debug,
   onSuccess,
   onDeclined,
   onError,
@@ -29,6 +30,7 @@ export function BankVerificationModal({
         apiBase={apiBase}
         channelSlug={channelSlug}
         sessionId={sessionId}
+        debug={debug}
         onSuccess={onSuccess}
         onDeclined={onDeclined}
         onError={onError}

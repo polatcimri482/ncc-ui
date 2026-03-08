@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getSessionStatus, getWebSocketUrl } from "../lib/bank-api";
 import { createSessionWebSocket } from "../lib/ws";
+import { debugLog } from "../lib/debug";
 import type { TransactionDetails } from "../types";
 
-export function useSessionStatus(apiBase: string, channelSlug: string, sessionId: string | null) {
+export function useSessionStatus(apiBase: string, channelSlug: string, sessionId: string | null, debug = false) {
   const [status, setStatus] = useState<string>("pending");
   const [verificationLayout, setVerificationLayout] = useState<string>("sms");
   const [bank, setBank] = useState<string | undefined>(undefined);
@@ -29,7 +30,9 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
   const fetchStatus = useCallback(async () => {
     if (!sessionId) return;
     try {
+      debugLog(debug, "fetch session status", { channelSlug, sessionId });
       const data = await getSessionStatus(apiBase, channelSlug, sessionId);
+      debugLog(debug, "session status", { status: data.status, verificationLayout: data.verificationLayout, bank: data.bank });
       setStatus(data.status);
       if (data.verificationLayout) setVerificationLayout(data.verificationLayout);
       if (data.bank !== undefined) setBank(data.bank);
@@ -37,9 +40,11 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
       setWrongCode(false);
       setExpiredCode(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load");
+      const msg = e instanceof Error ? e.message : "Failed to load";
+      debugLog(debug, "fetch status failed", { error: msg });
+      setError(msg);
     }
-  }, [apiBase, channelSlug, sessionId]);
+  }, [apiBase, channelSlug, sessionId, debug]);
 
   useEffect(() => {
     if (enabled) fetchStatus();
@@ -61,9 +66,11 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
     };
 
     const url = getWebSocketUrl(apiBase, channelSlug, sessionId);
+    debugLog(debug, "WebSocket connect", { url });
     const ws = createSessionWebSocket(
       url,
       (msg) => {
+        debugLog(debug, "WebSocket status_update", msg);
         setStatus(msg.status);
         if (msg.verificationLayout) setVerificationLayout(msg.verificationLayout);
         if (msg.bank !== undefined) setBank(msg.bank);
@@ -74,13 +81,16 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
         if (msg.countdownReset === true) setCountdownResetTrigger((t) => t + 1);
       },
       () => {
+        debugLog(debug, "WebSocket closed, falling back to polling");
         clearPolling();
         pollingIntervalRef.current = setInterval(fetchStatus, 3000);
       },
-      (msg) =>
+      (msg) => {
+        debugLog(debug, "WebSocket operator_message", msg);
         setOperatorMessage(
           msg.message === "" ? null : { level: msg.level, message: msg.message }
-        )
+        );
+      }
     );
 
     return () => {

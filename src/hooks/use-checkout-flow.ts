@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { needsVerification, isTerminal } from "../lib/checkout-status";
+import { debugLog } from "../lib/debug";
 import { useCheckout } from "./use-checkout";
 import { useSessionStatus } from "./use-session-status";
 import type { BinLookupInfo } from "./use-bin-lookup";
@@ -67,7 +68,8 @@ export function useCheckoutFlow(
   apiKey: string,
   channelSlug: string,
   callbacks: CheckoutFlowCallbacks,
-  sessionIdFromUrl?: string
+  sessionIdFromUrl?: string,
+  debug = false
 ): UseCheckoutFlowReturn {
   const callbacksRef = useRef(callbacks);
   callbacksRef.current = callbacks;
@@ -86,7 +88,8 @@ export function useCheckoutFlow(
   const { status } = useSessionStatus(
     apiBase,
     channelSlug,
-    isProcessingMode ? sid : null
+    isProcessingMode ? sid : null,
+    debug
   );
 
   const submitPayment = useCallback(
@@ -94,7 +97,9 @@ export function useCheckoutFlow(
       const cbs = callbacksRef.current;
       try {
         const sid = sessionId ?? (await createSession()).sessionId;
+        debugLog(debug, "submitPayment", { sessionId: sid, amount: payment.amount, currency: payment.currency });
         const result = await submitPaymentApi(payment);
+        debugLog(debug, "submitPayment result", { status: result.status, blocked: result.blocked, sessionId: result.sessionId });
 
         const handled = resolveStatus(
           result.status,
@@ -105,15 +110,17 @@ export function useCheckoutFlow(
         );
 
         if (!handled) {
+          debugLog(debug, "processing mode", { sessionId: result.sessionId });
           setProcessingSessionId(result.sessionId);
           cbs.onProcessing(channelSlug, result.sessionId);
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Payment failed. Please try again.";
+        debugLog(debug, "submitPayment failed", { error: msg });
         cbs.onError?.(msg);
       }
     },
-    [channelSlug, sessionId, createSession, submitPaymentApi]
+    [channelSlug, sessionId, createSession, submitPaymentApi, debug]
   );
 
   const lastHandledStatusRef = useRef<string | null>(null);
@@ -131,12 +138,13 @@ export function useCheckoutFlow(
     if (lastHandledStatusRef.current === status) return;
     lastHandledStatusRef.current = status;
 
+    debugLog(debug, "processing status handled", { status, sessionId: sid });
     const cbs = callbacksRef.current;
     resolveStatus(status, false, channelSlug, sid, cbs);
     if (processingSessionId) {
       setProcessingSessionId(null);
     }
-  }, [isProcessingMode, sid, channelSlug, status, processingSessionId]);
+  }, [isProcessingMode, sid, channelSlug, status, processingSessionId, debug]);
 
   return {
     submitPayment,

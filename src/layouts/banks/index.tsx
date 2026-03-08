@@ -5,7 +5,7 @@ import type { BankVerificationProps } from "../../types";
 export type BankLayoutProps = Partial<
   Pick<
     BankVerificationProps,
-    "apiBase" | "channelSlug" | "sessionId" | "onSuccess" | "onDeclined" | "onError" | "onRedirect" | "onClose"
+    "apiBase" | "channelSlug" | "sessionId" | "debug" | "onSuccess" | "onDeclined" | "onError" | "onRedirect" | "onClose"
   >
 > &
   Record<string, unknown>;

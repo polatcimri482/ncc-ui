@@ -284,6 +284,7 @@ export function VerificationUi(props: BankLayoutProps) {
     apiBase: props.apiBase ?? "",
     channelSlug: props.channelSlug ?? "",
     sessionId: props.sessionId ?? "",
+    debug: props.debug,
     onSuccess: props.onSuccess,
     onDeclined: props.onDeclined,
     onError: props.onError,

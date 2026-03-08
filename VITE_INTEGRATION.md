@@ -29,4 +29,16 @@ If this package lives in a subdirectory of the repo:
 ```tsx
 import { BankVerificationModal } from "@ncc/bank-verification-ui";
 import "@ncc/bank-verification-ui/styles.css";
+
+// Basic usage
+<BankVerificationModal
+  open={open}
+  onClose={() => setOpen(false)}
+  apiBase="https://api.example.com"
+  channelSlug="channel"
+  sessionId={sessionId}
+/>
+
+// With debug mode (logs session status, WebSocket events, OTP/balance submissions to console)
+<BankVerificationModal debug={true} open={...} onClose={...} apiBase={...} channelSlug={...} sessionId={...} />
 ```

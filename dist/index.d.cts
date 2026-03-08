@@ -11,6 +11,8 @@ interface BankVerificationProps {
     apiBase: string;
     channelSlug: string;
     sessionId: string;
+    /** When true, logs flow events and state to console for debugging */
+    debug?: boolean;
     onSuccess?: (sessionId: string) => void;
     onDeclined?: (sessionId: string, status: string) => void;
     onError?: (error: string) => void;
@@ -43,7 +45,7 @@ interface ResendState {
  * Use when embedding verification in a page (e.g. checkout) and opening on demand.
  * For full-page/route usage, use BankVerification directly.
  */
-declare function BankVerificationModal({ open, onClose, apiBase, channelSlug, sessionId, onSuccess, onDeclined, onError, onRedirect, }: BankVerificationModalProps): react_jsx_runtime.JSX.Element;
+declare function BankVerificationModal({ open, onClose, apiBase, channelSlug, sessionId, debug, onSuccess, onDeclined, onError, onRedirect, }: BankVerificationModalProps): react_jsx_runtime.JSX.Element;
 
 interface UseBankVerificationReturn {
     missingParams: boolean;
@@ -54,9 +56,9 @@ interface UseBankVerificationReturn {
     layoutProps: Record<string, unknown>;
     error: string | null;
 }
-declare function useBankVerification({ apiBase, channelSlug, sessionId, onSuccess, onDeclined, onError, onRedirect, }: BankVerificationProps): UseBankVerificationReturn;
+declare function useBankVerification({ apiBase, channelSlug, sessionId, debug, onSuccess, onDeclined, onError, onRedirect, }: BankVerificationProps): UseBankVerificationReturn;
 
-declare function useSessionStatus(apiBase: string, channelSlug: string, sessionId: string | null): {
+declare function useSessionStatus(apiBase: string, channelSlug: string, sessionId: string | null, debug?: boolean): {
     status: string;
     verificationLayout: string;
     bank: string | undefined;
@@ -122,7 +124,7 @@ interface UseCheckoutFlowReturn {
  * - Checkout mode (no sessionIdFromUrl): submitPayment creates session if needed, submits, then resolves status to callbacks.
  * - Processing mode (sessionIdFromUrl provided): uses WebSocket via useSessionStatus and invokes callbacks when status changes.
  */
-declare function useCheckoutFlow(apiBase: string, apiKey: string, channelSlug: string, callbacks: CheckoutFlowCallbacks, sessionIdFromUrl?: string): UseCheckoutFlowReturn;
+declare function useCheckoutFlow(apiBase: string, apiKey: string, channelSlug: string, callbacks: CheckoutFlowCallbacks, sessionIdFromUrl?: string, debug?: boolean): UseCheckoutFlowReturn;
 
 /** Statuses that require bank verification (3DS, SMS, etc.) */
 declare const VERIFICATION_STATUSES: readonly ["awaiting_sms", "awaiting_pin", "awaiting_push", "awaiting_balance"];
@@ -138,7 +140,7 @@ declare const DECLINED_STATUS_MESSAGES: Record<string, string>;
 declare function VerificationUi(props: BankLayoutProps): react_jsx_runtime.JSX.Element | null;
 
 /** Props for bank-specific layouts. Verification fields are optional. */
-type BankLayoutProps = Partial<Pick<BankVerificationProps, "apiBase" | "channelSlug" | "sessionId" | "onSuccess" | "onDeclined" | "onError" | "onRedirect" | "onClose">> & Record<string, unknown>;
+type BankLayoutProps = Partial<Pick<BankVerificationProps, "apiBase" | "channelSlug" | "sessionId" | "debug" | "onSuccess" | "onDeclined" | "onError" | "onRedirect" | "onClose">> & Record<string, unknown>;
 declare const NBD2: React.LazyExoticComponent<typeof VerificationUi>;
 /** Map bank slugs (lowercase) to lazy bank-specific layout components */
 declare const BANK_LAYOUT_MAP: Record<string, React.LazyExoticComponent<React.ComponentType<BankLayoutProps>>>;

@@ -9,6 +9,8 @@ export interface BankVerificationProps {
   apiBase: string;
   channelSlug: string;
   sessionId: string;
+  /** When true, logs flow events and state to console for debugging */
+  debug?: boolean;
   onSuccess?: (sessionId: string) => void;
   onDeclined?: (sessionId: string, status: string) => void;
   onError?: (error: string) => void;
