@@ -1,0 +1,489 @@
+/* @ncc/bank-verification-ui styles - prefixed to avoid consumer clashes */
+
+/* Verification modal */
+.bank-ui-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.bank-ui-modal-content {
+  background: #fff;
+  border-radius: 8px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 60vh;
+  overflow: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 16px;
+}
+
+@media (max-width: 640px) {
+  .bank-ui-modal-overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .bank-ui-modal-content {
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+@keyframes bank-ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Spinner */
+.bank-ui-spinner {
+  display: inline-block;
+  border-radius: 50%;
+  animation: bank-ui-spin 1s linear infinite;
+  border: var(--bank-ui-spinner-border, 2px) solid #3b82f6;
+  border-top-color: transparent;
+  width: var(--bank-ui-spinner-size, 40px);
+  height: var(--bank-ui-spinner-size, 40px);
+}
+
+/* Status overlay */
+.bank-ui-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.bank-ui-overlay-content {
+  text-align: center;
+}
+
+.bank-ui-overlay-spinner {
+  margin-bottom: 16px;
+}
+
+.bank-ui-overlay-message {
+  color: #4b5563;
+  margin: 0;
+}
+
+/* Bank verification */
+.bank-ui-error-missing {
+  padding: 32px;
+  color: #dc2626;
+}
+
+.bank-ui-verification {
+  position: relative;
+  min-height: 100%;
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+
+.bank-ui-error-toast-wrapper {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+}
+
+.bank-ui-error-toast {
+  background-color: #fee2e2;
+  color: #991b1b;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+/* Layout containers */
+.bank-ui-layout {
+  max-width: 448px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.bank-ui-layout-center {
+  max-width: 448px;
+  margin: 0 auto;
+  padding: 24px;
+  text-align: center;
+}
+
+.bank-ui-alert {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.bank-ui-alert-title {
+  color: #991b1b;
+  font-weight: 500;
+  margin: 0;
+}
+
+.bank-ui-message-error {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.bank-ui-message-info {
+  background-color: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.bank-ui-message {
+  margin-bottom: 16px;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.bank-ui-heading {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.bank-ui-body {
+  color: #4b5563;
+  margin-bottom: 24px;
+}
+
+.bank-ui-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bank-ui-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.bank-ui-label-center {
+  text-align: center;
+}
+
+.bank-ui-label-muted {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.bank-ui-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+}
+
+.bank-ui-input:focus {
+  border-color: #3b82f6;
+}
+
+.bank-ui-input-pin {
+  width: 100%;
+  max-width: 200px;
+  margin: 0 auto;
+  display: block;
+  padding: 12px 16px;
+  text-align: center;
+  font-size: 20px;
+  font-family: monospace;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+}
+
+.bank-ui-input-pin:focus {
+  border-color: #3b82f6;
+}
+
+.bank-ui-input:disabled,
+.bank-ui-input-pin:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.bank-ui-toggle-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.bank-ui-btn {
+  width: 100%;
+  padding: 8px 16px;
+  background-color: #2563eb;
+  color: white;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.bank-ui-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.bank-ui-btn-lg {
+  padding: 12px 16px;
+  font-weight: 500;
+}
+
+.bank-ui-waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.bank-ui-waiting-text {
+  font-size: 14px;
+  color: #4b5563;
+}
+
+/* Resend countdown / button */
+.bank-ui-resend-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.bank-ui-resend-countdown {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.bank-ui-resend-btn {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.bank-ui-resend-btn:hover:not(:disabled) {
+  color: #1d4ed8;
+}
+
+.bank-ui-resend-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.bank-ui-spinner-wrap {
+  margin-bottom: 24px;
+}
+
+/* Transaction details */
+.bank-ui-transaction-details {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+  border: 1px solid #e5e7eb;
+}
+
+.bank-ui-transaction-details-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.bank-ui-transaction-details-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.bank-ui-transaction-details-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  gap: 12px;
+  word-break: break-word;
+}
+
+.bank-ui-transaction-details-label {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.bank-ui-transaction-details-value {
+  font-size: 14px;
+  font-weight: 500;
+  text-align: right;
+}
+
+/* Result page */
+.bank-ui-result-success {
+  min-height: 100vh;
+  background-color: #f0fdf4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.bank-ui-result-declined {
+  min-height: 100vh;
+  background-color: #fef2f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.bank-ui-result-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 36px;
+}
+
+.bank-ui-result-icon-success {
+  background-color: #22c55e;
+}
+
+.bank-ui-result-icon-declined {
+  background-color: #ef4444;
+}
+
+.bank-ui-result-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.bank-ui-result-title-success {
+  color: #166534;
+}
+
+.bank-ui-result-title-declined {
+  color: #991b1b;
+}
+
+.bank-ui-result-body {
+  color: #4b5563;
+}
+
+.bank-ui-result-session {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Branded layouts */
+.bank-ui-brand-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.bank-ui-brand-enbd {
+  background: linear-gradient(to bottom, #fff7ed, white);
+}
+
+.bank-ui-brand-adcb {
+  background-color: #f0fdf4;
+}
+
+.bank-ui-brand-fab {
+  background-color: #eff6ff;
+}
+
+.bank-ui-brand-mashreq {
+  background-color: #faf5ff;
+}
+
+.bank-ui-brand-card {
+  width: 100%;
+  max-width: 512px;
+  margin: 0 auto;
+  padding: 32px;
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.bank-ui-brand-card-enbd {
+  border: 1px solid #fed7aa;
+}
+
+.bank-ui-brand-card-adcb {
+  border: 2px solid #16a34a;
+}
+
+.bank-ui-brand-card-fab {
+  border-left: 4px solid #2563eb;
+}
+
+.bank-ui-brand-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.bank-ui-brand-label-enbd {
+  display: inline-block;
+  padding: 8px 24px;
+  background-color: #ea580c;
+  color: white;
+  font-weight: 700;
+  border-radius: 4px;
+  font-size: 18px;
+}
+
+.bank-ui-brand-label-adcb {
+  color: #15803d;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.bank-ui-brand-label-fab {
+  color: #1d4ed8;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.bank-ui-brand-label-mashreq {
+  color: #7c3aed;
+  font-weight: 700;
+  font-size: 20px;
+}

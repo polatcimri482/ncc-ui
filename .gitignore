@@ -1,14 +1,10 @@
 # Dependencies
 node_modules/
 
-# Build output
-dist/
+# Build output: dist/ is committed for GitHub installs (no prepare script).
+# Run `npm run build` before committing changes.
 
-# Generated (from scripts/generate-css-string.js)
-src/styles/bank-ui-css.ts
-
-# Generated (from scripts/generate-bank-logos.js)
-src/assets/bank-logos.ts
+# Generated files are committed so consumers get pre-built package.
 
 # IDE
 .idea/
