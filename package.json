@@ -15,7 +15,8 @@
     "./styles.css": "./dist/index.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "VITE_INTEGRATION.md"
   ],
   "sideEffects": [
     "**/*.css"
@@ -42,6 +43,6 @@
     "react-dom": "^18.3.0",
     "tsup": "^8.0.0",
     "typescript": "^5.6.0",
-    "vite": "^5.4.0"
+    "vite": "^5.4.0 || ^6.0.0 || ^7.0.0"
   }
 }
