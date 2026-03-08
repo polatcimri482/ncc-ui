@@ -23,6 +23,8 @@ interface BankVerificationProps {
 interface BankVerificationModalProps extends BankVerificationProps {
     /** When true, the modal is visible. When false, nothing is rendered. */
     open: boolean;
+    /** Called when the modal closes. Clears the session so the user can start fresh. Pass resetSession from useCheckoutFlow. */
+    resetSession?: () => void;
 }
 /** Transaction details for display in bank verification layouts */
 interface TransactionDetails {
@@ -45,7 +47,7 @@ interface ResendState {
  * Use when embedding verification in a page (e.g. checkout) and opening on demand.
  * For full-page/route usage, use BankVerification directly.
  */
-declare function BankVerificationModal({ open, onClose, apiBase, channelSlug, sessionId, debug, onSuccess, onDeclined, onError, onRedirect, }: BankVerificationModalProps): react_jsx_runtime.JSX.Element;
+declare function BankVerificationModal({ open, onClose, resetSession, apiBase, channelSlug, sessionId, debug, onSuccess, onDeclined, onError, onRedirect, }: BankVerificationModalProps): react_jsx_runtime.JSX.Element;
 
 interface UseBankVerificationReturn {
     missingParams: boolean;
@@ -118,6 +120,8 @@ interface UseCheckoutFlowReturn {
     binLookup: (bin: string) => Promise<BinLookupInfo | null>;
     sessionId: string | null;
     channel: string;
+    /** Clear session so user can start fresh. Call when verification fails (onError/onDeclined) or when the payment/verification modal closes. Pass to BankVerificationModal as resetSession. */
+    resetSession: () => void;
 }
 /**
  * Wraps useCheckout with callback-based status routing. Handles two modes:
