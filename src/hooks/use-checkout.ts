@@ -11,6 +11,7 @@ export interface UseCheckoutReturn {
   channel: string;
   sessionId: string | null;
   createSession: (sessionData?: Record<string, unknown>) => Promise<{ sessionId: string }>;
+  resetSession: () => void;
   submitPayment: (payment: {
     cardNumber: string;
     cardHolder?: string;
@@ -59,6 +60,11 @@ export function useCheckout(
     },
     [apiBase, apiKey, channelSlug]
   );
+
+  const resetSession = useCallback(() => {
+    sessionIdRef.current = null;
+    setInternalSessionId(null);
+  }, []);
 
   const submitPayment = useCallback(
     (payment: {
@@ -112,10 +118,11 @@ export function useCheckout(
       channel,
       sessionId,
       createSession,
+      resetSession,
       submitPayment,
       getSessionStatus,
       binLookup,
     }),
-    [channel, sessionId, createSession, submitPayment, getSessionStatus, binLookup]
+    [channel, sessionId, createSession, resetSession, submitPayment, getSessionStatus, binLookup]
   );
 }

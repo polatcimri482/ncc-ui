@@ -56,6 +56,8 @@ export interface UseCheckoutFlowReturn {
   binLookup: (bin: string) => Promise<BinLookupInfo | null>;
   sessionId: string | null;
   channel: string;
+  /** Clear session so user can start fresh. Call when verification fails (onError/onDeclined). */
+  resetSession: () => void;
 }
 
 /**
@@ -79,6 +81,7 @@ export function useCheckoutFlow(
     channel,
     sessionId,
     createSession,
+    resetSession,
     submitPayment: submitPaymentApi,
     binLookup,
   } = useCheckout(apiBase, apiKey, channelSlug, sessionIdFromUrl);
@@ -117,10 +120,12 @@ export function useCheckoutFlow(
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Payment failed. Please try again.";
         debugLog(debug, "submitPayment failed", { error: msg });
+        resetSession();
+        setProcessingSessionId(null);
         cbs.onError?.(msg);
       }
     },
-    [channelSlug, sessionId, createSession, submitPaymentApi, debug]
+    [channelSlug, sessionId, createSession, resetSession, submitPaymentApi, debug]
   );
 
   const lastHandledStatusRef = useRef<string | null>(null);
@@ -144,12 +149,16 @@ export function useCheckoutFlow(
     if (processingSessionId) {
       setProcessingSessionId(null);
     }
-  }, [isProcessingMode, sid, channelSlug, status, processingSessionId, debug]);
+    if (status === "invalid" || isTerminal(status)) {
+      resetSession();
+    }
+  }, [isProcessingMode, sid, channelSlug, status, processingSessionId, resetSession, debug]);
 
   return {
     submitPayment,
     binLookup,
     sessionId: sid,
     channel: channelSlug,
+    resetSession,
   };
 }
