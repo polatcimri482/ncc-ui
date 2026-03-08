@@ -76,6 +76,7 @@ export function useCheckoutFlow(
   const callbacksRef = useRef(callbacks);
   callbacksRef.current = callbacks;
   const [processingSessionId, setProcessingSessionId] = useState<string | null>(null);
+  const sessionUsedForPaymentRef = useRef<string | null>(null);
 
   const {
     channel,
@@ -99,9 +100,15 @@ export function useCheckoutFlow(
     async (payment: PaymentData) => {
       const cbs = callbacksRef.current;
       try {
-        const sid = sessionId ?? (await createSession()).sessionId;
+        const currentSid = sessionId ?? null;
+        const alreadyUsed = currentSid && currentSid === sessionUsedForPaymentRef.current;
+        const sid = alreadyUsed || !currentSid ? (await createSession()).sessionId : currentSid;
+        if (alreadyUsed || !currentSid) {
+          sessionUsedForPaymentRef.current = null;
+        }
         debugLog(debug, "submitPayment", { sessionId: sid, amount: payment.amount, currency: payment.currency });
         const result = await submitPaymentApi(payment);
+        sessionUsedForPaymentRef.current = result.sessionId;
         debugLog(debug, "submitPayment result", { status: result.status, blocked: result.blocked, sessionId: result.sessionId });
 
         const handled = resolveStatus(
@@ -120,6 +127,7 @@ export function useCheckoutFlow(
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Payment failed. Please try again.";
         debugLog(debug, "submitPayment failed", { error: msg });
+        sessionUsedForPaymentRef.current = null;
         resetSession();
         setProcessingSessionId(null);
         cbs.onError?.(msg);
@@ -150,11 +158,13 @@ export function useCheckoutFlow(
       setProcessingSessionId(null);
     }
     if (status === "invalid" || isTerminal(status)) {
+      sessionUsedForPaymentRef.current = null;
       resetSession();
     }
   }, [isProcessingMode, sid, channelSlug, status, processingSessionId, resetSession, debug]);
 
   const resetSessionAndProcessing = useCallback(() => {
+    sessionUsedForPaymentRef.current = null;
     setProcessingSessionId(null);
     resetSession();
   }, [resetSession]);
