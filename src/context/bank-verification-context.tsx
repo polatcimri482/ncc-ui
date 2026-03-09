@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext } from "react";
+import React, { createContext, useContext } from "react";
 import { clearSession } from "../lib/checkout-session-storage";
 import {
   useVerificationForm,
@@ -41,10 +41,10 @@ function VerificationInner({
 }: BankVerificationProviderProps & { children: React.ReactNode }) {
   const verification = useVerificationForm();
 
-  const effectiveOnClose = useCallback(() => {
+  const effectiveOnClose = () => {
     clearSession(channelSlug);
     onClose?.();
-  }, [channelSlug, onClose]);
+  };
 
   const value: VerificationContextValue = {
     ...verification,

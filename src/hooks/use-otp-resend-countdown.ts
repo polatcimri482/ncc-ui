@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 
 export function useOtpResendCountdown(
   durationSeconds: number,
@@ -8,9 +8,9 @@ export function useOtpResendCountdown(
   const [secondsLeft, setSecondsLeft] = useState(durationSeconds);
   const [resending, setResending] = useState(false);
 
-  const resetCountdown = useCallback(() => {
+  const resetCountdown = () => {
     setSecondsLeft(durationSeconds);
-  }, [durationSeconds]);
+  };
 
   // Decrement every second
   useEffect(() => {
@@ -26,7 +26,7 @@ export function useOtpResendCountdown(
     }
   }, [countdownResetTrigger]);
 
-  const onResend = useCallback(async () => {
+  const onResend = async () => {
     if (!resendFn || secondsLeft > 0) return;
     setResending(true);
     try {
@@ -35,7 +35,7 @@ export function useOtpResendCountdown(
     } finally {
       setResending(false);
     }
-  }, [resendFn, secondsLeft, resetCountdown]);
+  };
 
   return {
     secondsLeft,

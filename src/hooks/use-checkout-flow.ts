@@ -1,4 +1,4 @@
-import { useCallback, useReducer } from "react";
+import { useReducer } from "react";
 import { needsVerification, isTerminal } from "../lib/checkout-status";
 import { DECLINED_STATUS_MESSAGES } from "../lib/checkout-status";
 import { debugLog } from "../lib/debug";
@@ -73,80 +73,74 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
     stored?.submitted && sessionId && !isTerminal(status),
   );
 
-  const createSession = useCallback(
-    async (sessionData?: Record<string, unknown>) => {
-      const result = await createSessionApi(channelSlug, sessionData);
-      saveSession(channelSlug, {
-        sessionId: result.sessionId,
-        status: "pending",
-        submitted: false,
-      });
-      forceUpdate();
-      return result.sessionId;
-    },
-    [channelSlug],
-  );
+  const createSession = async (sessionData?: Record<string, unknown>) => {
+    const result = await createSessionApi(channelSlug, sessionData);
+    saveSession(channelSlug, {
+      sessionId: result.sessionId,
+      status: "pending",
+      submitted: false,
+    });
+    forceUpdate();
+    return result.sessionId;
+  };
 
-  const clearSessionInternal = useCallback(() => {
+  const clearSessionInternal = () => {
     clearSession(channelSlug);
     forceUpdate();
-  }, [channelSlug]);
+  };
 
-  const submitPayment = useCallback(
-    async (payment: PaymentData): Promise<SubmitResult> => {
-      try {
-        const current = loadSession(channelSlug);
-        const sid =
-          current?.submitted || !current?.sessionId
-            ? await createSession(payment.sessionData)
-            : current!.sessionId;
+  const submitPayment = async (payment: PaymentData): Promise<SubmitResult> => {
+    try {
+      const current = loadSession(channelSlug);
+      const sid =
+        current?.submitted || !current?.sessionId
+          ? await createSession(payment.sessionData)
+          : current!.sessionId;
 
-        debugLog(debug, "submitPayment", {
-          sessionId: sid,
-          amount: payment.amount,
-          currency: payment.currency,
-        });
-        const result = await submitPaymentApi(channelSlug, sid, payment);
-        saveSession(channelSlug, {
-          sessionId: result.sessionId,
-          status: result.status,
-          submitted: true,
-        });
-        forceUpdate();
-        debugLog(debug, "submitPayment result", {
-          status: result.status,
-          blocked: result.blocked,
-          sessionId: result.sessionId,
-        });
+      debugLog(debug, "submitPayment", {
+        sessionId: sid,
+        amount: payment.amount,
+        currency: payment.currency,
+      });
+      const result = await submitPaymentApi(channelSlug, sid, payment);
+      saveSession(channelSlug, {
+        sessionId: result.sessionId,
+        status: result.status,
+        submitted: true,
+      });
+      forceUpdate();
+      debugLog(debug, "submitPayment result", {
+        status: result.status,
+        blocked: result.blocked,
+        sessionId: result.sessionId,
+      });
 
-        if (result.blocked || needsVerification(result.status)) {
-          return { isSuccess: false, isLoading: true };
-        }
-        if (result.status === "success") {
-          clearSessionInternal();
-          return toSuccessResult();
-        }
-        if (isTerminal(result.status)) {
-          const failStatus = result.status as FailureStatus;
-          clearSessionInternal();
-          return toFailureResult(
-            failStatus,
-            result.sessionId,
-            DECLINED_STATUS_MESSAGES[failStatus],
-          );
-        }
-        debugLog(debug, "processing mode", { sessionId: result.sessionId });
+      if (result.blocked || needsVerification(result.status)) {
         return { isSuccess: false, isLoading: true };
-      } catch (e) {
-        const msg =
-          e instanceof Error ? e.message : "Payment failed. Please try again.";
-        debugLog(debug, "submitPayment failed", { error: msg });
-        clearSessionInternal();
-        return toFailureResult("error", null, msg);
       }
-    },
-    [channelSlug, createSession, clearSessionInternal, debug],
-  );
+      if (result.status === "success") {
+        clearSessionInternal();
+        return toSuccessResult();
+      }
+      if (isTerminal(result.status)) {
+        const failStatus = result.status as FailureStatus;
+        clearSessionInternal();
+        return toFailureResult(
+          failStatus,
+          result.sessionId,
+          DECLINED_STATUS_MESSAGES[failStatus],
+        );
+      }
+      debugLog(debug, "processing mode", { sessionId: result.sessionId });
+      return { isSuccess: false, isLoading: true };
+    } catch (e) {
+      const msg =
+        e instanceof Error ? e.message : "Payment failed. Please try again.";
+      debugLog(debug, "submitPayment failed", { error: msg });
+      clearSessionInternal();
+      return toFailureResult("error", null, msg);
+    }
+  };
 
   const binLookup = useBinLookup();
 

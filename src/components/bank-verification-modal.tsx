@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { VerificationUi } from "../layouts/banks/verification-ui";
 import { VerificationModal } from "./verification-modal";
 import { useVerificationContext } from "../context/bank-verification-context";
@@ -23,10 +23,10 @@ export function BankVerificationModal({ onClose }: BankVerificationModalProps) {
 
   const open = Boolean(sessionId && (awaitingVerification || inProgress));
 
-  const handleClose = useCallback(() => {
+  const handleClose = () => {
     contextOnClose?.();
     onClose?.();
-  }, [contextOnClose, onClose]);
+  };
 
   return (
     <VerificationModal open={open} onClose={handleClose}>

