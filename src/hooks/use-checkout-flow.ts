@@ -31,22 +31,6 @@ export interface UseCheckoutFlowReturn {
   status: string;
 }
 
-function toFailureResult(
-  status: FailureStatus,
-  sessionId: string | null,
-  message?: string,
-): SubmitResult {
-  const msg =
-    message ??
-    DECLINED_STATUS_MESSAGES[status] ??
-    "Payment failed. Please try again.";
-  return { isSuccess: false, error: status, message: msg };
-}
-
-function toSuccessResult(): SubmitResult {
-  return { isSuccess: true };
-}
-
 /**
  * Orchestrates the full checkout flow: session creation, payment submission,
  * and real-time status tracking via WebSocket.
@@ -101,16 +85,15 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
       }
       if (result.status === "success") {
         clearSession();
-        return toSuccessResult();
+        return { isSuccess: true };
       }
       if (isTerminal(result.status)) {
         const failStatus = result.status as FailureStatus;
         clearSession();
-        return toFailureResult(
-          failStatus,
-          result.sessionId,
-          DECLINED_STATUS_MESSAGES[failStatus],
-        );
+        const msg =
+          DECLINED_STATUS_MESSAGES[failStatus] ??
+          "Payment failed. Please try again.";
+        return { isSuccess: false, error: failStatus, message: msg };
       }
       debugLog(debug, "processing mode", { sessionId: result.sessionId });
       return { isSuccess: false, isLoading: true };
@@ -119,7 +102,7 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
         e instanceof Error ? e.message : "Payment failed. Please try again.";
       debugLog(debug, "submitPayment failed", { error: msg });
       clearSession();
-      return toFailureResult("error", null, msg);
+      return { isSuccess: false, error: "error", message: msg };
     }
   };
 
