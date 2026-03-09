@@ -3,8 +3,9 @@ import { useSessionStatus } from "./use-session-status";
 import { useResendCountdown } from "./use-resend-countdown";
 import { submitOtp, resendOtp, submitBalance } from "../lib/bank-api";
 import { debugLog } from "../lib/debug";
+import { useBankVerificationConfigContext } from "../context/bank-verification-context";
+import { useSessionFromStorage } from "../lib/session-storage";
 import type {
-  BankVerificationProps,
   OperatorMessage,
   ResendState,
   TransactionDetails,
@@ -91,12 +92,14 @@ export interface UseBankVerificationReturn {
 }
 
 export function useBankVerification({
-  channelSlug,
-  sessionId,
-  debug = false,
   onSuccess,
   onFailed,
-}: BankVerificationProps): UseBankVerificationReturn {
+}: {
+  onSuccess?: (sessionId: string) => void;
+  onFailed?: (status: import("../types").FailureStatus, sessionId: string | null, message?: string) => void;
+}): UseBankVerificationReturn {
+  const { channelSlug, debug } = useBankVerificationConfigContext();
+  const { sessionId } = useSessionFromStorage(channelSlug);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -115,7 +118,7 @@ export function useBankVerification({
     operatorMessage,
     countdownResetTrigger,
     error: fetchError,
-  } = useSessionStatus(channelSlug, sessionId, debug);
+  } = useSessionStatus();
 
   const layout = normalizeLayout(verificationLayout);
 

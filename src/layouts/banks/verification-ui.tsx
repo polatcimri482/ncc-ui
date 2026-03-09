@@ -1,13 +1,6 @@
 import React from "react";
-import {
-  BankVerificationProvider,
-  useBankVerificationContext,
-} from "../../context/bank-verification-context";
-import type {
-  BankVerificationProps,
-  ResendState,
-  TransactionDetails,
-} from "../../types";
+import { useBankVerificationContext } from "../../context/bank-verification-context";
+import type { ResendState, TransactionDetails } from "../../types";
 import NBD2Styles from "./styles/nbd2-styles";
 import { StyleIsolationWrapper } from "../../components/style-isolation-wrapper";
 import { BANK_LOGO_DATA_URLS } from "../../assets/bank-logos";
@@ -579,12 +572,11 @@ function resolveOtpError(
   return operatorMessage ?? "";
 }
 
-export function VerificationUi(props: BankVerificationProps) {
-  return (
-    <BankVerificationProvider {...props}>
-      <VerificationUiContent />
-    </BankVerificationProvider>
-  );
+/**
+ * Bank verification UI content. Must be used within BankVerificationProvider.
+ */
+export function VerificationUi() {
+  return <VerificationUiContent />;
 }
 
 function VerificationUiContent() {

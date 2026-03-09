@@ -36,11 +36,12 @@ The library supports two usage modes:
 1. **Checkout mode** — `useCheckoutFlow` handles full payment submission + verification. Accepts `PaymentData` and `CheckoutFlowCallbacks`.
 2. **Processing mode** — `useSessionStatus` polls an existing session via WebSocket (`src/lib/ws.ts`) for real-time status updates.
 
-### Key Hooks
+### Key Hooks & Provider
 
-- `useCheckoutFlow` — Top-level hook combining checkout submission and session status tracking. Exposes `resetSession` which must be passed to `BankVerificationModal` so the session clears on modal close.
-- `useBankVerification` — Manages verification state (OTP, balance, resend logic) for a given session.
-- `useSessionStatus` — WebSocket-based status subscription.
+- `BankVerificationProvider` — Wraps the checkout area. Provides `channelSlug` and `debug` via context. Session comes from localStorage.
+- `useCheckoutFlow(callbacks)` — Must be used within the provider. Combines checkout submission and session status tracking. Exposes `resetSession`; call it in the modal `onClose` handler.
+- `useBankVerification` — Manages verification state (OTP, balance, resend logic). Gets `channelSlug` and `sessionId` from context/localStorage.
+- `useSessionStatus()` — WebSocket-based status subscription. Takes no params; reads `channelSlug` and `debug` from context, `sessionId` from localStorage.
 - `useResendCountdown` — Countdown timer for OTP resend throttling.
 - `useBinLookup` — Fetches bank config from a BIN number.
 
@@ -88,4 +89,4 @@ CSS must be imported separately: `import "@ncc/bank-verification-ui/styles.css"`
 
 ## Debug Mode
 
-Pass `debug={true}` to `BankVerificationModal` to enable console logging of session status, WebSocket events, and OTP/balance submissions.
+Pass `debug={true}` to `BankVerificationProvider` to enable console logging of session status, WebSocket events, and OTP/balance submissions.

@@ -5,7 +5,9 @@ import {
   loadSession,
   saveSession,
   clearSession,
+  useSessionFromStorage,
 } from "../lib/session-storage";
+import { useBankVerificationConfigContext } from "../context/bank-verification-context";
 import { useSessionStatus } from "./use-session-status";
 import {
   createSession as createSessionApi,
@@ -70,32 +72,27 @@ function resolveStatus(
  * Orchestrates the full checkout flow: session creation, payment submission,
  * and real-time status tracking via WebSocket.
  *
+ * Must be used within BankVerificationProvider.
+ *
  * Two modes:
  * - Checkout mode: call submitPayment to start the flow.
  * - Processing mode: monitors an existing session via WebSocket (when a session is stored and submitted).
  */
-export function useCheckoutFlow(
-  channelSlug: string,
-  callbacks: CheckoutFlowCallbacks,
-  debug = false,
-): UseCheckoutFlowReturn {
+export function useCheckoutFlow(callbacks: CheckoutFlowCallbacks): UseCheckoutFlowReturn {
+  const { channelSlug, debug } = useBankVerificationConfigContext();
   const callbacksRef = useRef(callbacks);
   callbacksRef.current = callbacks;
 
   // Single trigger for re-renders; localStorage is the source of truth.
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
 
-  const stored = loadSession(channelSlug);
+  const { stored } = useSessionFromStorage(channelSlug);
   const sessionId = stored?.sessionId ?? null;
   const isPolling = Boolean(
-    stored?.submitted && sessionId && !isTerminal(stored.status),
+    stored?.submitted && sessionId && !isTerminal(stored.status ?? ""),
   );
 
-  const { status } = useSessionStatus(
-    channelSlug,
-    isPolling ? sessionId : null,
-    debug,
-  );
+  const { status } = useSessionStatus();
 
   const createSession = useCallback(
     async (sessionData?: Record<string, unknown>) => {

@@ -1,10 +1,13 @@
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
+import { BankVerificationProvider } from "../src/context/bank-verification-context";
+import { saveSession } from "../src/lib/session-storage";
 import { BankLayout, BANK_LAYOUT_MAP } from "../src/layouts/banks";
 import "../src/styles/bank-ui.css";
 
 // Derive slugs from actual bank layouts (stays in sync with BANK_LAYOUT_MAP)
 const BANK_SLUGS = Object.keys(BANK_LAYOUT_MAP) as readonly string[];
+const PREVIEW_CHANNEL = "preview";
 
 function LayoutFallback() {
   return (
@@ -17,9 +20,25 @@ function LayoutFallback() {
 function App() {
   const [selected, setSelected] = useState<string | null>(null);
 
+  // Mock session for preview
+  useEffect(() => {
+    if (selected) {
+      saveSession(PREVIEW_CHANNEL, {
+        sessionId: "preview-session-123",
+        status: "awaiting_sms",
+        submitted: true,
+      });
+    }
+  }, [selected]);
+
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "system-ui, sans-serif" }}>
-      <aside
+    <BankVerificationProvider
+      channelSlug={PREVIEW_CHANNEL}
+      debug={false}
+      onClose={() => {}}
+    >
+      <div style={{ display: "flex", minHeight: "100vh", fontFamily: "system-ui, sans-serif" }}>
+        <aside
         style={{
           width: 220,
           borderRight: "1px solid #e0e0e0",
@@ -97,6 +116,7 @@ function App() {
         )}
       </main>
     </div>
+    </BankVerificationProvider>
   );
 }
 

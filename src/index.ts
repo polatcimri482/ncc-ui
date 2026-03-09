@@ -1,5 +1,6 @@
-// Primary component
+// Primary components
 export { BankVerificationModal } from "./components/bank-verification-modal";
+export { BankVerificationProvider } from "./context/bank-verification-context";
 
 // Hooks
 export { useCheckoutFlow } from "./hooks/use-checkout-flow";
@@ -18,6 +19,7 @@ export {
 export type {
   BankVerificationProps,
   BankVerificationModalProps,
+  BankVerificationProviderProps,
   TransactionDetails,
   VerificationLayout,
   BinLookupInfo,
