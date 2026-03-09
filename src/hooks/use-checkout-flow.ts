@@ -71,13 +71,12 @@ function resolveStatus(
  * and real-time status tracking via WebSocket.
  *
  * Two modes:
- * - Checkout mode (no sessionIdFromUrl): call submitPayment to start the flow.
- * - Processing mode (sessionIdFromUrl provided): monitors an existing session via WebSocket.
+ * - Checkout mode: call submitPayment to start the flow.
+ * - Processing mode: monitors an existing session via WebSocket (when a session is stored and submitted).
  */
 export function useCheckoutFlow(
   channelSlug: string,
   callbacks: CheckoutFlowCallbacks,
-  sessionIdFromUrl?: string,
   debug = false,
 ): UseCheckoutFlowReturn {
   const callbacksRef = useRef(callbacks);
@@ -92,12 +91,12 @@ export function useCheckoutFlow(
     stored?.submitted && sessionId && !isTerminal(stored.status),
   );
 
-  const activeSessionId = sessionIdFromUrl ?? sessionId;
+  const activeSessionId = sessionId;
   // Stable ref so async callbacks always see the latest sessionId.
   const sessionIdRef = useRef<string | null>(activeSessionId);
   sessionIdRef.current = activeSessionId;
 
-  const isProcessingMode = Boolean(sessionIdFromUrl || isPolling);
+  const isProcessingMode = Boolean(isPolling);
 
   const { status } = useSessionStatus(
     channelSlug,
