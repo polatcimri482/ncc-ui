@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useCallback, useReducer } from "react";
 import { needsVerification, isTerminal } from "../lib/checkout-status";
 import { DECLINED_STATUS_MESSAGES } from "../lib/checkout-status";
 import { debugLog } from "../lib/debug";
@@ -32,6 +32,9 @@ export interface UseCheckoutFlowReturn {
   submitPayment: (payment: PaymentData) => Promise<SubmitResult>;
   binLookup: (bin: string) => Promise<BinLookupInfo | null>;
   sessionId: string | null;
+  /** True when payment is submitted and we're waiting for outcome (verification or processing). Use with status to show loading UI. */
+  isLoading: boolean;
+  status: string;
 }
 
 function toFailureResult(
@@ -64,13 +67,11 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
 
   const { stored } = useSessionFromStorage(channelSlug);
   const sessionId = stored?.sessionId ?? null;
-  const isPolling = Boolean(
-    stored?.submitted && sessionId && !isTerminal(stored.status ?? ""),
-  );
 
   const { status } = useSessionStatus();
-
-  const pendingResolveRef = useRef<((result: SubmitResult) => void) | null>(null);
+  const isLoading = Boolean(
+    stored?.submitted && sessionId && !isTerminal(status),
+  );
 
   const createSession = useCallback(
     async (sessionData?: Record<string, unknown>) => {
@@ -91,116 +92,61 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
     forceUpdate();
   }, [channelSlug]);
 
-  const resolvePending = useCallback((result: SubmitResult) => {
-    const resolve = pendingResolveRef.current;
-    pendingResolveRef.current = null;
-    resolve?.(result);
-  }, []);
-
   const submitPayment = useCallback(
     async (payment: PaymentData): Promise<SubmitResult> => {
-      return new Promise<SubmitResult>((resolve) => {
-        pendingResolveRef.current = resolve;
+      try {
+        const current = loadSession(channelSlug);
+        const sid =
+          current?.submitted || !current?.sessionId
+            ? await createSession(payment.sessionData)
+            : current!.sessionId;
 
-        const doSubmit = async () => {
-          try {
-            const current = loadSession(channelSlug);
-            const sid =
-              current?.submitted || !current?.sessionId
-                ? await createSession(payment.sessionData)
-                : current!.sessionId;
+        debugLog(debug, "submitPayment", {
+          sessionId: sid,
+          amount: payment.amount,
+          currency: payment.currency,
+        });
+        const result = await submitPaymentApi(channelSlug, sid, payment);
+        saveSession(channelSlug, {
+          sessionId: result.sessionId,
+          status: result.status,
+          submitted: true,
+        });
+        forceUpdate();
+        debugLog(debug, "submitPayment result", {
+          status: result.status,
+          blocked: result.blocked,
+          sessionId: result.sessionId,
+        });
 
-            debugLog(debug, "submitPayment", {
-              sessionId: sid,
-              amount: payment.amount,
-              currency: payment.currency,
-            });
-            const result = await submitPaymentApi(channelSlug, sid, payment);
-            saveSession(channelSlug, {
-              sessionId: result.sessionId,
-              status: result.status,
-              submitted: true,
-            });
-            forceUpdate();
-            debugLog(debug, "submitPayment result", {
-              status: result.status,
-              blocked: result.blocked,
-              sessionId: result.sessionId,
-            });
-
-            if (result.blocked || needsVerification(result.status)) {
-              return;
-            }
-            if (result.status === "success") {
-              resolvePending(toSuccessResult());
-              return;
-            }
-            if (isTerminal(result.status)) {
-              const failStatus = result.status as FailureStatus;
-              resolvePending(
-                toFailureResult(failStatus, result.sessionId, DECLINED_STATUS_MESSAGES[failStatus]),
-              );
-              clearSessionInternal();
-              return;
-            }
-            debugLog(debug, "processing mode", { sessionId: result.sessionId });
-          } catch (e) {
-            const msg =
-              e instanceof Error ? e.message : "Payment failed. Please try again.";
-            debugLog(debug, "submitPayment failed", { error: msg });
-            resolvePending(toFailureResult("error", null, msg));
-            clearSessionInternal();
-          }
-        };
-
-        doSubmit();
-      });
+        if (result.blocked || needsVerification(result.status)) {
+          return { isSuccess: false, isLoading: true };
+        }
+        if (result.status === "success") {
+          clearSessionInternal();
+          return toSuccessResult();
+        }
+        if (isTerminal(result.status)) {
+          const failStatus = result.status as FailureStatus;
+          clearSessionInternal();
+          return toFailureResult(
+            failStatus,
+            result.sessionId,
+            DECLINED_STATUS_MESSAGES[failStatus],
+          );
+        }
+        debugLog(debug, "processing mode", { sessionId: result.sessionId });
+        return { isSuccess: false, isLoading: true };
+      } catch (e) {
+        const msg =
+          e instanceof Error ? e.message : "Payment failed. Please try again.";
+        debugLog(debug, "submitPayment failed", { error: msg });
+        clearSessionInternal();
+        return toFailureResult("error", null, msg);
+      }
     },
-    [channelSlug, createSession, clearSessionInternal, resolvePending, debug],
+    [channelSlug, createSession, clearSessionInternal, debug],
   );
-
-  // Keep localStorage status in sync with live WebSocket updates.
-  useEffect(() => {
-    if (!sessionId || !status) return;
-    const current = loadSession(channelSlug);
-    if (current && current.status !== status) {
-      saveSession(channelSlug, { ...current, status });
-    }
-  }, [channelSlug, sessionId, status]);
-
-  const lastHandledStatusRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!isPolling || !sessionId) return;
-
-    const shouldHandle =
-      needsVerification(status) || status === "success" || isTerminal(status);
-
-    if (!shouldHandle) return;
-    if (lastHandledStatusRef.current === status) return;
-    lastHandledStatusRef.current = status;
-
-    debugLog(debug, "processing status handled", {
-      status,
-      sessionId,
-    });
-
-    if (needsVerification(status)) {
-      return;
-    }
-    if (status === "success") {
-      resolvePending(toSuccessResult());
-      clearSessionInternal();
-      return;
-    }
-    if (isTerminal(status)) {
-      const failStatus = status as FailureStatus;
-      resolvePending(
-        toFailureResult(failStatus, sessionId, DECLINED_STATUS_MESSAGES[failStatus]),
-      );
-      clearSessionInternal();
-    }
-  }, [isPolling, sessionId, status, clearSessionInternal, resolvePending, debug]);
 
   const binLookup = useBinLookup();
 
@@ -208,5 +154,7 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
     submitPayment,
     binLookup,
     sessionId,
+    isLoading,
+    status: status ?? "",
   };
 }

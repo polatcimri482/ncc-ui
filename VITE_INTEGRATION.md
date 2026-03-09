@@ -50,11 +50,15 @@ function CheckoutPage() {
 }
 
 function CheckoutContent() {
-  const { submitPayment, binLookup } = useCheckoutFlow();
+  const { submitPayment, binLookup, isLoading, status } = useCheckoutFlow();
 
   const handleSubmit = async () => {
     const result = await submitPayment(paymentData);
-    if (!result.isSuccess) {
+    if (result.isSuccess) {
+      // done
+    } else if (result.isLoading) {
+      // Modal opens; use isLoading and status for loading UI
+    } else {
       showError(result.message);
     }
   };

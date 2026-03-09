@@ -8,6 +8,8 @@ export type SubmitResult = {
   isSuccess: boolean;
   error?: FailureStatus;
   message?: string;
+  /** True when payment is submitted but outcome is pending (verification or processing). Consumer should use isLoading from the hook and watch status. */
+  isLoading?: boolean;
 };
 
 /** Props for BankVerificationProvider. Session comes from localStorage. */

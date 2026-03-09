@@ -9,6 +9,8 @@ type SubmitResult = {
     isSuccess: boolean;
     error?: FailureStatus;
     message?: string;
+    /** True when payment is submitted but outcome is pending (verification or processing). Consumer should use isLoading from the hook and watch status. */
+    isLoading?: boolean;
 };
 /** Props for BankVerificationProvider. Session comes from localStorage. */
 interface BankVerificationProviderProps {
@@ -83,6 +85,9 @@ interface UseCheckoutFlowReturn {
     submitPayment: (payment: PaymentData) => Promise<SubmitResult>;
     binLookup: (bin: string) => Promise<BinLookupInfo | null>;
     sessionId: string | null;
+    /** True when payment is submitted and we're waiting for outcome (verification or processing). Use with status to show loading UI. */
+    isLoading: boolean;
+    status: string;
 }
 /**
  * Orchestrates the full checkout flow: session creation, payment submission,
