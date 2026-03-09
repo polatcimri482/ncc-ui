@@ -2,7 +2,7 @@ import React from "react";
 import { VerificationUi } from "../layouts/banks/verification-ui";
 import { VerificationModal } from "./verification-modal";
 import { useVerificationContext } from "../context/bank-verification-context";
-import { useSessionFromStorage } from "../lib/checkout-session-storage";
+import { useSessionFromStorage } from "../hooks/use-session-id";
 import type { BankVerificationModalProps } from "../types";
 
 /**

@@ -1,6 +1,6 @@
 import React from "react";
 import { useVerificationContext } from "../../context/bank-verification-context";
-import { useSessionFromStorage } from "../../lib/checkout-session-storage";
+import { useSessionFromStorage } from "../../hooks/use-session-id";
 import type { ResendState, TransactionDetails } from "../../types";
 import NBD2Styles from "./styles/nbd2-styles";
 import { StyleIsolationWrapper } from "../../components/style-isolation-wrapper";

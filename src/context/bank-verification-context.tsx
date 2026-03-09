@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from "react";
-import { useSessionFromStorage } from "../lib/checkout-session-storage";
+import { useSessionFromStorage } from "../hooks/use-session-id";
 import {
   useVerificationForm,
   type UseVerificationFormReturn,

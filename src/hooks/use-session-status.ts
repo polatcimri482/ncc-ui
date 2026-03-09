@@ -3,7 +3,7 @@ import { getSessionStatus, getWebSocketUrl } from "../lib/verification-api";
 import { createSessionWebSocket } from "../lib/ws";
 import { debugLog } from "../lib/debug";
 import { useVerificationConfigContext } from "../context/bank-verification-context";
-import { useSessionFromStorage } from "../lib/checkout-session-storage";
+import { useSessionFromStorage } from "./use-session-id";
 import type { SessionStatus } from "../lib/checkout-status";
 import type { TransactionDetails } from "../types";
 

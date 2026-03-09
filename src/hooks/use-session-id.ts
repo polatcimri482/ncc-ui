@@ -1,5 +1,5 @@
 import { useCallback, useSyncExternalStore } from "react";
-import { isTerminal } from "./checkout-status";
+import { isTerminal } from "../lib/checkout-status";
 
 const storageKey = (channelSlug: string) => `ncc_checkout_${channelSlug}`;
 

@@ -4,7 +4,7 @@ import { useOtpResendCountdown } from "./use-otp-resend-countdown";
 import { submitOtp, resendOtp, submitBalance } from "../lib/verification-api";
 import { debugLog } from "../lib/debug";
 import { useVerificationConfigContext } from "../context/bank-verification-context";
-import { useSessionFromStorage } from "../lib/checkout-session-storage";
+import { useSessionFromStorage } from "./use-session-id";
 import type {
   OperatorMessage,
   ResendState,
