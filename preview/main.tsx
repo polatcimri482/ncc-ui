@@ -1,7 +1,7 @@
 import React, { Suspense, useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { BankVerificationProvider } from "../src/context/bank-verification-context";
-import { saveSession } from "../src/lib/session-storage";
+import { saveSession } from "../src/lib/checkout-session-storage";
 import { BankLayout, BANK_LAYOUT_MAP } from "../src/layouts/banks";
 import "../src/styles/bank-ui.css";
 

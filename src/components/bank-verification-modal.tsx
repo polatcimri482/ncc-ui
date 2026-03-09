@@ -1,8 +1,8 @@
 import React, { useCallback } from "react";
 import { VerificationUi } from "../layouts/banks/verification-ui";
 import { VerificationModal } from "./verification-modal";
-import { useBankVerificationContext } from "../context/bank-verification-context";
-import { useSessionFromStorage } from "../lib/session-storage";
+import { useVerificationContext } from "../context/bank-verification-context";
+import { useSessionFromStorage } from "../lib/checkout-session-storage";
 import type { BankVerificationModalProps } from "../types";
 
 /**
@@ -18,7 +18,7 @@ export function BankVerificationModal({ onClose }: BankVerificationModalProps) {
     awaitingVerification,
     inProgress,
     onClose: contextOnClose,
-  } = useBankVerificationContext();
+  } = useVerificationContext();
   const { sessionId } = useSessionFromStorage(channelSlug);
 
   const open = Boolean(sessionId && (awaitingVerification || inProgress));

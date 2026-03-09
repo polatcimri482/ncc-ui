@@ -38,16 +38,6 @@ export async function submitPayment(
   );
 }
 
-export async function getSessionStatus(
-  channelSlug: string,
-  sessionId: string
-): Promise<{ status: string; verificationLayout?: string }> {
-  return apiRequest(
-    apiUrl(`/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/status`),
-    {}
-  );
-}
-
 export interface BinLookupResult {
   bin: string;
   brand?: string;

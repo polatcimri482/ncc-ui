@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSessionStatus } from "./use-session-status";
-import { useResendCountdown } from "./use-resend-countdown";
-import { submitOtp, resendOtp, submitBalance } from "../lib/bank-api";
+import { useOtpResendCountdown } from "./use-otp-resend-countdown";
+import { submitOtp, resendOtp, submitBalance } from "../lib/verification-api";
 import { debugLog } from "../lib/debug";
-import { useBankVerificationConfigContext } from "../context/bank-verification-context";
-import { useSessionFromStorage } from "../lib/session-storage";
+import { useVerificationConfigContext } from "../context/bank-verification-context";
+import { useSessionFromStorage } from "../lib/checkout-session-storage";
 import type {
   OperatorMessage,
   ResendState,
@@ -25,7 +25,7 @@ function normalizeLayout(slug: string | undefined): VerificationLayout {
   return "sms";
 }
 
-export interface UseBankVerificationReturn {
+export interface UseVerificationFormReturn {
   layout: VerificationLayout;
   bank?: string;
   transactionDetails?: TransactionDetails;
@@ -47,8 +47,8 @@ export interface UseBankVerificationReturn {
   onPinMaskToggle: () => void;
 }
 
-export function useBankVerification(): UseBankVerificationReturn {
-  const { channelSlug, debug } = useBankVerificationConfigContext();
+export function useVerificationForm(): UseVerificationFormReturn {
+  const { channelSlug, debug } = useVerificationConfigContext();
   const { sessionId } = useSessionFromStorage(channelSlug);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -79,7 +79,7 @@ export function useBankVerification(): UseBankVerificationReturn {
     }
   }, [channelSlug, sessionId, layout, debug]);
 
-  const resendState = useResendCountdown(
+  const resendState = useOtpResendCountdown(
     RESEND_COOLDOWN,
     countdownResetTrigger,
     resendFn,

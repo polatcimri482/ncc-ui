@@ -7,8 +7,8 @@ import {
   saveSession,
   clearSession,
   useSessionFromStorage,
-} from "../lib/session-storage";
-import { useBankVerificationConfigContext } from "../context/bank-verification-context";
+} from "../lib/checkout-session-storage";
+import { useVerificationConfigContext } from "../context/bank-verification-context";
 import { useSessionStatus } from "./use-session-status";
 import {
   createSession as createSessionApi,
@@ -59,7 +59,7 @@ function toSuccessResult(): SubmitResult {
  * - Processing mode: monitors an existing session via WebSocket (when a session is stored and submitted).
  */
 export function useCheckoutFlow(): UseCheckoutFlowReturn {
-  const { channelSlug, debug } = useBankVerificationConfigContext();
+  const { channelSlug, debug } = useVerificationConfigContext();
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
 
   const { stored } = useSessionFromStorage(channelSlug);

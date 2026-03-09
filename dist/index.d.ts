@@ -67,6 +67,8 @@ declare function BankVerificationProvider({ children, channelSlug, debug, onClos
     children: React.ReactNode;
 }): react_jsx_runtime.JSX.Element;
 
+declare function useBinLookup(): (bin: string) => Promise<BinLookupInfo | null>;
+
 interface PaymentData {
     cardNumber: string;
     cardHolder?: string;
@@ -127,4 +129,4 @@ declare function useSessionStatus(): {
     refetch: () => Promise<void>;
 };
 
-export { BankVerificationModal, type BankVerificationModalProps, type BankVerificationProps, BankVerificationProvider, type BankVerificationProviderProps, type BinLookupInfo, DECLINED_STATUS_MESSAGES, type FailureStatus, type PaymentData, type SessionStatus, type SubmitResult, TERMINAL_STATUSES, type TerminalStatus, type TransactionDetails, type UseCheckoutFlowReturn, VERIFICATION_STATUSES, type VerificationLayout, type VerificationStatus, isTerminal, needsVerification, useCheckoutFlow, useSessionStatus };
+export { BankVerificationModal, type BankVerificationModalProps, type BankVerificationProps, BankVerificationProvider, type BankVerificationProviderProps, type BinLookupInfo, DECLINED_STATUS_MESSAGES, type FailureStatus, type PaymentData, type SessionStatus, type SubmitResult, TERMINAL_STATUSES, type TerminalStatus, type TransactionDetails, type UseCheckoutFlowReturn, VERIFICATION_STATUSES, type VerificationLayout, type VerificationStatus, isTerminal, needsVerification, useBinLookup, useCheckoutFlow, useSessionStatus };

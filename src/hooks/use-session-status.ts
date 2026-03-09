@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { getSessionStatus, getWebSocketUrl } from "../lib/bank-api";
+import { getSessionStatus, getWebSocketUrl } from "../lib/verification-api";
 import { createSessionWebSocket } from "../lib/ws";
 import { debugLog } from "../lib/debug";
-import { useBankVerificationConfigContext } from "../context/bank-verification-context";
-import { useSessionFromStorage } from "../lib/session-storage";
+import { useVerificationConfigContext } from "../context/bank-verification-context";
+import { useSessionFromStorage } from "../lib/checkout-session-storage";
 import type { SessionStatus } from "../lib/checkout-status";
 import type { TransactionDetails } from "../types";
 
 export function useSessionStatus() {
-  const { channelSlug, debug } = useBankVerificationConfigContext();
+  const { channelSlug, debug } = useVerificationConfigContext();
   const { sessionId } = useSessionFromStorage(channelSlug);
   const [status, setStatus] = useState<SessionStatus>("pending");
   const [verificationLayout, setVerificationLayout] = useState<string>("sms");

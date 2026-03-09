@@ -40,9 +40,9 @@ The library supports two usage modes:
 
 - `BankVerificationProvider` — Wraps the checkout area. Provides `channelSlug` and `debug` via context. Session comes from localStorage.
 - `useCheckoutFlow(callbacks)` — Must be used within the provider. Combines checkout submission and session status tracking. Exposes `resetSession`; call it in the modal `onClose` handler.
-- `useBankVerification` — Manages verification state (OTP, balance, resend logic). Gets `channelSlug` and `sessionId` from context/localStorage.
+- `useVerificationForm` — Manages verification state (OTP, balance, resend logic). Gets `channelSlug` and `sessionId` from context/localStorage.
 - `useSessionStatus()` — WebSocket-based status subscription. Takes no params; reads `channelSlug` and `debug` from context, `sessionId` from localStorage.
-- `useResendCountdown` — Countdown timer for OTP resend throttling.
+- `useOtpResendCountdown` — Countdown timer for OTP resend throttling.
 - `useBinLookup` — Fetches bank config from a BIN number.
 
 ### Bank Layouts

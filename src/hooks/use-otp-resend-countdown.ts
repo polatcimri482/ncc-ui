@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-export function useResendCountdown(
+export function useOtpResendCountdown(
   durationSeconds: number,
   countdownResetTrigger?: number,
   resendFn?: () => Promise<void>
