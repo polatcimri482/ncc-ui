@@ -3,6 +3,7 @@ export { BankVerificationModal } from "./components/bank-verification-modal";
 export { BankVerificationProvider } from "./context/bank-verification-context";
 
 // Hooks
+export { useBinLookup } from "./hooks/use-bin-lookup";
 export { useCheckoutFlow } from "./hooks/use-checkout-flow";
 export { useSessionStatus } from "./hooks/use-session-status";
 

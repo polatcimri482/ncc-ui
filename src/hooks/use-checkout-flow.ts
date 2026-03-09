@@ -13,8 +13,8 @@ import { useSessionStatus } from "./use-session-status";
 import {
   createSession as createSessionApi,
   submitPayment as submitPaymentApi,
-  lookupBin as lookupBinApi,
 } from "../lib/checkout-api";
+import { useBinLookup } from "./use-bin-lookup";
 import type { BinLookupInfo, FailureStatus, SubmitResult } from "../types";
 
 export interface PaymentData {
@@ -210,24 +210,7 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
     prevSessionIdRef.current = sessionId;
   }, [sessionId, resolvePending]);
 
-  const binLookup = useCallback(
-    async (bin: string): Promise<BinLookupInfo | null> => {
-      try {
-        const r = await lookupBinApi(bin);
-        return {
-          brand: r.brand,
-          type: r.type,
-          category: r.category,
-          issuer: r.issuer,
-          isoCode2: r.isoCode2,
-          blocked: r.blocked,
-        };
-      } catch {
-        return null;
-      }
-    },
-    [],
-  );
+  const binLookup = useBinLookup();
 
   return {
     submitPayment,
