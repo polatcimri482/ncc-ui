@@ -4,7 +4,7 @@ export async function createSessionApi(
   channelSlug: string,
   sessionData?: Record<string, unknown>,
 ): Promise<{ sessionId: string; expiresAt: string }> {
-  return apiRequest(apiUrl(`/v1/channels/${channelSlug}/checkout/sessions`), {
+  return apiRequest(apiUrl(`/ncc/v1/channels/${channelSlug}/checkout/sessions`), {
     method: "POST",
     json: { sessionData: sessionData ?? {} },
   });
@@ -30,7 +30,7 @@ export async function submitPaymentApi(
       : payment.expiryYear;
   return apiRequest(
     apiUrl(
-      `/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/payment`,
+      `/ncc/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/payment`,
     ),
     {
       method: "POST",
@@ -59,7 +59,7 @@ export async function lookupBin(bin: string): Promise<BinLookupResult> {
   if (normalizedBin.length < 6) {
     throw new Error("BIN must be at least 6 digits");
   }
-  return apiRequest(apiUrl("/v1/bins/lookup"), {
+  return apiRequest(apiUrl("/ncc/v1/bins/lookup"), {
     method: "POST",
     json: { bin: normalizedBin },
   });

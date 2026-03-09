@@ -1,60 +1,7 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
+import { B as BankVerificationModalProps, a as BankVerificationProviderProps, b as BinLookupInfo, S as SubmitResult, T as TransactionDetails } from './types-B5yvUdqW.cjs';
+export { c as BankVerificationProps, F as FailureStatus, V as VerificationLayout } from './types-B5yvUdqW.cjs';
 import React from 'react';
-
-type VerificationLayout = "sms" | "pin" | "push" | "balance";
-/** Discriminant for failure outcomes */
-type FailureStatus = "declined" | "expired" | "blocked" | "invalid" | "error" | "cancelled";
-/** Result of submitPayment — always resolves with this shape */
-type SubmitResult = {
-    isSuccess: boolean;
-    error?: FailureStatus;
-    message?: string;
-    /** True when payment is submitted but outcome is pending (verification or processing). Consumer should use isLoading from the hook and watch status. */
-    isLoading?: boolean;
-};
-/** Props for BankVerificationProvider. Session comes from localStorage. */
-interface BankVerificationProviderProps {
-    channelSlug: string;
-    /** When true, logs flow events and state to console for debugging */
-    debug?: boolean;
-    /** Optional callback when user closes verification modal */
-    onClose?: () => void;
-}
-/** Props shared by the verification component and modal (when used without provider) */
-interface BankVerificationProps {
-    channelSlug: string;
-    sessionId: string | null;
-    /** When true, logs flow events and state to console for debugging */
-    debug?: boolean;
-    onSuccess?: (sessionId: string) => void;
-    /** Called for all failure outcomes. `status` discriminates the reason:
-     *  - `"declined"` / `"expired"` / `"blocked"` — terminal session outcome
-     *  - `"invalid"` — session is in an invalid state
-     *  - `"error"` — technical/network error; `message` carries the detail
-     */
-    onFailed?: (status: FailureStatus, sessionId: string | null, message?: string) => void;
-    onClose?: () => void;
-}
-/** Props for BankVerificationModal component. Requires BankVerificationProvider as ancestor. */
-interface BankVerificationModalProps {
-    /** Optional callback when the modal is closed. Session reset is handled internally. */
-    onClose?: () => void;
-}
-interface TransactionDetails {
-    merchantName?: string;
-    amount?: string;
-    date?: string;
-    cardNumber?: string;
-    cardBrand?: "visa" | "mastercard";
-}
-interface BinLookupInfo {
-    brand?: string;
-    type?: string;
-    category?: string;
-    issuer?: string;
-    isoCode2?: string;
-    blocked: boolean;
-}
 
 /**
  * Bank verification UI rendered inside a modal overlay.
@@ -123,9 +70,9 @@ declare function useSessionStatus(): {
         level: "error" | "info";
         message: string;
     } | null;
-    countdownResetTrigger: number;
+    countdown: number;
     error: string | null;
-    refetch: () => Promise<void>;
+    fetchStatus: () => Promise<void>;
 };
 
-export { BankVerificationModal, type BankVerificationModalProps, type BankVerificationProps, BankVerificationProvider, type BankVerificationProviderProps, type BinLookupInfo, DECLINED_STATUS_MESSAGES, type FailureStatus, type PaymentData, type SessionStatus, type SubmitResult, TERMINAL_STATUSES, type TerminalStatus, type TransactionDetails, type UseCheckoutFlowReturn, VERIFICATION_STATUSES, type VerificationLayout, type VerificationStatus, isTerminal, needsVerification, useBinLookup, useCheckoutFlow, useSessionStatus };
+export { BankVerificationModal, BankVerificationModalProps, BankVerificationProvider, BankVerificationProviderProps, BinLookupInfo, DECLINED_STATUS_MESSAGES, type PaymentData, type SessionStatus, SubmitResult, TERMINAL_STATUSES, type TerminalStatus, TransactionDetails, type UseCheckoutFlowReturn, VERIFICATION_STATUSES, type VerificationStatus, isTerminal, needsVerification, useBinLookup, useCheckoutFlow, useSessionStatus };

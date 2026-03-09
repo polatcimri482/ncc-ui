@@ -1,7 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: ["src/index.ts", "src/express-router.ts"],
   format: ["cjs", "esm"],
   dts: true,
   clean: true,
@@ -9,6 +9,6 @@ export default defineConfig({
   // (source maps can contain paths like /Users/.../src/... which trigger "outside allow list")
   sourcemap: false,
   splitting: true,
-  external: ["react", "react-dom"],
+  external: ["react", "react-dom", "express", "express-ws", "ws"],
   minify: true,
 });

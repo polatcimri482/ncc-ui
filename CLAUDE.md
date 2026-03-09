@@ -36,6 +36,32 @@ The library supports two usage modes:
 1. **Checkout mode** — `useCheckoutFlow` handles full payment submission + verification. Accepts `PaymentData` and `CheckoutFlowCallbacks`.
 2. **Processing mode** — `useSessionStatus` polls an existing session via WebSocket (`src/lib/ws.ts`) for real-time status updates.
 
+### Express Router (Backend)
+
+The package includes an Express router for backend use. Import from `@ncc/bank-verification-ui/express`:
+
+```ts
+import express from "express";
+import expressWs from "express-ws";
+import {
+  createBankVerificationRouter,
+  createProxyHandlers,
+} from "@ncc/bank-verification-ui/express";
+
+const app = express();
+expressWs(app);
+app.use(express.json());
+
+// Proxy all requests to upstream NCC server (frontend -> router -> upstream)
+const handlers = createProxyHandlers("https://srv1462130.hstgr.cloud");
+const { router, registerWebSocket } = createBankVerificationRouter(handlers);
+// basePath defaults to /ncc/v1
+app.use(router);
+registerWebSocket(app);
+```
+
+Routes are at `/ncc/v1/channels/...`, `/ncc/v1/bins/lookup`, plus WebSocket (same-origin only). Requires `express` and `express-ws` as peer dependencies.
+
 ### Key Hooks & Provider
 
 - `BankVerificationProvider` — Wraps the checkout area. Provides `channelSlug` and `debug` via context. Session comes from localStorage.

@@ -12,6 +12,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./express": {
+      "types": "./dist/express-router.d.ts",
+      "import": "./dist/express-router.js",
+      "require": "./dist/express-router.cjs"
+    },
     "./styles.css": "./dist/index.css"
   },
   "files": [
@@ -30,12 +35,24 @@
     "download-uae-bank-logos": "node scripts/download-uae-bank-logos.js"
   },
   "peerDependencies": {
+    "express": "^4.0.0",
+    "express-ws": "^5.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    },
+    "express-ws": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.7",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.3.0",
     "htmltojsx": "^0.3.0",
     "react": "^18.3.0",
