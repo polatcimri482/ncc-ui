@@ -1,5 +1,8 @@
 export type VerificationLayout = "sms" | "pin" | "push" | "balance";
 
+/** Discriminant for the `onFailed` callback */
+export type FailureStatus = "declined" | "expired" | "blocked" | "invalid" | "error";
+
 /** Props shared by the verification component and modal */
 export interface BankVerificationProps {
   channelSlug: string;
@@ -7,9 +10,12 @@ export interface BankVerificationProps {
   /** When true, logs flow events and state to console for debugging */
   debug?: boolean;
   onSuccess?: (sessionId: string) => void;
-  onDeclined?: (sessionId: string, status: string) => void;
-  onError?: (error: string) => void;
-  onRedirect?: (url: string) => void;
+  /** Called for all failure outcomes. `status` discriminates the reason:
+   *  - `"declined"` / `"expired"` / `"blocked"` — terminal session outcome
+   *  - `"invalid"` — session is in an invalid state
+   *  - `"error"` — technical/network error; `message` carries the detail
+   */
+  onFailed?: (status: FailureStatus, sessionId: string | null, message?: string) => void;
   onClose?: () => void;
 }
 

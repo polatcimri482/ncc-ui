@@ -95,9 +95,7 @@ export function useBankVerification({
   sessionId,
   debug = false,
   onSuccess,
-  onDeclined,
-  onError,
-  onRedirect,
+  onFailed,
 }: BankVerificationProps): UseBankVerificationReturn {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -152,11 +150,7 @@ export function useBankVerification({
     debugLog(debug, "status effect", { status, redirectUrl });
     if (status === "blocked" && redirectUrl) {
       debugLog(debug, "redirect", { redirectUrl });
-      if (onRedirect) {
-        onRedirect(redirectUrl);
-      } else {
-        window.location.replace(redirectUrl);
-      }
+      window.location.replace(redirectUrl);
       return;
     }
     if (status === "success") {
@@ -165,13 +159,13 @@ export function useBankVerification({
       return;
     }
     if (status === "invalid") {
-      debugLog(debug, "error callback", { reason: "invalid" });
-      onError?.("invalid");
+      debugLog(debug, "failed callback", { reason: "invalid" });
+      onFailed?.("invalid", sessionId);
       return;
     }
     if (status === "declined" || status === "expired" || status === "blocked") {
-      debugLog(debug, "declined callback", { sessionId, status });
-      onDeclined?.(sessionId, status);
+      debugLog(debug, "failed callback", { sessionId, status });
+      onFailed?.(status, sessionId);
     }
   }, [
     channelSlug,
@@ -179,9 +173,7 @@ export function useBankVerification({
     status,
     redirectUrl,
     onSuccess,
-    onDeclined,
-    onError,
-    onRedirect,
+    onFailed,
     debug,
   ]);
 

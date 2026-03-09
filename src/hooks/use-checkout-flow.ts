@@ -12,7 +12,7 @@ import {
   submitPayment as submitPaymentApi,
   lookupBin as lookupBinApi,
 } from "../lib/checkout-api";
-import type { BinLookupInfo } from "../types";
+import type { BinLookupInfo, FailureStatus } from "../types";
 
 export interface PaymentData {
   cardNumber: string;
@@ -30,9 +30,11 @@ export interface CheckoutFlowCallbacks {
   onNeedsVerification: (sessionId: string) => void;
   /** Called when payment completes successfully */
   onSuccess: (sessionId: string) => void;
-  /** Called when payment is declined, expired, blocked, or invalid */
-  onDeclined: (sessionId: string, status: string) => void;
-  onError?: (error: string) => void;
+  /** Called for all failure outcomes. `status` discriminates the reason:
+   *  - `"declined"` / `"expired"` / `"blocked"` / `"invalid"` — terminal session outcome
+   *  - `"error"` — technical/network error; `message` carries the detail
+   */
+  onFailed?: (status: FailureStatus, sessionId: string | null, message?: string) => void;
 }
 
 export interface UseCheckoutFlowReturn {
@@ -58,7 +60,7 @@ function resolveStatus(
     return true;
   }
   if (isTerminal(status)) {
-    callbacks.onDeclined(sessionId, status);
+    callbacks.onFailed?.(status as FailureStatus, sessionId);
     return true;
   }
   return false;
@@ -167,7 +169,7 @@ export function useCheckoutFlow(
           e instanceof Error ? e.message : "Payment failed. Please try again.";
         debugLog(debug, "submitPayment failed", { error: msg });
         resetAll();
-        cbs.onError?.(msg);
+        cbs.onFailed?.("error", null, msg);
       }
     },
     [channelSlug, createSession, resetAll, debug],

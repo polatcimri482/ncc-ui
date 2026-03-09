@@ -16,9 +16,7 @@ export function BankVerificationModal({
   sessionId,
   debug,
   onSuccess,
-  onDeclined,
-  onError,
-  onRedirect,
+  onFailed,
 }: BankVerificationModalProps) {
   return (
     <VerificationModal open={open} onClose={onClose ?? (() => {})}>
@@ -27,9 +25,7 @@ export function BankVerificationModal({
         sessionId={sessionId}
         debug={debug}
         onSuccess={onSuccess}
-        onDeclined={onDeclined}
-        onError={onError}
-        onRedirect={onRedirect}
+        onFailed={onFailed}
         onClose={onClose}
       />
     </VerificationModal>
