@@ -203,9 +203,12 @@ export function useBankVerification(): UseBankVerificationReturn {
       : inputValue.replace(/\D/g, "").length >= OTP_MIN_LENGTH;
   const sharedOtp = {
     ...shared,
+    inputValue,
+    setInputValue,
     wrongCode,
     expiredCode,
     onTryAgain: clearCodeFeedback ?? (() => {}),
+    onSubmit: () => handleSubmitOtp(inputValue),
     submitting,
     canSubmit: otpCanSubmit,
     resendState,
@@ -231,19 +234,13 @@ export function useBankVerification(): UseBankVerificationReturn {
     layoutState = {
       layout: "pin",
       ...sharedOtp,
-      inputValue,
-      setInputValue,
       pinMasked,
       onPinMaskToggle: () => setPinMasked((m) => !m),
-      onSubmit: () => handleSubmitOtp(inputValue),
     };
   } else {
     layoutState = {
       layout: "sms",
       ...sharedOtp,
-      inputValue,
-      setInputValue,
-      onSubmit: () => handleSubmitOtp(inputValue),
     };
   }
 
