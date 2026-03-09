@@ -30,6 +30,7 @@
     "build": "node scripts/generate-css-string.js && node scripts/generate-bank-logos.js && tsup && cp src/styles/bank-ui.css dist/index.css",
     "dev": "vite",
     "dev:server": "node scripts/test-express-server.js",
+    "dev:mock": "NCC_MOCK=true node scripts/test-express-server.js",
     "typecheck": "tsc --noEmit",
     "html-to-tsx": "node scripts/html-to-tsx.js",
     "extract-base64-images": "node scripts/extract-base64-images.js",

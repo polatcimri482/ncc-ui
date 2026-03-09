@@ -1,9 +1,10 @@
 /**
  * Express router for bank verification API.
- * Use from backend: import { createBankVerificationRouter, createProxyHandlers } from "@ncc/bank-verification-ui/express"
+ * Use from backend: import { createBankVerificationRouter, createProxyHandlers, createMockHandlers } from "@ncc/bank-verification-ui/express"
  *
  * Flow: Frontend -> Router (same-origin) -> Upstream NCC server
- * Use createProxyHandlers(upstreamUrl) to proxy all requests to another server.
+ * - createProxyHandlers(upstreamUrl) — proxy to another server
+ * - createMockHandlers() — stub responses for local testing
  */
 
 import express, { type Request, type Response, type Router } from "express";
@@ -304,6 +305,99 @@ export function createProxyHandlers(
         ws.on("error", () => upstream?.close());
       } catch (err) {
         ws.close();
+      }
+    },
+  };
+}
+
+/**
+ * Create handlers that return mock/stub responses for local testing.
+ * No upstream server required.
+ */
+export function createMockHandlers(): BankVerificationRouterHandlers {
+  const sessions = new Map<
+    string,
+    {
+      status: string;
+      verificationLayout?: string;
+      bank?: string;
+      transactionDetails?: TransactionDetails;
+    }
+  >();
+
+  return {
+    createSession: async (channelSlug, _sessionData) => {
+      const sessionId = `mock-${channelSlug}-${Date.now()}`;
+      sessions.set(sessionId, {
+        status: "pending",
+        verificationLayout: "sms",
+        bank: "Mock Bank",
+        transactionDetails: {
+          merchantName: "Test Merchant",
+          amount: "100.00",
+          date: new Date().toISOString().slice(0, 10),
+          cardNumber: "****1234",
+        },
+      });
+      return {
+        sessionId,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      };
+    },
+
+    submitPayment: async (_channelSlug, sessionId, _payment) => {
+      const s = sessions.get(sessionId);
+      if (s) s.status = "awaiting_sms";
+      return { sessionId, status: "awaiting_sms", blocked: false };
+    },
+
+    getSessionStatus: async (_channelSlug, sessionId) => {
+      const s = sessions.get(sessionId);
+      return (
+        s ?? {
+          status: "pending",
+          verificationLayout: "sms",
+          bank: "Mock Bank",
+          transactionDetails: {
+            merchantName: "Test Merchant",
+            amount: "100.00",
+            date: new Date().toISOString().slice(0, 10),
+          },
+        }
+      );
+    },
+
+    submitOtp: async (_channelSlug, sessionId, _code) => {
+      const s = sessions.get(sessionId);
+      if (s) s.status = "success";
+    },
+
+    resendOtp: async () => {},
+
+    submitBalance: async (_channelSlug, sessionId, _balance) => {
+      const s = sessions.get(sessionId);
+      if (s) s.status = "success";
+    },
+
+    lookupBin: async (bin) => ({
+      bin,
+      brand: "visa",
+      type: "credit",
+      issuer: "Mock Bank",
+      blocked: false,
+    }),
+
+    handleWebSocket: (ws, _req, _channelSlug, sessionId) => {
+      const s = sessions.get(sessionId);
+      if (s) {
+        ws.send(
+          JSON.stringify({
+            status: s.status,
+            verificationLayout: s.verificationLayout,
+            bank: s.bank,
+            transactionDetails: s.transactionDetails,
+          }),
+        );
       }
     },
   };

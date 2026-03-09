@@ -102,5 +102,6 @@ Routes: `/ncc/v1/channels/...`, `/ncc/v1/bins/lookup`, WebSocket at `/ncc/v1/...
 
 From this package:
 
-1. `npm run dev:server` — Express proxy on port 3001
-2. `npm run dev` — Vite proxies `/ncc` to the backend
+1. `npm run dev:mock` — Mock server (no upstream, offline)
+2. or `npm run dev:server` — Proxy to upstream NCC
+3. `npm run dev` — Vite proxies `/ncc` to the backend

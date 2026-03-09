@@ -12,8 +12,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Development preview server (Vite, root is preview/)
 npm run dev
 
-# NCC Express proxy server (for testing router; run alongside npm run dev)
-npm run dev:server
+# NCC Express server (run alongside npm run dev)
+npm run dev:server      # proxy to upstream
+npm run dev:mock        # mock upstream, no external server
 
 # Build the library (generates CSS strings, bank logos, bundles with tsup, copies CSS)
 npm run build
@@ -32,9 +33,11 @@ There are no automated tests — manual testing is done via the preview app at `
 
 ### Testing the Express Router
 
-1. **Terminal 1:** `npm run dev:server` — starts NCC proxy on port 3001
-2. **Terminal 2:** `npm run dev` — starts Vite (proxies `/ncc` to the backend)
-3. Open the Vite dev URL; the frontend calls `/ncc/v1/...` which proxies to the Express server → upstream NCC
+1. **Terminal 1:** `npm run dev:mock` or `npm run dev:server`
+   - `dev:mock` — mock handlers, no upstream (offline testing)
+   - `dev:server` — proxies to upstream NCC
+2. **Terminal 2:** `npm run dev` — Vite proxies `/ncc` to the backend
+3. Open the Vite dev URL; the frontend calls `/ncc/v1/...`
 
 Override upstream: `NCC_UPSTREAM=https://your-server.com npm run dev:server`
 

@@ -75,5 +75,10 @@ declare function createBankVerificationRouter(handlers: BankVerificationRouterHa
  * @param upstreamBaseUrl - Base URL of the NCC server (e.g. "https://srv1462130.hstgr.cloud")
  */
 declare function createProxyHandlers(upstreamBaseUrl: string): BankVerificationRouterHandlers;
+/**
+ * Create handlers that return mock/stub responses for local testing.
+ * No upstream server required.
+ */
+declare function createMockHandlers(): BankVerificationRouterHandlers;
 
-export { type BankVerificationRouterHandlers, type BankVerificationRouterResult, type BinLookupResult, type CreateBankVerificationRouterOptions, type ExpressWsApp, type PaymentPayload, createBankVerificationRouter, createProxyHandlers };
+export { type BankVerificationRouterHandlers, type BankVerificationRouterResult, type BinLookupResult, type CreateBankVerificationRouterOptions, type ExpressWsApp, type PaymentPayload, createBankVerificationRouter, createMockHandlers, createProxyHandlers };
