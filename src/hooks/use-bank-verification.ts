@@ -223,15 +223,25 @@ export function useBankVerification({
     status === "awaiting_push" ||
     status === "awaiting_balance";
 
+  const shared = { bank, transactionDetails };
+  const sharedOtp = {
+    ...shared,
+    wrongCode,
+    expiredCode,
+    onTryAgain: clearCodeFeedback ?? (() => {}),
+    submitting,
+    resendState,
+    operatorMessage,
+  };
+
   let layoutState: LayoutState;
 
   if (layout === "push") {
-    layoutState = { layout: "push", bank, transactionDetails };
+    layoutState = { layout: "push", ...shared };
   } else if (layout === "balance") {
     layoutState = {
       layout: "balance",
-      bank,
-      transactionDetails,
+      ...shared,
       balance,
       onBalanceChange: setBalance,
       onSubmit: () => handleSubmitBalance(balance),
@@ -242,36 +252,22 @@ export function useBankVerification({
   } else if (layout === "pin") {
     layoutState = {
       layout: "pin",
-      bank,
-      transactionDetails,
+      ...sharedOtp,
       pinValue,
       onPinChange: setPinValue,
       pinMasked,
       onPinMaskToggle: () => setPinMasked((m) => !m),
-      wrongCode,
-      expiredCode,
-      onTryAgain: clearCodeFeedback ?? (() => {}),
       onSubmit: () => handleSubmitOtp(pinValue),
-      submitting,
       canSubmit: pinValue.replace(/\D/g, "").length === PIN_LENGTH,
-      resendState,
-      operatorMessage,
     };
   } else {
     layoutState = {
       layout: "sms",
-      bank,
-      transactionDetails,
+      ...sharedOtp,
       code,
       onCodeChange: setCode,
-      wrongCode,
-      expiredCode,
-      onTryAgain: clearCodeFeedback ?? (() => {}),
       onSubmit: () => handleSubmitOtp(code),
-      submitting,
       canSubmit: code.replace(/\D/g, "").length >= OTP_MIN_LENGTH,
-      resendState,
-      operatorMessage,
     };
   }
 
