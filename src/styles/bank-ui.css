@@ -18,7 +18,7 @@
   border-radius: 8px;
   max-width: 480px;
   width: 100%;
-  max-height: 60vh;
+  max-height: 90vh;
   overflow: auto;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   padding: 16px;
@@ -87,7 +87,7 @@
 
 .bank-ui-verification {
   position: relative;
-  min-height: 100%;
+  /* min-height: 100%; */
   padding-top: 32px;
   padding-bottom: 32px;
 }
@@ -347,7 +347,7 @@
 
 /* Result page */
 .bank-ui-result-success {
-  min-height: 100vh;
+  /* min-height: 100vh; */
   background-color: #f0fdf4;
   display: flex;
   align-items: center;
@@ -357,7 +357,7 @@
 }
 
 .bank-ui-result-declined {
-  min-height: 100vh;
+  /* min-height: 100vh; */
   background-color: #fef2f2;
   display: flex;
   align-items: center;
@@ -412,7 +412,7 @@
 
 /* Branded layouts */
 .bank-ui-brand-wrapper {
-  min-height: 100vh;
+  /* min-height: 100vh; */
   display: flex;
   align-items: center;
 }

@@ -144,7 +144,7 @@ function PreviewApp() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        // minHeight: "100vh",
         fontFamily: "system-ui, sans-serif",
         padding: 24,
         background: "#f5f5f5",

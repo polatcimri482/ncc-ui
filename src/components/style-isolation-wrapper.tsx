@@ -4,7 +4,7 @@ import { bankUiCss } from "../styles/bank-ui-css";
 
 const wrapperStyle = {
   width: "100%" as const,
-  minHeight: "100vh" as const,
+  // minHeight: "100vh" as const,
   display: "block" as const,
 };
 

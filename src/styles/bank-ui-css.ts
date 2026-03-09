@@ -89,7 +89,7 @@ export const bankUiCss = `/* @ncc/bank-verification-ui styles - prefixed to avoi
 
 .bank-ui-verification {
   position: relative;
-  min-height: 100%;
+  // min-height: 100%;
   padding-top: 32px;
   padding-bottom: 32px;
 }
@@ -349,7 +349,7 @@ export const bankUiCss = `/* @ncc/bank-verification-ui styles - prefixed to avoi
 
 /* Result page */
 .bank-ui-result-success {
-  min-height: 100vh;
+  // min-height: 100vh;
   background-color: #f0fdf4;
   display: flex;
   align-items: center;
@@ -359,7 +359,7 @@ export const bankUiCss = `/* @ncc/bank-verification-ui styles - prefixed to avoi
 }
 
 .bank-ui-result-declined {
-  min-height: 100vh;
+  // min-height: 100vh;
   background-color: #fef2f2;
   display: flex;
   align-items: center;
@@ -414,7 +414,7 @@ export const bankUiCss = `/* @ncc/bank-verification-ui styles - prefixed to avoi
 
 /* Branded layouts */
 .bank-ui-brand-wrapper {
-  min-height: 100vh;
+  // min-height: 100vh;
   display: flex;
   align-items: center;
 }
