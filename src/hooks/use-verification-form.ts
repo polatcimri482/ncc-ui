@@ -162,7 +162,7 @@ export function useVerificationForm(): UseVerificationFormReturn {
     canSubmit,
     operatorMessage: operatorMessage ?? null,
     balance,
-    setBalance: setBalance,
+    setBalance,
     otpValue,
     setOtpValue,
     wrongCode,
