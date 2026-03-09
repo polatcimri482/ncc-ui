@@ -2,64 +2,45 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { bankUiCss } from "../styles/bank-ui-css";
 
+const wrapperStyle = {
+  width: "100%" as const,
+  minHeight: "100vh" as const,
+  display: "block" as const,
+};
+
 /**
- * Wraps children in an iframe for full style isolation from the host.
+ * Wraps children in a shadow DOM for style isolation from the host.
  * Host CSS cannot affect the content; package CSS does not leak out.
  * Uses createPortal so children stay in the main React tree; no separate root = no render loop.
+ * Shadow DOM avoids iframe timing issues (doc.write/srcdoc load) and works reliably with React Strict Mode.
  */
 export function StyleIsolationWrapper({ children }: { children: React.ReactNode }) {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
+    const host = hostRef.current;
+    if (!host) return;
 
-    const doc = iframe.contentDocument;
-    if (!doc) return;
-
-    doc.open();
-    doc.write(
-      `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${bankUiCss}</style></head><body><div id="root"></div></body></html>`
-    );
-    doc.close();
-
-    const rootEl = doc.getElementById("root");
-    if (rootEl instanceof HTMLDivElement) {
-      setContainer(rootEl);
+    if (host.shadowRoot) {
+      const root = host.shadowRoot.getElementById("root");
+      if (root instanceof HTMLDivElement) setContainer(root);
+      return;
     }
 
-    return () => setContainer(null);
+    const shadow = host.attachShadow({ mode: "open" });
+    const style = document.createElement("style");
+    style.textContent = bankUiCss;
+    shadow.appendChild(style);
+    const rootEl = document.createElement("div");
+    rootEl.id = "root";
+    shadow.appendChild(rootEl);
+    setContainer(rootEl);
   }, []);
 
-  if (!container) {
-    return (
-      <iframe
-        ref={iframeRef}
-        style={{
-          width: "100%",
-          border: "none",
-          minHeight: "100vh",
-          display: "block",
-        }}
-        title="Bank verification"
-      />
-    );
-  }
-
   return (
-    <>
-      <iframe
-        ref={iframeRef}
-        style={{
-          width: "100%",
-          border: "none",
-          minHeight: "100vh",
-          display: "block",
-        }}
-        title="Bank verification"
-      />
-      {createPortal(children, container)}
-    </>
+    <div ref={hostRef} style={wrapperStyle} data-host="bank-ui-isolation">
+      {container ? createPortal(children, container) : null}
+    </div>
   );
 }
