@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from "react";
-import { clearSession } from "../lib/checkout-session-storage";
+import { useSessionFromStorage } from "../lib/checkout-session-storage";
 import {
   useVerificationForm,
   type UseVerificationFormReturn,
@@ -7,11 +7,12 @@ import {
 import type { BankVerificationProviderProps } from "../types";
 
 /** Config-level context: channelSlug and debug. Used so useSessionStatus can read them before the full provider mounts. */
-const VerificationConfigContext =
-  createContext<{ channelSlug: string; debug: boolean } | null>(null);
+const VerificationConfigContext = createContext<{
+  channelSlug: string;
+  debug: boolean;
+} | null>(null);
 
-export interface VerificationContextValue
-  extends UseVerificationFormReturn {
+export interface VerificationContextValue extends UseVerificationFormReturn {
   channelSlug: string;
   debug: boolean;
   onClose?: () => void;
@@ -40,9 +41,10 @@ function VerificationInner({
   onClose,
 }: BankVerificationProviderProps & { children: React.ReactNode }) {
   const verification = useVerificationForm();
+  const { clearSession } = useSessionFromStorage(channelSlug);
 
   const effectiveOnClose = () => {
-    clearSession(channelSlug);
+    clearSession();
     onClose?.();
   };
 
@@ -68,7 +70,11 @@ export function BankVerificationProvider({
 }: BankVerificationProviderProps & { children: React.ReactNode }) {
   return (
     <VerificationConfigContext.Provider value={{ channelSlug, debug }}>
-      <VerificationInner channelSlug={channelSlug} debug={debug} onClose={onClose}>
+      <VerificationInner
+        channelSlug={channelSlug}
+        debug={debug}
+        onClose={onClose}
+      >
         {children}
       </VerificationInner>
     </VerificationConfigContext.Provider>

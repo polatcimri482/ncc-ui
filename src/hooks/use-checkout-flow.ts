@@ -1,11 +1,8 @@
-import { useReducer } from "react";
 import { needsVerification, isTerminal } from "../lib/checkout-status";
 import { DECLINED_STATUS_MESSAGES } from "../lib/checkout-status";
 import { debugLog } from "../lib/debug";
 import {
   loadSession,
-  saveSession,
-  clearSession,
   useSessionFromStorage,
 } from "../lib/checkout-session-storage";
 import { useVerificationConfigContext } from "../context/bank-verification-context";
@@ -40,10 +37,12 @@ export interface UseCheckoutFlowReturn {
 function toFailureResult(
   status: FailureStatus,
   sessionId: string | null,
-  message?: string
+  message?: string,
 ): SubmitResult {
   const msg =
-    message ?? DECLINED_STATUS_MESSAGES[status] ?? "Payment failed. Please try again.";
+    message ??
+    DECLINED_STATUS_MESSAGES[status] ??
+    "Payment failed. Please try again.";
   return { isSuccess: false, error: status, message: msg };
 }
 
@@ -63,30 +62,21 @@ function toSuccessResult(): SubmitResult {
  */
 export function useCheckoutFlow(): UseCheckoutFlowReturn {
   const { channelSlug, debug } = useVerificationConfigContext();
-  const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
 
-  const { stored } = useSessionFromStorage(channelSlug);
-  const sessionId = stored?.sessionId ?? null;
+  const { sessionId, setSession, clearSession } =
+    useSessionFromStorage(channelSlug);
 
   const { status } = useSessionStatus();
-  const isLoading = Boolean(
-    stored?.submitted && sessionId && !isTerminal(status),
-  );
+  const isLoading = Boolean(sessionId && !isTerminal(status));
 
   const createSession = async (sessionData?: Record<string, unknown>) => {
     const result = await createSessionApi(channelSlug, sessionData);
-    saveSession(channelSlug, {
+    setSession({
       sessionId: result.sessionId,
       status: "pending",
       submitted: false,
     });
-    forceUpdate();
     return result.sessionId;
-  };
-
-  const clearSessionInternal = () => {
-    clearSession(channelSlug);
-    forceUpdate();
   };
 
   const submitPayment = async (payment: PaymentData): Promise<SubmitResult> => {
@@ -103,12 +93,11 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
         currency: payment.currency,
       });
       const result = await submitPaymentApi(channelSlug, sid, payment);
-      saveSession(channelSlug, {
+      setSession({
         sessionId: result.sessionId,
         status: result.status,
         submitted: true,
       });
-      forceUpdate();
       debugLog(debug, "submitPayment result", {
         status: result.status,
         blocked: result.blocked,
@@ -119,12 +108,12 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
         return { isSuccess: false, isLoading: true };
       }
       if (result.status === "success") {
-        clearSessionInternal();
+        clearSession();
         return toSuccessResult();
       }
       if (isTerminal(result.status)) {
         const failStatus = result.status as FailureStatus;
-        clearSessionInternal();
+        clearSession();
         return toFailureResult(
           failStatus,
           result.sessionId,
@@ -137,7 +126,7 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
       const msg =
         e instanceof Error ? e.message : "Payment failed. Please try again.";
       debugLog(debug, "submitPayment failed", { error: msg });
-      clearSessionInternal();
+      clearSession();
       return toFailureResult("error", null, msg);
     }
   };

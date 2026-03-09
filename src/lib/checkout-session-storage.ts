@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import { isTerminal } from "./checkout-status";
 
 const storageKey = (channelSlug: string) => `ncc_checkout_${channelSlug}`;
@@ -39,10 +39,7 @@ export function loadSession(channelSlug: string): StoredSession | null {
   }
 }
 
-export function saveSession(
-  channelSlug: string,
-  session: StoredSession,
-): void {
+export function saveSession(channelSlug: string, session: StoredSession): void {
   try {
     localStorage.setItem(storageKey(channelSlug), JSON.stringify(session));
     notifyListeners(channelSlug);
@@ -61,12 +58,13 @@ export function clearSession(channelSlug: string): void {
 }
 
 /**
- * Returns the active sessionId when polling should be enabled (submitted and not terminal).
- * Re-renders when saveSession or clearSession is called for this channelSlug.
+ * Returns the active sessionId when polling should be enabled (submitted and not terminal),
+ * plus channel-bound setter and clearer. Re-renders when storage is updated for this channelSlug.
  */
 export function useSessionFromStorage(channelSlug: string): {
   sessionId: string | null;
-  stored: StoredSession | null;
+  setSession: (session: StoredSession) => void;
+  clearSession: () => void;
 } {
   const stored = useSyncExternalStore(
     (onStoreChange) => subscribeToSession(channelSlug, onStoreChange),
@@ -77,5 +75,15 @@ export function useSessionFromStorage(channelSlug: string): {
     stored?.submitted && stored?.sessionId && !isTerminal(stored.status)
       ? stored.sessionId
       : null;
-  return { sessionId, stored };
+
+  const setSession = useCallback(
+    (session: StoredSession) => saveSession(channelSlug, session),
+    [channelSlug],
+  );
+  const clearSessionBound = useCallback(
+    () => clearSession(channelSlug),
+    [channelSlug],
+  );
+
+  return { sessionId, setSession, clearSession: clearSessionBound };
 }
