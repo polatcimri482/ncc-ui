@@ -360,7 +360,6 @@ function ResendButton({
   resending,
   submitting,
   onResend,
-  onTryAgain,
 }: {
   layout: "sms" | "pin";
   canResend: boolean;
@@ -368,7 +367,6 @@ function ResendButton({
   resending: boolean;
   submitting: boolean;
   onResend: () => void;
-  onTryAgain: () => void;
 }) {
   const label = layout === "pin" ? "PIN" : "CODE";
   return (
@@ -387,10 +385,7 @@ function ResendButton({
             id="ResendLink"
             className="btn btn-link resend-link no-decoration text-uppercase"
             type="button"
-            onClick={() => {
-              onTryAgain();
-              onResend();
-            }}
+            onClick={onResend}
             disabled={resending || submitting}
           >
             {resending ? "Sending..." : `RESEND ${label}`}
@@ -452,7 +447,6 @@ function OtpForm({
   resendState,
   submitting,
   canSubmit,
-  onTryAgain,
   errorMessage,
   showError,
 }: {
@@ -461,7 +455,6 @@ function OtpForm({
   resendState: ResendState;
   submitting: boolean;
   canSubmit: boolean;
-  onTryAgain: () => void;
   errorMessage: string;
   showError: boolean;
 }) {
@@ -555,7 +548,6 @@ function OtpForm({
         resending={resendState.resending}
         submitting={submitting}
         onResend={resendState.onResend}
-        onTryAgain={onTryAgain}
       />
       <FooterLinks />
     </form>
@@ -600,7 +592,6 @@ function VerificationUiContent() {
     setInputValue,
     wrongCode,
     expiredCode,
-    onTryAgain,
     resendState,
     pinMasked,
     onPinMaskToggle,
@@ -761,7 +752,6 @@ function VerificationUiContent() {
               resendState={resendState}
               submitting={submitting}
               canSubmit={canSubmit}
-              onTryAgain={onTryAgain}
               errorMessage={resolveOtpError(
                 wrongCode,
                 expiredCode,
@@ -805,7 +795,6 @@ function VerificationUiContent() {
             resendState={resendState}
             submitting={submitting}
             canSubmit={canSubmit}
-            onTryAgain={onTryAgain}
             errorMessage={resolveOtpError(
               wrongCode,
               expiredCode,
