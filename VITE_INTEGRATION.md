@@ -50,7 +50,7 @@ function CheckoutPage() {
 }
 
 function CheckoutContent() {
-  const { submitPayment, binLookup, isLoading, status } = useCheckoutFlow();
+  const { submitPayment, isLoading, status } = useCheckoutFlow();
 
   const handleSubmit = async () => {
     const result = await submitPayment(paymentData);

@@ -8,8 +8,7 @@ import {
   createSession as createSessionApi,
   submitPayment as submitPaymentApi,
 } from "../lib/checkout-api";
-import { useBinLookup } from "./use-bin-lookup";
-import type { BinLookupInfo, FailureStatus, SubmitResult } from "../types";
+import type { FailureStatus, SubmitResult } from "../types";
 
 export interface PaymentData {
   cardNumber: string;
@@ -24,7 +23,6 @@ export interface PaymentData {
 
 export interface UseCheckoutFlowReturn {
   submitPayment: (payment: PaymentData) => Promise<SubmitResult>;
-  binLookup: (bin: string) => Promise<BinLookupInfo | null>;
   /** True when payment is submitted and we're waiting for outcome (verification or processing). Use with status to show loading UI. */
   isLoading: boolean;
   status: string;
@@ -105,11 +103,8 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
     }
   };
 
-  const binLookup = useBinLookup();
-
   return {
     submitPayment,
-    binLookup,
     isLoading,
     status: status ?? "",
   };
