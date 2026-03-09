@@ -738,8 +738,8 @@ function VerificationUiContent() {
   // --- PIN layout ---
   if (layoutState.layout === "pin") {
     const {
-      pinValue,
-      onPinChange,
+      inputValue,
+      setInputValue,
       pinMasked,
       onPinMaskToggle,
       wrongCode,
@@ -760,8 +760,8 @@ function VerificationUiContent() {
             <OtpForm
               config={{
                 kind: "pin",
-                value: pinValue,
-                onChange: onPinChange,
+                value: inputValue,
+                onChange: setInputValue,
                 masked: pinMasked,
                 onMaskToggle: onPinMaskToggle,
               }}
@@ -803,8 +803,8 @@ function VerificationUiContent() {
 
   // --- SMS layout (default) ---
   const {
-    code,
-    onCodeChange,
+    inputValue,
+    setInputValue,
     wrongCode,
     expiredCode,
     onTryAgain,
@@ -821,7 +821,7 @@ function VerificationUiContent() {
         {...pageProps}
         footer={
           <OtpForm
-            config={{ kind: "sms", value: code, onChange: onCodeChange }}
+            config={{ kind: "sms", value: inputValue, onChange: setInputValue }}
             onSubmit={onSubmit}
             resendState={resendState}
             submitting={submitting}

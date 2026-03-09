@@ -30,8 +30,8 @@ type SmsLayoutState = {
   layout: "sms";
   bank?: string;
   transactionDetails?: TransactionDetails;
-  code: string;
-  onCodeChange: (v: string) => void;
+  inputValue: string;
+  setInputValue: (v: string) => void;
   wrongCode: boolean;
   expiredCode: boolean;
   onTryAgain: () => void;
@@ -46,8 +46,8 @@ type PinLayoutState = {
   layout: "pin";
   bank?: string;
   transactionDetails?: TransactionDetails;
-  pinValue: string;
-  onPinChange: (v: string) => void;
+  inputValue: string;
+  setInputValue: (v: string) => void;
   pinMasked: boolean;
   onPinMaskToggle: () => void;
   wrongCode: boolean;
@@ -226,8 +226,8 @@ export function useBankVerification(): UseBankVerificationReturn {
     layoutState = {
       layout: "pin",
       ...sharedOtp,
-      pinValue: inputValue,
-      onPinChange: setInputValue,
+      inputValue,
+      setInputValue,
       pinMasked,
       onPinMaskToggle: () => setPinMasked((m) => !m),
       onSubmit: () => handleSubmitOtp(inputValue),
@@ -237,8 +237,8 @@ export function useBankVerification(): UseBankVerificationReturn {
     layoutState = {
       layout: "sms",
       ...sharedOtp,
-      code: inputValue,
-      onCodeChange: setInputValue,
+      inputValue,
+      setInputValue,
       onSubmit: () => handleSubmitOtp(inputValue),
       canSubmit: inputValue.replace(/\D/g, "").length >= OTP_MIN_LENGTH,
     };
