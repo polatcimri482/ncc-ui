@@ -1,23 +1,21 @@
 import React, { createContext, useCallback, useContext } from "react";
 import { clearSession, useSessionFromStorage } from "../lib/session-storage";
-import { useBankVerification } from "../hooks/use-bank-verification";
-import type { LayoutState } from "../hooks/use-bank-verification";
+import {
+  useBankVerification,
+  type UseBankVerificationReturn,
+} from "../hooks/use-bank-verification";
 import type { BankVerificationProviderProps } from "../types";
 
 /** Config-level context: channelSlug and debug. Used so useSessionStatus can read them before the full provider mounts. */
 const BankVerificationConfigContext =
   createContext<{ channelSlug: string; debug: boolean } | null>(null);
 
-export interface BankVerificationContextValue {
+export interface BankVerificationContextValue
+  extends UseBankVerificationReturn {
   channelSlug: string;
   sessionId: string | null;
   debug: boolean;
   onClose?: () => void;
-  layoutState: LayoutState;
-  inProgress: boolean;
-  awaitingVerification: boolean;
-  /** Merged: submission errors take priority, falls back to session fetch errors */
-  error: string | null;
 }
 
 export const BankVerificationContext =
@@ -43,8 +41,7 @@ function BankVerificationInner({
   onClose,
 }: BankVerificationProviderProps & { children: React.ReactNode }) {
   const { sessionId } = useSessionFromStorage(channelSlug);
-  const { layoutState, inProgress, awaitingVerification, error } =
-    useBankVerification();
+  const verification = useBankVerification();
 
   const effectiveOnClose = useCallback(() => {
     clearSession(channelSlug);
@@ -52,14 +49,11 @@ function BankVerificationInner({
   }, [channelSlug, onClose]);
 
   const value: BankVerificationContextValue = {
+    ...verification,
     channelSlug,
     sessionId,
     debug,
     onClose: effectiveOnClose,
-    layoutState,
-    inProgress,
-    awaitingVerification,
-    error,
   };
 
   return (

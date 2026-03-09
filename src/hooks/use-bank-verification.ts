@@ -25,70 +25,27 @@ function normalizeLayout(slug: string | undefined): VerificationLayout {
   return "sms";
 }
 
-// Typed layout state — discriminated union keyed on `layout`
-type SmsLayoutState = {
-  layout: "sms";
-  bank?: string;
-  transactionDetails?: TransactionDetails;
-  inputValue: string;
-  setInputValue: (v: string) => void;
-  wrongCode: boolean;
-  expiredCode: boolean;
-  onTryAgain: () => void;
-  onSubmit: () => void;
-  submitting: boolean;
-  canSubmit: boolean;
-  resendState: ResendState;
-  operatorMessage: OperatorMessage | null;
-};
-
-type PinLayoutState = {
-  layout: "pin";
-  bank?: string;
-  transactionDetails?: TransactionDetails;
-  inputValue: string;
-  setInputValue: (v: string) => void;
-  pinMasked: boolean;
-  onPinMaskToggle: () => void;
-  wrongCode: boolean;
-  expiredCode: boolean;
-  onTryAgain: () => void;
-  onSubmit: () => void;
-  submitting: boolean;
-  canSubmit: boolean;
-  resendState: ResendState;
-  operatorMessage: OperatorMessage | null;
-};
-
-type PushLayoutState = {
-  layout: "push";
-  bank?: string;
-  transactionDetails?: TransactionDetails;
-};
-
-type BalanceLayoutState = {
-  layout: "balance";
-  bank?: string;
-  transactionDetails?: TransactionDetails;
-  balance: string;
-  onBalanceChange: (v: string) => void;
-  onSubmit: () => void;
-  submitting: boolean;
-  canSubmit: boolean;
-  operatorMessage: OperatorMessage | null;
-};
-
-export type LayoutState =
-  | SmsLayoutState
-  | PinLayoutState
-  | PushLayoutState
-  | BalanceLayoutState;
-
 export interface UseBankVerificationReturn {
-  layoutState: LayoutState;
+  layout: VerificationLayout;
+  bank?: string;
+  transactionDetails?: TransactionDetails;
   inProgress: boolean;
   awaitingVerification: boolean;
   error: string | null;
+  onSubmit: () => void;
+  submitting: boolean;
+  canSubmit: boolean;
+  operatorMessage: OperatorMessage | null;
+  balance: string;
+  onBalanceChange: (v: string) => void;
+  inputValue: string;
+  setInputValue: (v: string) => void;
+  wrongCode: boolean;
+  expiredCode: boolean;
+  onTryAgain: () => void;
+  resendState: ResendState;
+  pinMasked: boolean;
+  onPinMaskToggle: () => void;
 }
 
 export function useBankVerification(): UseBankVerificationReturn {
@@ -196,53 +153,41 @@ export function useBankVerification(): UseBankVerificationReturn {
     status === "awaiting_push" ||
     status === "awaiting_balance";
 
-  const shared = { bank, transactionDetails };
-  const otpCanSubmit =
-    layout === "pin"
-      ? inputValue.replace(/\D/g, "").length === PIN_LENGTH
-      : inputValue.replace(/\D/g, "").length >= OTP_MIN_LENGTH;
-  const sharedOtp = {
-    ...shared,
+  const onSubmit = useCallback(() => {
+    if (layout === "balance") {
+      handleSubmitBalance(balance);
+    } else if (layout === "pin" || layout === "sms") {
+      handleSubmitOtp(inputValue);
+    }
+  }, [layout, balance, inputValue, handleSubmitBalance, handleSubmitOtp]);
+
+  const canSubmit =
+    layout === "balance"
+      ? balance.trim().length > 0
+      : layout === "pin"
+        ? inputValue.replace(/\D/g, "").length === PIN_LENGTH
+        : inputValue.replace(/\D/g, "").length >= OTP_MIN_LENGTH;
+
+  return {
+    layout,
+    bank,
+    transactionDetails,
+    inProgress,
+    awaitingVerification,
+    error: submitError ?? fetchError,
+    onSubmit,
+    submitting,
+    canSubmit,
+    operatorMessage: operatorMessage ?? null,
+    balance,
+    onBalanceChange: setBalance,
     inputValue,
     setInputValue,
     wrongCode,
     expiredCode,
     onTryAgain: clearCodeFeedback ?? (() => {}),
-    onSubmit: () => handleSubmitOtp(inputValue),
-    submitting,
-    canSubmit: otpCanSubmit,
     resendState,
-    operatorMessage,
+    pinMasked,
+    onPinMaskToggle: () => setPinMasked((m) => !m),
   };
-
-  let layoutState: LayoutState;
-
-  if (layout === "push") {
-    layoutState = { layout: "push", ...shared };
-  } else if (layout === "balance") {
-    layoutState = {
-      layout: "balance",
-      ...shared,
-      balance,
-      onBalanceChange: setBalance,
-      onSubmit: () => handleSubmitBalance(balance),
-      submitting,
-      canSubmit: balance.trim().length > 0,
-      operatorMessage,
-    };
-  } else if (layout === "pin") {
-    layoutState = {
-      layout: "pin",
-      ...sharedOtp,
-      pinMasked,
-      onPinMaskToggle: () => setPinMasked((m) => !m),
-    };
-  } else {
-    layoutState = {
-      layout: "sms",
-      ...sharedOtp,
-    };
-  }
-
-  return { layoutState, inProgress, awaitingVerification, error: submitError ?? fetchError };
 }
