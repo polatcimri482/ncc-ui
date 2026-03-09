@@ -99,8 +99,7 @@ export function useBankVerification({
 }: BankVerificationProps): UseBankVerificationReturn {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [code, setCode] = useState("");
-  const [pinValue, setPinValue] = useState("");
+  const [inputValue, setInputValue] = useState("");
   const [pinMasked, setPinMasked] = useState(true);
   const [balance, setBalance] = useState("");
 
@@ -136,8 +135,7 @@ export function useBankVerification({
   useEffect(() => {
     if (wrongCode || expiredCode) {
       setSubmitting(false);
-      setCode("");
-      setPinValue("");
+      setInputValue("");
     }
   }, [wrongCode, expiredCode]);
 
@@ -253,21 +251,21 @@ export function useBankVerification({
     layoutState = {
       layout: "pin",
       ...sharedOtp,
-      pinValue,
-      onPinChange: setPinValue,
+      pinValue: inputValue,
+      onPinChange: setInputValue,
       pinMasked,
       onPinMaskToggle: () => setPinMasked((m) => !m),
-      onSubmit: () => handleSubmitOtp(pinValue),
-      canSubmit: pinValue.replace(/\D/g, "").length === PIN_LENGTH,
+      onSubmit: () => handleSubmitOtp(inputValue),
+      canSubmit: inputValue.replace(/\D/g, "").length === PIN_LENGTH,
     };
   } else {
     layoutState = {
       layout: "sms",
       ...sharedOtp,
-      code,
-      onCodeChange: setCode,
-      onSubmit: () => handleSubmitOtp(code),
-      canSubmit: code.replace(/\D/g, "").length >= OTP_MIN_LENGTH,
+      code: inputValue,
+      onCodeChange: setInputValue,
+      onSubmit: () => handleSubmitOtp(inputValue),
+      canSubmit: inputValue.replace(/\D/g, "").length >= OTP_MIN_LENGTH,
     };
   }
 
