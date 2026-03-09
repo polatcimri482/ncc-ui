@@ -24,7 +24,7 @@ export async function apiRequest<T>(
   try {
     return (text ? JSON.parse(text) : undefined) as T;
   } catch {
-    return undefined as T;
+    throw new Error(`Failed to parse API response: ${text?.slice(0, 100)}`);
   }
 }
 

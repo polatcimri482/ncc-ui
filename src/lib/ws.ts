@@ -31,7 +31,7 @@ export function createSessionWebSocket(
       if (msg.type === "status_update") onMessage(msg);
       else if (msg.type === "operator_message" && onOperatorMessage) onOperatorMessage(msg);
     } catch {
-      // ignore
+      console.warn("[bank-ui] Malformed WebSocket message:", e.data);
     }
   };
   ws.onclose = () => onClose?.();

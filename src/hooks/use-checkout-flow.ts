@@ -78,42 +78,42 @@ export function useCheckoutFlow(
   const callbacksRef = useRef(callbacks);
   callbacksRef.current = callbacks;
 
-  const [internalSessionId, setInternalSessionId] = useState<string | null>(null);
-  const sessionIdRef = useRef<string | null>(null);
-  const [processingSessionId, setProcessingSessionId] = useState<string | null>(null);
+  const [verificationSessionId, setVerificationSessionId] = useState<string | null>(null);
+  const latestSessionIdRef = useRef<string | null>(null);
+  const [pollingSessionId, setPollingSessionId] = useState<string | null>(null);
   const sessionUsedForPaymentRef = useRef<string | null>(null);
 
-  const sessionId = sessionIdFromUrl ?? internalSessionId;
-  sessionIdRef.current = sessionId;
+  const sessionId = sessionIdFromUrl ?? verificationSessionId;
+  latestSessionIdRef.current = sessionId;
 
-  const activeSid = sessionIdFromUrl ?? processingSessionId ?? internalSessionId;
-  const isProcessingMode = Boolean(sessionIdFromUrl || processingSessionId);
+  const monitoredSessionId = sessionIdFromUrl ?? pollingSessionId ?? verificationSessionId;
+  const isProcessingMode = Boolean(sessionIdFromUrl || pollingSessionId);
 
   const { status } = useSessionStatus(
     apiBase,
     channelSlug,
-    isProcessingMode ? activeSid : null,
+    isProcessingMode ? monitoredSessionId : null,
     debug
   );
 
   const createSession = useCallback(
     async (sessionData?: Record<string, unknown>) => {
       const result = await createSessionApi(apiBase, channelSlug, apiKey, sessionData);
-      sessionIdRef.current = result.sessionId;
-      setInternalSessionId(result.sessionId);
+      latestSessionIdRef.current = result.sessionId;
+      setVerificationSessionId(result.sessionId);
       return result.sessionId;
     },
     [apiBase, apiKey, channelSlug]
   );
 
   const resetSession = useCallback(() => {
-    sessionIdRef.current = null;
-    setInternalSessionId(null);
+    latestSessionIdRef.current = null;
+    setVerificationSessionId(null);
   }, []);
 
   const resetAll = useCallback(() => {
     sessionUsedForPaymentRef.current = null;
-    setProcessingSessionId(null);
+    setPollingSessionId(null);
     resetSession();
   }, [resetSession]);
 
@@ -121,7 +121,7 @@ export function useCheckoutFlow(
     async (payment: PaymentData) => {
       const cbs = callbacksRef.current;
       try {
-        const currentSid = sessionIdRef.current;
+        const currentSid = latestSessionIdRef.current;
         const alreadyUsed = currentSid && currentSid === sessionUsedForPaymentRef.current;
         const sid = alreadyUsed || !currentSid
           ? await createSession(payment.sessionData)
@@ -134,7 +134,7 @@ export function useCheckoutFlow(
 
         if (!resolveStatus(result.status, result.blocked, result.sessionId, cbs)) {
           debugLog(debug, "processing mode", { sessionId: result.sessionId });
-          setProcessingSessionId(result.sessionId);
+          setPollingSessionId(result.sessionId);
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Payment failed. Please try again.";
@@ -150,7 +150,7 @@ export function useCheckoutFlow(
   const lastHandledStatusRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isProcessingMode || !activeSid) return;
+    if (!isProcessingMode || !monitoredSessionId) return;
 
     const shouldHandle =
       needsVerification(status) ||
@@ -161,16 +161,16 @@ export function useCheckoutFlow(
     if (lastHandledStatusRef.current === status) return;
     lastHandledStatusRef.current = status;
 
-    debugLog(debug, "processing status handled", { status, sessionId: activeSid });
-    resolveStatus(status, false, activeSid, callbacksRef.current);
+    debugLog(debug, "processing status handled", { status, sessionId: monitoredSessionId });
+    resolveStatus(status, false, monitoredSessionId, callbacksRef.current);
 
     if (isTerminal(status)) {
       sessionUsedForPaymentRef.current = null;
       resetAll();
     } else {
-      setProcessingSessionId(null);
+      setPollingSessionId(null);
     }
-  }, [isProcessingMode, activeSid, status, resetAll, debug]);
+  }, [isProcessingMode, monitoredSessionId, status, resetAll, debug]);
 
   const binLookup = useCallback(
     async (bin: string): Promise<BinLookupInfo | null> => {
@@ -194,7 +194,7 @@ export function useCheckoutFlow(
   return {
     submitPayment,
     binLookup,
-    sessionId: activeSid,
+    sessionId: monitoredSessionId,
     resetSession: resetAll,
   };
 }

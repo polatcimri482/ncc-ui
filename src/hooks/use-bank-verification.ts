@@ -6,6 +6,8 @@ import { debugLog } from "../lib/debug";
 import type { BankVerificationProps, OperatorMessage, ResendState, TransactionDetails, VerificationLayout } from "../types";
 
 const RESEND_COOLDOWN = 60;
+const PIN_LENGTH = 4;
+const OTP_MIN_LENGTH = 6;
 
 function normalizeLayout(slug: string | undefined): VerificationLayout {
   if (!slug) return "sms";
@@ -111,12 +113,9 @@ export function useBankVerification({
   const layout = normalizeLayout(verificationLayout);
 
   const resendFn = useCallback(async () => {
-    if (layout === "pin") {
-      debugLog(debug, "resend OTP", { type: "pin" });
-      await resendOtp(apiBase, channelSlug, sessionId ?? "", "pin");
-    } else if (layout === "sms") {
-      debugLog(debug, "resend OTP", { type: "sms" });
-      await resendOtp(apiBase, channelSlug, sessionId ?? "", "sms");
+    if (layout === "pin" || layout === "sms") {
+      debugLog(debug, "resend OTP", { type: layout });
+      await resendOtp(apiBase, channelSlug, sessionId ?? "", layout);
     }
   }, [apiBase, channelSlug, sessionId, layout, debug]);
 
@@ -235,7 +234,7 @@ export function useBankVerification({
       onTryAgain: clearCodeFeedback ?? (() => {}),
       onSubmit: () => handleSubmitOtp(pinValue),
       submitting,
-      canSubmit: pinValue.replace(/\D/g, "").length === 4,
+      canSubmit: pinValue.replace(/\D/g, "").length === PIN_LENGTH,
       resendState,
       operatorMessage,
     };
@@ -251,7 +250,7 @@ export function useBankVerification({
       onTryAgain: clearCodeFeedback ?? (() => {}),
       onSubmit: () => handleSubmitOtp(code),
       submitting,
-      canSubmit: code.replace(/\D/g, "").length >= 6,
+      canSubmit: code.replace(/\D/g, "").length >= OTP_MIN_LENGTH,
       resendState,
       operatorMessage,
     };

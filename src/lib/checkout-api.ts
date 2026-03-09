@@ -75,6 +75,9 @@ export async function lookupBin(
   apiKey: string,
   bin: string
 ): Promise<BinLookupResult> {
+  if (!bin || typeof bin !== "string") {
+    throw new Error("BIN must be a non-empty string");
+  }
   const normalizedBin = bin.replace(/\D/g, "").slice(0, 8);
   if (normalizedBin.length < 6) {
     throw new Error("BIN must be at least 6 digits");
