@@ -6,7 +6,6 @@ import type { SessionStatus } from "../lib/checkout-status";
 import type { TransactionDetails } from "../types";
 
 export function useSessionStatus(
-  apiBase: string,
   channelSlug: string,
   sessionId: string | null,
   debug = false,
@@ -44,7 +43,7 @@ export function useSessionStatus(
     if (!sessionId) return;
     try {
       debugLog(debug, "fetch session status", { channelSlug, sessionId });
-      const data = await getSessionStatus(apiBase, channelSlug, sessionId);
+      const data = await getSessionStatus(channelSlug, sessionId);
       debugLog(debug, "session status", {
         status: data.status,
         verificationLayout: data.verificationLayout,
@@ -63,7 +62,7 @@ export function useSessionStatus(
       debugLog(debug, "fetch status failed", { error: msg });
       setError(msg);
     }
-  }, [apiBase, channelSlug, sessionId, debug]);
+  }, [channelSlug, sessionId, debug]);
 
   useEffect(() => {
     if (enabled) fetchStatus();
@@ -84,7 +83,7 @@ export function useSessionStatus(
       }
     };
 
-    const url = getWebSocketUrl(apiBase, channelSlug, sessionId);
+    const url = getWebSocketUrl(channelSlug, sessionId);
     debugLog(debug, "WebSocket connect", { url });
     const ws = createSessionWebSocket(
       url,
@@ -120,7 +119,7 @@ export function useSessionStatus(
       clearPolling();
       ws.close();
     };
-  }, [enabled, apiBase, channelSlug, sessionId, fetchStatus]);
+  }, [enabled, channelSlug, sessionId, fetchStatus]);
 
   return {
     status,

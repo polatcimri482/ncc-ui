@@ -68,8 +68,6 @@ function resolveStatus(
  * - Processing mode (sessionIdFromUrl provided): monitors an existing session via WebSocket.
  */
 export function useCheckoutFlow(
-  apiBase: string,
-  apiKey: string,
   channelSlug: string,
   callbacks: CheckoutFlowCallbacks,
   sessionIdFromUrl?: string,
@@ -93,7 +91,6 @@ export function useCheckoutFlow(
   const isProcessingMode = Boolean(sessionIdFromUrl || pollingSessionId);
 
   const { status } = useSessionStatus(
-    apiBase,
     channelSlug,
     isProcessingMode ? monitoredSessionId : null,
     debug,
@@ -101,17 +98,12 @@ export function useCheckoutFlow(
 
   const createSession = useCallback(
     async (sessionData?: Record<string, unknown>) => {
-      const result = await createSessionApi(
-        apiBase,
-        channelSlug,
-        apiKey,
-        sessionData,
-      );
+      const result = await createSessionApi(channelSlug, sessionData);
       latestSessionIdRef.current = result.sessionId;
       setVerificationSessionId(result.sessionId);
       return result.sessionId;
     },
-    [apiBase, apiKey, channelSlug],
+    [channelSlug],
   );
 
   const resetSession = useCallback(() => {
@@ -142,13 +134,7 @@ export function useCheckoutFlow(
           amount: payment.amount,
           currency: payment.currency,
         });
-        const result = await submitPaymentApi(
-          apiBase,
-          channelSlug,
-          sid,
-          apiKey,
-          payment,
-        );
+        const result = await submitPaymentApi(channelSlug, sid, payment);
         sessionUsedForPaymentRef.current = result.sessionId;
         debugLog(debug, "submitPayment result", {
           status: result.status,
@@ -171,7 +157,7 @@ export function useCheckoutFlow(
         cbs.onError?.(msg);
       }
     },
-    [apiBase, apiKey, channelSlug, createSession, resetAll, debug],
+    [channelSlug, createSession, resetAll, debug],
   );
 
   const lastHandledStatusRef = useRef<string | null>(null);
@@ -203,7 +189,7 @@ export function useCheckoutFlow(
   const binLookup = useCallback(
     async (bin: string): Promise<BinLookupInfo | null> => {
       try {
-        const r = await lookupBinApi(apiBase, apiKey, bin);
+        const r = await lookupBinApi(bin);
         return {
           brand: r.brand,
           type: r.type,
@@ -216,7 +202,7 @@ export function useCheckoutFlow(
         return null;
       }
     },
-    [apiBase, apiKey],
+    [],
   );
 
   return {

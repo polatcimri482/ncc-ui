@@ -12,7 +12,6 @@ import type { BankVerificationModalProps } from "../types";
 export function BankVerificationModal({
   open,
   onClose,
-  apiBase,
   channelSlug,
   sessionId,
   debug,
@@ -24,7 +23,6 @@ export function BankVerificationModal({
   return (
     <VerificationModal open={open} onClose={onClose ?? (() => {})}>
       <VerificationUi
-        apiBase={apiBase}
         channelSlug={channelSlug}
         sessionId={sessionId}
         debug={debug}

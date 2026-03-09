@@ -1,5 +1,8 @@
 import React from "react";
-import { useBankVerification } from "../../hooks/use-bank-verification";
+import {
+  BankVerificationProvider,
+  useBankVerificationContext,
+} from "../../context/bank-verification-context";
 import type {
   BankVerificationProps,
   ResendState,
@@ -576,29 +579,24 @@ function resolveOtpError(
   return operatorMessage ?? "";
 }
 
-export function VerificationUi({
-  apiBase,
-  channelSlug,
-  sessionId,
-  debug,
-  onSuccess,
-  onDeclined,
-  onError,
-  onRedirect,
-  onClose,
-}: BankVerificationProps) {
-  const { layoutState, inProgress, awaitingVerification, error } =
-    useBankVerification({
-      apiBase,
-      channelSlug,
-      sessionId,
-      debug,
-      onSuccess,
-      onDeclined,
-      onError,
-      onRedirect,
-      onClose,
-    });
+export function VerificationUi(props: BankVerificationProps) {
+  return (
+    <BankVerificationProvider {...props}>
+      <VerificationUiContent />
+    </BankVerificationProvider>
+  );
+}
+
+function VerificationUiContent() {
+  const {
+    channelSlug,
+    sessionId,
+    onClose,
+    layoutState,
+    inProgress,
+    awaitingVerification,
+    error,
+  } = useBankVerificationContext();
 
   if (!channelSlug || !sessionId) return null;
   if (!awaitingVerification && !inProgress) return null;

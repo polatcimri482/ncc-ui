@@ -2,8 +2,6 @@ export type VerificationLayout = "sms" | "pin" | "push" | "balance";
 
 /** Props shared by the verification component and modal */
 export interface BankVerificationProps {
-  /** Base URL for the API (e.g. https://api.example.com). Leave empty to use relative paths. */
-  apiBase: string;
   channelSlug: string;
   sessionId: string | null;
   /** When true, logs flow events and state to console for debugging */

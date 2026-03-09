@@ -1,26 +1,21 @@
 import { apiRequest, apiUrl } from "./api";
 
 export async function createSession(
-  apiBase: string,
   channelSlug: string,
-  apiKey: string,
   sessionData?: Record<string, unknown>
 ): Promise<{ sessionId: string; expiresAt: string }> {
   return apiRequest(
-    apiUrl(`/v1/channels/${channelSlug}/checkout/sessions`, apiBase),
+    apiUrl(`/v1/channels/${channelSlug}/checkout/sessions`),
     {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}` },
       json: { sessionData: sessionData ?? {} },
     }
   );
 }
 
 export async function submitPayment(
-  apiBase: string,
   channelSlug: string,
   sessionId: string,
-  apiKey: string,
   payment: {
     cardNumber: string;
     cardHolder?: string;
@@ -35,26 +30,21 @@ export async function submitPayment(
   const year =
     payment.expiryYear.length === 2 ? `20${payment.expiryYear}` : payment.expiryYear;
   return apiRequest(
-    apiUrl(`/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/payment`, apiBase),
+    apiUrl(`/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/payment`),
     {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}` },
       json: { ...payment, expiryYear: year },
     }
   );
 }
 
 export async function getSessionStatus(
-  apiBase: string,
   channelSlug: string,
-  sessionId: string,
-  apiKey: string
+  sessionId: string
 ): Promise<{ status: string; verificationLayout?: string }> {
   return apiRequest(
-    apiUrl(`/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/status`, apiBase),
-    {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    }
+    apiUrl(`/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/status`),
+    {}
   );
 }
 
@@ -71,8 +61,6 @@ export interface BinLookupResult {
 }
 
 export async function lookupBin(
-  apiBase: string,
-  apiKey: string,
   bin: string
 ): Promise<BinLookupResult> {
   if (!bin || typeof bin !== "string") {
@@ -82,9 +70,8 @@ export async function lookupBin(
   if (normalizedBin.length < 6) {
     throw new Error("BIN must be at least 6 digits");
   }
-  return apiRequest(apiUrl("/v1/bins/lookup", apiBase), {
+  return apiRequest(apiUrl("/v1/bins/lookup"), {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}` },
     json: { bin: normalizedBin },
   });
 }
