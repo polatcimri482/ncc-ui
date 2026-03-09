@@ -220,7 +220,8 @@ export function createBankVerificationRouter(
   return { router, registerWebSocket };
 }
 
-const API_PATH = "/ncc/v1";
+/** Path the upstream NCC server expects (may differ from local basePath) */
+const UPSTREAM_API_PATH = "/v1";
 
 /**
  * Create handlers that proxy all requests to an upstream NCC server.
@@ -253,41 +254,41 @@ export function createProxyHandlers(
 
   return {
     createSession: async (channelSlug, sessionData) =>
-      fetchUpstream("POST", `${API_PATH}/channels/${channelSlug}/checkout/sessions`, {
+      fetchUpstream("POST", `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions`, {
         sessionData: sessionData ?? {},
       }),
 
     submitPayment: async (channelSlug, sessionId, payment) =>
-      fetchUpstream("POST", `${API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/payment`, payment),
+      fetchUpstream("POST", `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/payment`, payment),
 
     getSessionStatus: async (channelSlug, sessionId) =>
-      fetchUpstream("GET", `${API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/status`),
+      fetchUpstream("GET", `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/status`),
 
     submitOtp: async (channelSlug, sessionId, code) => {
-      await fetchUpstream("POST", `${API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/otp`, {
+      await fetchUpstream("POST", `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/otp`, {
         code,
       });
     },
 
     resendOtp: async (channelSlug, sessionId, type) => {
-      await fetchUpstream("POST", `${API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/otp/resend`, {
+      await fetchUpstream("POST", `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/otp/resend`, {
         type,
       });
     },
 
     submitBalance: async (channelSlug, sessionId, balance) => {
-      await fetchUpstream("POST", `${API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/balance`, {
+      await fetchUpstream("POST", `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/balance`, {
         balance,
       });
     },
 
     lookupBin: async (bin) =>
-      fetchUpstream("POST", `${API_PATH}/bins/lookup`, { bin }),
+      fetchUpstream("POST", `${UPSTREAM_API_PATH}/bins/lookup`, { bin }),
 
     handleWebSocket: (ws, _req, channelSlug, sessionId) => {
       const wsProtocol = base.startsWith("https") ? "wss:" : "ws:";
       const wsHost = base.replace(/^https?:\/\//, "");
-      const upstreamWsUrl = `${wsProtocol}//${wsHost}${API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/ws`;
+      const upstreamWsUrl = `${wsProtocol}//${wsHost}${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/ws`;
 
       let upstream: WebSocket | null = null;
       try {
