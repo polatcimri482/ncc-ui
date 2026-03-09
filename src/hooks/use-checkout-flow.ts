@@ -71,7 +71,6 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
   const { status } = useSessionStatus();
 
   const pendingResolveRef = useRef<((result: SubmitResult) => void) | null>(null);
-  const prevSessionIdRef = useRef<string | null>(null);
 
   const createSession = useCallback(
     async (sessionData?: Record<string, unknown>) => {
@@ -202,13 +201,6 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
       clearSessionInternal();
     }
   }, [isPolling, sessionId, status, clearSessionInternal, resolvePending, debug]);
-
-  useEffect(() => {
-    if (prevSessionIdRef.current !== null && sessionId === null && pendingResolveRef.current) {
-      resolvePending(toFailureResult("cancelled", null, "Verification cancelled."));
-    }
-    prevSessionIdRef.current = sessionId;
-  }, [sessionId, resolvePending]);
 
   const binLookup = useBinLookup();
 
