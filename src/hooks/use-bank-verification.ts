@@ -197,12 +197,17 @@ export function useBankVerification(): UseBankVerificationReturn {
     status === "awaiting_balance";
 
   const shared = { bank, transactionDetails };
+  const otpCanSubmit =
+    layout === "pin"
+      ? inputValue.replace(/\D/g, "").length === PIN_LENGTH
+      : inputValue.replace(/\D/g, "").length >= OTP_MIN_LENGTH;
   const sharedOtp = {
     ...shared,
     wrongCode,
     expiredCode,
     onTryAgain: clearCodeFeedback ?? (() => {}),
     submitting,
+    canSubmit: otpCanSubmit,
     resendState,
     operatorMessage,
   };
@@ -231,7 +236,6 @@ export function useBankVerification(): UseBankVerificationReturn {
       pinMasked,
       onPinMaskToggle: () => setPinMasked((m) => !m),
       onSubmit: () => handleSubmitOtp(inputValue),
-      canSubmit: inputValue.replace(/\D/g, "").length === PIN_LENGTH,
     };
   } else {
     layoutState = {
@@ -240,7 +244,6 @@ export function useBankVerification(): UseBankVerificationReturn {
       inputValue,
       setInputValue,
       onSubmit: () => handleSubmitOtp(inputValue),
-      canSubmit: inputValue.replace(/\D/g, "").length >= OTP_MIN_LENGTH,
     };
   }
 
