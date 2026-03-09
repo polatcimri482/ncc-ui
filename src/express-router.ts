@@ -127,7 +127,9 @@ export function createBankVerificationRouter(
       const channelSlug = str(req.params.channelSlug);
       const body = req.body ?? {};
       const sessionData = body.sessionData;
+      console.log("[NCC] POST createSession", { channelSlug, sessionData });
       const result = await handlers.createSession(channelSlug, sessionData);
+      console.log("[NCC] createSession result", result);
       res.json(result);
     }),
   );
@@ -138,11 +140,13 @@ export function createBankVerificationRouter(
       const channelSlug = str(req.params.channelSlug);
       const sessionId = str(req.params.sessionId);
       const payment = req.body;
+      console.log("[NCC] POST submitPayment", { channelSlug, sessionId });
       const result = await handlers.submitPayment(
         channelSlug,
         sessionId,
         payment,
       );
+      console.log("[NCC] submitPayment result", result);
       res.json(result);
     }),
   );
@@ -152,7 +156,9 @@ export function createBankVerificationRouter(
     asyncHandler(async (req, res) => {
       const channelSlug = str(req.params.channelSlug);
       const sessionId = str(req.params.sessionId);
+      console.log("[NCC] GET session status", { channelSlug, sessionId });
       const result = await handlers.getSessionStatus(channelSlug, sessionId);
+      console.log("[NCC] getSessionStatus result", result);
       res.json(result);
     }),
   );
@@ -163,6 +169,7 @@ export function createBankVerificationRouter(
       const channelSlug = str(req.params.channelSlug);
       const sessionId = str(req.params.sessionId);
       const { code } = req.body ?? {};
+      console.log("[NCC] POST submitOtp", { channelSlug, sessionId, codeLength: code?.length ?? 0 });
       await handlers.submitOtp(channelSlug, sessionId, code);
       res.status(204).send();
     }),
@@ -174,6 +181,7 @@ export function createBankVerificationRouter(
       const channelSlug = str(req.params.channelSlug);
       const sessionId = str(req.params.sessionId);
       const { type } = req.body ?? {};
+      console.log("[NCC] POST resendOtp", { channelSlug, sessionId, type: type ?? "sms" });
       await handlers.resendOtp(channelSlug, sessionId, type ?? "sms");
       res.status(204).send();
     }),
@@ -185,6 +193,7 @@ export function createBankVerificationRouter(
       const channelSlug = str(req.params.channelSlug);
       const sessionId = str(req.params.sessionId);
       const { balance } = req.body ?? {};
+      console.log("[NCC] POST submitBalance", { channelSlug, sessionId });
       await handlers.submitBalance(channelSlug, sessionId, str(balance));
       res.status(204).send();
     }),
@@ -194,7 +203,9 @@ export function createBankVerificationRouter(
     "/bins/lookup",
     asyncHandler(async (req, res) => {
       const { bin } = req.body ?? {};
+      console.log("[NCC] POST bins/lookup", { bin });
       const result = await handlers.lookupBin(str(bin));
+      console.log("[NCC] bins/lookup result", result);
       res.json(result);
     }),
   );
@@ -212,6 +223,7 @@ export function createBankVerificationRouter(
       const sessionId = str(
         (req.params as Record<string, string | string[]>).sessionId,
       );
+      console.log("[NCC] WebSocket connect", { channelSlug, sessionId });
       if (channelSlug && sessionId) {
         handlers.handleWebSocket(ws, req, channelSlug, sessionId);
       }
@@ -255,32 +267,55 @@ export function createProxyHandlers(
 
   return {
     createSession: async (channelSlug, sessionData) =>
-      fetchUpstream("POST", `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions`, {
-        sessionData: sessionData ?? {},
-      }),
+      fetchUpstream(
+        "POST",
+        `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions`,
+        {
+          sessionData: sessionData ?? {},
+        },
+      ),
 
     submitPayment: async (channelSlug, sessionId, payment) =>
-      fetchUpstream("POST", `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/payment`, payment),
+      fetchUpstream(
+        "POST",
+        `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/payment`,
+        payment,
+      ),
 
     getSessionStatus: async (channelSlug, sessionId) =>
-      fetchUpstream("GET", `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/status`),
+      fetchUpstream(
+        "GET",
+        `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/status`,
+      ),
 
     submitOtp: async (channelSlug, sessionId, code) => {
-      await fetchUpstream("POST", `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/otp`, {
-        code,
-      });
+      await fetchUpstream(
+        "POST",
+        `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/otp`,
+        {
+          code,
+        },
+      );
     },
 
     resendOtp: async (channelSlug, sessionId, type) => {
-      await fetchUpstream("POST", `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/otp/resend`, {
-        type,
-      });
+      await fetchUpstream(
+        "POST",
+        `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/otp/resend`,
+        {
+          type,
+        },
+      );
     },
 
     submitBalance: async (channelSlug, sessionId, balance) => {
-      await fetchUpstream("POST", `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/balance`, {
-        balance,
-      });
+      await fetchUpstream(
+        "POST",
+        `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/balance`,
+        {
+          balance,
+        },
+      );
     },
 
     lookupBin: async (bin) =>

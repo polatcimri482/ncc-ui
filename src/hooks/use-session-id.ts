@@ -30,12 +30,23 @@ function subscribeToSession(
   };
 }
 
+/** Cache getSnapshot result by channel+raw so useSyncExternalStore gets stable references. */
+const snapshotCache = new Map<string, { raw: string; parsed: StoredSession }>();
+
 function loadSession(channelSlug: string): StoredSession | null {
   try {
     const raw = localStorage.getItem(storageKey(channelSlug));
-    if (!raw) return null;
-    return JSON.parse(raw) as StoredSession;
+    if (!raw) {
+      snapshotCache.delete(channelSlug);
+      return null;
+    }
+    const cached = snapshotCache.get(channelSlug);
+    if (cached && cached.raw === raw) return cached.parsed;
+    const parsed = JSON.parse(raw) as StoredSession;
+    snapshotCache.set(channelSlug, { raw, parsed });
+    return parsed;
   } catch {
+    snapshotCache.delete(channelSlug);
     return null;
   }
 }

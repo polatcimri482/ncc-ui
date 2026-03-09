@@ -14,8 +14,11 @@ import type { BankVerificationModalProps } from "../types";
  * is handled internally when the user closes the modal.
  */
 export function BankVerificationModal({ onClose }: BankVerificationModalProps) {
-  const { awaitingVerification, inProgress, onClose: contextOnClose } =
-    useVerificationContext();
+  const {
+    awaitingVerification,
+    inProgress,
+    onClose: contextOnClose,
+  } = useVerificationContext();
   const { sessionId } = useSessionFromStorage();
 
   const open = Boolean(sessionId && (awaitingVerification || inProgress));

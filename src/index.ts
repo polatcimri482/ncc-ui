@@ -29,5 +29,12 @@ export type {
   SubmitResult,
 } from "./types";
 export type { ErrorBoundaryProps } from "./components/error-boundary";
-export type { VerificationStatus, TerminalStatus, SessionStatus } from "./lib/checkout-status";
-export type { PaymentData, UseCheckoutFlowReturn } from "./hooks/use-checkout-flow";
+export type {
+  VerificationStatus,
+  TerminalStatus,
+  SessionStatus,
+} from "./lib/checkout-status";
+export type {
+  PaymentData,
+  UseCheckoutFlowReturn,
+} from "./hooks/use-checkout-flow";
