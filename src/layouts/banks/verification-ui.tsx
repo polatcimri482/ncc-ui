@@ -588,8 +588,8 @@ function VerificationUiContent() {
     submitting,
     canSubmit,
     operatorMessage,
-    inputValue,
-    setInputValue,
+    otpValue,
+    setOtpValue,
     wrongCode,
     expiredCode,
     resendState,
@@ -743,8 +743,8 @@ function VerificationUiContent() {
             <OtpForm
               config={{
                 kind: "pin",
-                value: inputValue,
-                onChange: setInputValue,
+                value: otpValue,
+                onChange: setOtpValue,
                 masked: pinMasked,
                 onMaskToggle: onPinMaskToggle,
               }}
@@ -790,7 +790,7 @@ function VerificationUiContent() {
         {...pageProps}
         footer={
           <OtpForm
-            config={{ kind: "sms", value: inputValue, onChange: setInputValue }}
+            config={{ kind: "sms", value: otpValue, onChange: setOtpValue }}
             onSubmit={onSubmit}
             resendState={resendState}
             submitting={submitting}
