@@ -15,7 +15,7 @@ function notifyListeners(channelSlug: string): void {
   listeners.get(channelSlug)?.forEach((cb) => cb());
 }
 
-export function subscribeToSession(
+function subscribeToSession(
   channelSlug: string,
   callback: () => void,
 ): () => void {
@@ -29,7 +29,7 @@ export function subscribeToSession(
   };
 }
 
-export function loadSession(channelSlug: string): StoredSession | null {
+function loadSession(channelSlug: string): StoredSession | null {
   try {
     const raw = localStorage.getItem(storageKey(channelSlug));
     if (!raw) return null;
@@ -39,7 +39,7 @@ export function loadSession(channelSlug: string): StoredSession | null {
   }
 }
 
-export function saveSession(channelSlug: string, session: StoredSession): void {
+function saveSession(channelSlug: string, session: StoredSession): void {
   try {
     localStorage.setItem(storageKey(channelSlug), JSON.stringify(session));
     notifyListeners(channelSlug);
@@ -48,7 +48,7 @@ export function saveSession(channelSlug: string, session: StoredSession): void {
   }
 }
 
-export function clearSession(channelSlug: string): void {
+function clearSession(channelSlug: string): void {
   try {
     localStorage.removeItem(storageKey(channelSlug));
     notifyListeners(channelSlug);

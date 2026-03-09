@@ -1,10 +1,7 @@
 import { needsVerification, isTerminal } from "../lib/checkout-status";
 import { DECLINED_STATUS_MESSAGES } from "../lib/checkout-status";
 import { debugLog } from "../lib/debug";
-import {
-  loadSession,
-  useSessionFromStorage,
-} from "../lib/checkout-session-storage";
+import { useSessionFromStorage } from "../lib/checkout-session-storage";
 import { useVerificationConfigContext } from "../context/bank-verification-context";
 import { useSessionStatus } from "./use-session-status";
 import {
@@ -81,11 +78,8 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
 
   const submitPayment = async (payment: PaymentData): Promise<SubmitResult> => {
     try {
-      const current = loadSession(channelSlug);
       const sid =
-        current?.submitted || !current?.sessionId
-          ? await createSession(payment.sessionData)
-          : current!.sessionId;
+        sessionId ?? (await createSession(payment.sessionData));
 
       debugLog(debug, "submitPayment", {
         sessionId: sid,
