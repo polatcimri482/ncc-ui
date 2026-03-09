@@ -4,10 +4,11 @@ import { T as TransactionDetails } from './types-B5yvUdqW.cjs';
 
 /**
  * Express router for bank verification API.
- * Use from backend: import { createBankVerificationRouter, createProxyHandlers } from "@ncc/bank-verification-ui/express"
+ * Use from backend: import { createBankVerificationRouter, createProxyHandlers, createMockHandlers } from "@ncc/bank-verification-ui/express"
  *
  * Flow: Frontend -> Router (same-origin) -> Upstream NCC server
- * Use createProxyHandlers(upstreamUrl) to proxy all requests to another server.
+ * - createProxyHandlers(upstreamUrl) — proxy to another server
+ * - createMockHandlers() — stub responses for local testing
  */
 
 /** App with express-ws .ws() method. Call expressWs(app) before registerWebSocket. */
@@ -77,6 +78,7 @@ declare function createBankVerificationRouter(handlers: BankVerificationRouterHa
 declare function createProxyHandlers(upstreamBaseUrl: string): BankVerificationRouterHandlers;
 /**
  * Create handlers that return mock/stub responses for local testing.
+ * Mimics the checkout flow: createSession → submitPayment → getSessionStatus → submitOtp/balance.
  * No upstream server required.
  */
 declare function createMockHandlers(): BankVerificationRouterHandlers;

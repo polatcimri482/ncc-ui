@@ -1,6 +1,7 @@
 // Primary components
 export { BankVerificationModal } from "./components/bank-verification-modal";
 export { BankVerificationProvider } from "./context/bank-verification-context";
+export { ErrorBoundary } from "./components/error-boundary";
 
 // Hooks
 export { useBinLookup } from "./hooks/use-bin-lookup";
@@ -27,5 +28,6 @@ export type {
   FailureStatus,
   SubmitResult,
 } from "./types";
+export type { ErrorBoundaryProps } from "./components/error-boundary";
 export type { VerificationStatus, TerminalStatus, SessionStatus } from "./lib/checkout-status";
 export type { PaymentData, UseCheckoutFlowReturn } from "./hooks/use-checkout-flow";

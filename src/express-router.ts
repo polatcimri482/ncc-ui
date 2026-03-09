@@ -310,34 +310,49 @@ export function createProxyHandlers(
   };
 }
 
+type MockSession = {
+  status: string;
+  verificationLayout?: string;
+  bank?: string;
+  transactionDetails?: TransactionDetails;
+};
+
+const DEFAULT_TRANSACTION: TransactionDetails = {
+  merchantName: "Test Merchant",
+  amount: "100.00",
+  date: new Date().toISOString().slice(0, 10),
+  cardNumber: "****1234",
+  cardBrand: "visa",
+};
+
+function txFromPayment(payment?: PaymentPayload): TransactionDetails {
+  if (!payment) return DEFAULT_TRANSACTION;
+  const last4 = String(payment.cardNumber ?? "").slice(-4);
+  return {
+    merchantName: "Test Merchant",
+    amount: String(payment.amount ?? 100),
+    date: new Date().toISOString().slice(0, 10),
+    cardNumber: last4 ? `****${last4}` : "****1234",
+    cardBrand: "visa",
+  };
+}
+
 /**
  * Create handlers that return mock/stub responses for local testing.
+ * Mimics the checkout flow: createSession → submitPayment → getSessionStatus → submitOtp/balance.
  * No upstream server required.
  */
 export function createMockHandlers(): BankVerificationRouterHandlers {
-  const sessions = new Map<
-    string,
-    {
-      status: string;
-      verificationLayout?: string;
-      bank?: string;
-      transactionDetails?: TransactionDetails;
-    }
-  >();
+  const sessions = new Map<string, MockSession>();
 
   return {
-    createSession: async (channelSlug, _sessionData) => {
+    createSession: async (channelSlug) => {
       const sessionId = `mock-${channelSlug}-${Date.now()}`;
       sessions.set(sessionId, {
         status: "pending",
         verificationLayout: "sms",
         bank: "Mock Bank",
-        transactionDetails: {
-          merchantName: "Test Merchant",
-          amount: "100.00",
-          date: new Date().toISOString().slice(0, 10),
-          cardNumber: "****1234",
-        },
+        transactionDetails: DEFAULT_TRANSACTION,
       });
       return {
         sessionId,
@@ -345,9 +360,18 @@ export function createMockHandlers(): BankVerificationRouterHandlers {
       };
     },
 
-    submitPayment: async (_channelSlug, sessionId, _payment) => {
-      const s = sessions.get(sessionId);
-      if (s) s.status = "awaiting_sms";
+    submitPayment: async (_channelSlug, sessionId, payment) => {
+      const s =
+        sessions.get(sessionId) ??
+        ({
+          status: "pending",
+          verificationLayout: "sms",
+          bank: "Mock Bank",
+          transactionDetails: DEFAULT_TRANSACTION,
+        } as MockSession);
+      s.status = "awaiting_sms";
+      s.transactionDetails = txFromPayment(payment);
+      sessions.set(sessionId, s);
       return { sessionId, status: "awaiting_sms", blocked: false };
     },
 
@@ -355,14 +379,10 @@ export function createMockHandlers(): BankVerificationRouterHandlers {
       const s = sessions.get(sessionId);
       return (
         s ?? {
-          status: "pending",
+          status: "awaiting_sms",
           verificationLayout: "sms",
           bank: "Mock Bank",
-          transactionDetails: {
-            merchantName: "Test Merchant",
-            amount: "100.00",
-            date: new Date().toISOString().slice(0, 10),
-          },
+          transactionDetails: DEFAULT_TRANSACTION,
         }
       );
     },
@@ -388,17 +408,22 @@ export function createMockHandlers(): BankVerificationRouterHandlers {
     }),
 
     handleWebSocket: (ws, _req, _channelSlug, sessionId) => {
-      const s = sessions.get(sessionId);
-      if (s) {
-        ws.send(
-          JSON.stringify({
-            status: s.status,
-            verificationLayout: s.verificationLayout,
-            bank: s.bank,
-            transactionDetails: s.transactionDetails,
-          }),
-        );
-      }
+      const sendStatus = () => {
+        const s = sessions.get(sessionId);
+        if (s && ws.readyState === 1) {
+          ws.send(
+            JSON.stringify({
+              status: s.status,
+              verificationLayout: s.verificationLayout,
+              bank: s.bank,
+              transactionDetails: s.transactionDetails,
+            }),
+          );
+        }
+      };
+      sendStatus();
+      const interval = setInterval(sendStatus, 1000);
+      ws.on("close", () => clearInterval(interval));
     },
   };
 }

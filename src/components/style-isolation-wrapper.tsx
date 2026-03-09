@@ -1,14 +1,15 @@
-import React, { useEffect, useRef } from "react";
-import { createRoot } from "react-dom/client";
+import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { bankUiCss } from "../styles/bank-ui-css";
 
 /**
  * Wraps children in an iframe for full style isolation from the host.
  * Host CSS cannot affect the content; package CSS does not leak out.
+ * Uses createPortal so children stay in the main React tree; no separate root = no render loop.
  */
 export function StyleIsolationWrapper({ children }: { children: React.ReactNode }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const rootRef = useRef<ReturnType<typeof createRoot> | null>(null);
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -24,33 +25,41 @@ export function StyleIsolationWrapper({ children }: { children: React.ReactNode 
     doc.close();
 
     const rootEl = doc.getElementById("root");
-    if (!rootEl) return;
+    if (rootEl instanceof HTMLDivElement) {
+      setContainer(rootEl);
+    }
 
-    rootRef.current = createRoot(rootEl);
-    rootRef.current.render(children);
-
-    return () => {
-      rootRef.current?.unmount();
-      rootRef.current = null;
-    };
+    return () => setContainer(null);
   }, []);
 
-  useEffect(() => {
-    if (rootRef.current) {
-      rootRef.current.render(children);
-    }
-  }, [children]);
+  if (!container) {
+    return (
+      <iframe
+        ref={iframeRef}
+        style={{
+          width: "100%",
+          border: "none",
+          minHeight: "100vh",
+          display: "block",
+        }}
+        title="Bank verification"
+      />
+    );
+  }
 
   return (
-    <iframe
-      ref={iframeRef}
-      style={{
-        width: "100%",
-        border: "none",
-        minHeight: "100vh",
-        display: "block",
-      }}
-      title="Bank verification"
-    />
+    <>
+      <iframe
+        ref={iframeRef}
+        style={{
+          width: "100%",
+          border: "none",
+          minHeight: "100vh",
+          display: "block",
+        }}
+        title="Bank verification"
+      />
+      {createPortal(children, container)}
+    </>
   );
 }

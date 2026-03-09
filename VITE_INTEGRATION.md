@@ -100,8 +100,4 @@ Routes: `/ncc/v1/channels/...`, `/ncc/v1/bins/lookup`, WebSocket at `/ncc/v1/...
 
 ### Local Testing
 
-From this package:
-
-1. `npm run dev:mock` — Mock server (no upstream, offline)
-2. or `npm run dev:server` — Proxy to upstream NCC
-3. `npm run dev` — Vite proxies `/ncc` to the backend
+From this package, run `npm run dev` or `npm run dev:mock`. Preview app and NCC API run together on http://localhost:5173. Default proxies to upstream; `dev:mock` uses mock handlers (offline).

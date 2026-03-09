@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { getSessionStatus, getWebSocketUrl } from "../lib/verification-api";
 import { createSessionWebSocket } from "../lib/ws";
 import { debugLog } from "../lib/debug";
@@ -34,12 +34,12 @@ export function useSessionStatus() {
     null,
   );
 
-  const clearCodeFeedback = () => {
+  const clearCodeFeedback = useCallback(() => {
     setWrongCode(false);
     setExpiredCode(false);
-  };
+  }, []);
 
-  const fetchStatus = async () => {
+  const fetchStatus = useCallback(async () => {
     if (!sessionId) return;
     try {
       debugLog(debug, "fetch session status", { channelSlug, sessionId });
@@ -62,7 +62,7 @@ export function useSessionStatus() {
       debugLog(debug, "fetch status failed", { error: msg });
       setError(msg);
     }
-  };
+  }, [channelSlug, sessionId, debug]);
 
   useEffect(() => {
     if (hasSessionId) fetchStatus();
@@ -71,7 +71,7 @@ export function useSessionStatus() {
   useEffect(() => {
     setWrongCode(false);
     setExpiredCode(false);
-  }, [channelSlug, sessionId, verificationLayout]);
+  }, [sessionId, verificationLayout]);
 
   useEffect(() => {
     if (!hasSessionId || !sessionId) return;

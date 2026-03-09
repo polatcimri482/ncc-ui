@@ -1,7 +1,7 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
 import { B as BankVerificationModalProps, a as BankVerificationProviderProps, b as BinLookupInfo, S as SubmitResult, T as TransactionDetails } from './types-B5yvUdqW.js';
 export { c as BankVerificationProps, F as FailureStatus, V as VerificationLayout } from './types-B5yvUdqW.js';
-import React from 'react';
+import React, { Component, ReactNode, ErrorInfo } from 'react';
 
 /**
  * Bank verification UI rendered inside a modal overlay.
@@ -15,6 +15,26 @@ declare function BankVerificationModal({ onClose }: BankVerificationModalProps):
 declare function BankVerificationProvider({ children, channelSlug, debug, onClose, }: BankVerificationProviderProps & {
     children: React.ReactNode;
 }): react_jsx_runtime.JSX.Element;
+
+interface ErrorBoundaryProps {
+    children: ReactNode;
+    fallback?: ReactNode | ((error: Error, reset: () => void) => ReactNode);
+    onError?: (error: Error, errorInfo: ErrorInfo) => void;
+}
+interface ErrorBoundaryState {
+    error: Error | null;
+}
+/**
+ * Catches React errors in child components and displays a fallback UI.
+ * Use around verification UI or checkout flows to prevent full app crashes.
+ */
+declare class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    state: ErrorBoundaryState;
+    static getDerivedStateFromError(error: Error): ErrorBoundaryState;
+    componentDidCatch(error: Error, errorInfo: ErrorInfo): void;
+    reset: () => void;
+    render(): ReactNode;
+}
 
 declare function useBinLookup(): (bin: string) => Promise<BinLookupInfo | null>;
 
@@ -75,4 +95,4 @@ declare function useSessionStatus(): {
     fetchStatus: () => Promise<void>;
 };
 
-export { BankVerificationModal, BankVerificationModalProps, BankVerificationProvider, BankVerificationProviderProps, BinLookupInfo, DECLINED_STATUS_MESSAGES, type PaymentData, type SessionStatus, SubmitResult, TERMINAL_STATUSES, type TerminalStatus, TransactionDetails, type UseCheckoutFlowReturn, VERIFICATION_STATUSES, type VerificationStatus, isTerminal, needsVerification, useBinLookup, useCheckoutFlow, useSessionStatus };
+export { BankVerificationModal, BankVerificationModalProps, BankVerificationProvider, BankVerificationProviderProps, BinLookupInfo, DECLINED_STATUS_MESSAGES, ErrorBoundary, type ErrorBoundaryProps, type PaymentData, type SessionStatus, SubmitResult, TERMINAL_STATUSES, type TerminalStatus, TransactionDetails, type UseCheckoutFlowReturn, VERIFICATION_STATUSES, type VerificationStatus, isTerminal, needsVerification, useBinLookup, useCheckoutFlow, useSessionStatus };

@@ -1,6 +1,7 @@
 import React from "react";
 import { VerificationUi } from "../layouts/banks/verification-ui";
 import { VerificationModal } from "./verification-modal";
+import { ErrorBoundary } from "./error-boundary";
 import { useSessionFromStorage } from "../hooks/use-session-id";
 import { useVerificationContext } from "../context/bank-verification-context";
 import type { BankVerificationModalProps } from "../types";
@@ -26,7 +27,9 @@ export function BankVerificationModal({ onClose }: BankVerificationModalProps) {
 
   return (
     <VerificationModal open={open} onClose={handleClose}>
-      <VerificationUi />
+      <ErrorBoundary>
+        <VerificationUi />
+      </ErrorBoundary>
     </VerificationModal>
   );
 }

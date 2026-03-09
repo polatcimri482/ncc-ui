@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useCallback, useContext, useMemo } from "react";
 import { useSessionFromStorage } from "../hooks/use-session-id";
 import {
   useVerificationForm,
@@ -43,17 +43,43 @@ function VerificationInner({
   const verification = useVerificationForm();
   const { clearSession } = useSessionFromStorage();
 
-  const effectiveOnClose = () => {
+  const effectiveOnClose = useCallback(() => {
     clearSession();
     onClose?.();
-  };
+  }, [clearSession, onClose]);
 
-  const value: VerificationContextValue = {
-    ...verification,
-    channelSlug,
-    debug,
-    onClose: effectiveOnClose,
-  };
+  const value = useMemo<VerificationContextValue>(
+    () => ({
+      ...verification,
+      channelSlug,
+      debug,
+      onClose: effectiveOnClose,
+    }),
+    [
+      verification.layout,
+      verification.bank,
+      verification.transactionDetails,
+      verification.inProgress,
+      verification.awaitingVerification,
+      verification.error,
+      verification.submitting,
+      verification.canSubmit,
+      verification.wrongCode,
+      verification.expiredCode,
+      verification.balance,
+      verification.otpValue,
+      verification.pinMasked,
+      verification.operatorMessage,
+      verification.resendState,
+      verification.onSubmit,
+      verification.setBalance,
+      verification.setOtpValue,
+      verification.onPinMaskToggle,
+      channelSlug,
+      debug,
+      effectiveOnClose,
+    ],
+  );
 
   return (
     <VerificationContext.Provider value={value}>

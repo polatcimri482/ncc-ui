@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSessionStatus } from "./use-session-status";
 import { useOtpResendCountdown } from "./use-otp-resend-countdown";
 import { submitOtp, resendOtp, submitBalance } from "../lib/verification-api";
@@ -135,13 +135,15 @@ export function useVerificationForm(): UseVerificationFormReturn {
     status === "awaiting_push" ||
     status === "awaiting_balance";
 
-  const onSubmit = () => {
+  const onSubmit = useCallback(() => {
     if (layout === "balance") {
       handleSubmitBalance(balance);
     } else if (layout === "pin" || layout === "sms") {
       handleSubmitOtp(otpValue);
     }
-  };
+  }, [layout, balance, otpValue]);
+
+  const onPinMaskToggle = useCallback(() => setPinMasked((m) => !m), []);
 
   const canSubmit =
     layout === "balance"
@@ -169,6 +171,6 @@ export function useVerificationForm(): UseVerificationFormReturn {
     expiredCode,
     resendState,
     pinMasked,
-    onPinMaskToggle: () => setPinMasked((m) => !m),
+    onPinMaskToggle,
   };
 }
