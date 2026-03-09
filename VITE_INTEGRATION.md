@@ -73,3 +73,34 @@ function CheckoutContent() {
 ```
 
 With `debug={true}` on the provider, logs session status, WebSocket events, and OTP/balance submissions to the console.
+
+## Backend: Express Router
+
+For same-origin setups, add the Express router to proxy NCC API requests:
+
+```ts
+import express from "express";
+import expressWs from "express-ws";
+import {
+  createBankVerificationRouter,
+  createProxyHandlers,
+} from "@ncc/bank-verification-ui/express";
+
+const app = express();
+expressWs(app);
+app.use(express.json());
+
+const handlers = createProxyHandlers("https://srv1462130.hstgr.cloud");
+const { router, registerWebSocket } = createBankVerificationRouter(handlers);
+app.use(router);
+registerWebSocket(app);
+```
+
+Routes: `/ncc/v1/channels/...`, `/ncc/v1/bins/lookup`, WebSocket at `/ncc/v1/.../ws`. Requires `express` and `express-ws`.
+
+### Local Testing
+
+From this package:
+
+1. `npm run dev:server` — Express proxy on port 3001
+2. `npm run dev` — Vite proxies `/ncc` to the backend

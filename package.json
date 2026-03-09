@@ -29,6 +29,7 @@
   "scripts": {
     "build": "node scripts/generate-css-string.js && node scripts/generate-bank-logos.js && tsup && cp src/styles/bank-ui.css dist/index.css",
     "dev": "vite",
+    "dev:server": "node scripts/test-express-server.js",
     "typecheck": "tsc --noEmit",
     "html-to-tsx": "node scripts/html-to-tsx.js",
     "extract-base64-images": "node scripts/extract-base64-images.js",
@@ -50,6 +51,8 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "express": "^4.21.0",
+    "express-ws": "^5.0.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.7",
     "@types/ws": "^8.18.1",
