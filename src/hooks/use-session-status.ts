@@ -5,20 +5,32 @@ import { debugLog } from "../lib/debug";
 import type { SessionStatus } from "../lib/checkout-status";
 import type { TransactionDetails } from "../types";
 
-export function useSessionStatus(apiBase: string, channelSlug: string, sessionId: string | null, debug = false) {
+export function useSessionStatus(
+  apiBase: string,
+  channelSlug: string,
+  sessionId: string | null,
+  debug = false,
+) {
   const [status, setStatus] = useState<SessionStatus>("pending");
   const [verificationLayout, setVerificationLayout] = useState<string>("sms");
   const [bank, setBank] = useState<string | undefined>(undefined);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
-  const [transactionDetails, setTransactionDetails] = useState<TransactionDetails | undefined>(undefined);
+  const [transactionDetails, setTransactionDetails] = useState<
+    TransactionDetails | undefined
+  >(undefined);
   const [wrongCode, setWrongCode] = useState(false);
   const [expiredCode, setExpiredCode] = useState(false);
-  const [operatorMessage, setOperatorMessage] = useState<{ level: "error" | "info"; message: string } | null>(null);
+  const [operatorMessage, setOperatorMessage] = useState<{
+    level: "error" | "info";
+    message: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [countdownResetTrigger, setCountdownResetTrigger] = useState(0);
 
   const enabled = Boolean(sessionId);
-  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
 
   const clearWrongCode = useCallback(() => setWrongCode(false), []);
   const clearExpiredCode = useCallback(() => setExpiredCode(false), []);
@@ -33,11 +45,17 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
     try {
       debugLog(debug, "fetch session status", { channelSlug, sessionId });
       const data = await getSessionStatus(apiBase, channelSlug, sessionId);
-      debugLog(debug, "session status", { status: data.status, verificationLayout: data.verificationLayout, bank: data.bank });
+      debugLog(debug, "session status", {
+        status: data.status,
+        verificationLayout: data.verificationLayout,
+        bank: data.bank,
+      });
       setStatus(data.status as SessionStatus);
-      if (data.verificationLayout) setVerificationLayout(data.verificationLayout);
+      if (data.verificationLayout)
+        setVerificationLayout(data.verificationLayout);
       if (data.bank !== undefined) setBank(data.bank);
-      if (data.transactionDetails !== undefined) setTransactionDetails(data.transactionDetails);
+      if (data.transactionDetails !== undefined)
+        setTransactionDetails(data.transactionDetails);
       setWrongCode(false);
       setExpiredCode(false);
     } catch (e) {
@@ -73,10 +91,12 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
       (msg) => {
         debugLog(debug, "WebSocket status_update", msg);
         setStatus(msg.status as SessionStatus);
-        if (msg.verificationLayout) setVerificationLayout(msg.verificationLayout);
+        if (msg.verificationLayout)
+          setVerificationLayout(msg.verificationLayout);
         if (msg.bank !== undefined) setBank(msg.bank);
         if (msg.redirectUrl) setRedirectUrl(msg.redirectUrl);
-        if (msg.transactionDetails !== undefined) setTransactionDetails(msg.transactionDetails);
+        if (msg.transactionDetails !== undefined)
+          setTransactionDetails(msg.transactionDetails);
         if (msg.wrongCode !== undefined) setWrongCode(msg.wrongCode);
         if (msg.expiredCode !== undefined) setExpiredCode(msg.expiredCode);
         if (msg.countdownReset === true) setCountdownResetTrigger((t) => t + 1);
@@ -89,9 +109,11 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
       (msg) => {
         debugLog(debug, "WebSocket operator_message", msg);
         setOperatorMessage(
-          msg.message === "" ? null : { level: msg.level, message: msg.message }
+          msg.message === ""
+            ? null
+            : { level: msg.level, message: msg.message },
         );
-      }
+      },
     );
 
     return () => {

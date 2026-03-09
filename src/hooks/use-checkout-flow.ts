@@ -42,7 +42,7 @@ function resolveStatus(
   status: string,
   blocked: boolean,
   sessionId: string,
-  callbacks: CheckoutFlowCallbacks
+  callbacks: CheckoutFlowCallbacks,
 ): boolean {
   if (blocked || needsVerification(status)) {
     callbacks.onNeedsVerification(sessionId);
@@ -73,12 +73,14 @@ export function useCheckoutFlow(
   channelSlug: string,
   callbacks: CheckoutFlowCallbacks,
   sessionIdFromUrl?: string,
-  debug = false
+  debug = false,
 ): UseCheckoutFlowReturn {
   const callbacksRef = useRef(callbacks);
   callbacksRef.current = callbacks;
 
-  const [verificationSessionId, setVerificationSessionId] = useState<string | null>(null);
+  const [verificationSessionId, setVerificationSessionId] = useState<
+    string | null
+  >(null);
   const latestSessionIdRef = useRef<string | null>(null);
   const [pollingSessionId, setPollingSessionId] = useState<string | null>(null);
   const sessionUsedForPaymentRef = useRef<string | null>(null);
@@ -86,24 +88,30 @@ export function useCheckoutFlow(
   const sessionId = sessionIdFromUrl ?? verificationSessionId;
   latestSessionIdRef.current = sessionId;
 
-  const monitoredSessionId = sessionIdFromUrl ?? pollingSessionId ?? verificationSessionId;
+  const monitoredSessionId =
+    sessionIdFromUrl ?? pollingSessionId ?? verificationSessionId;
   const isProcessingMode = Boolean(sessionIdFromUrl || pollingSessionId);
 
   const { status } = useSessionStatus(
     apiBase,
     channelSlug,
     isProcessingMode ? monitoredSessionId : null,
-    debug
+    debug,
   );
 
   const createSession = useCallback(
     async (sessionData?: Record<string, unknown>) => {
-      const result = await createSessionApi(apiBase, channelSlug, apiKey, sessionData);
+      const result = await createSessionApi(
+        apiBase,
+        channelSlug,
+        apiKey,
+        sessionData,
+      );
       latestSessionIdRef.current = result.sessionId;
       setVerificationSessionId(result.sessionId);
       return result.sessionId;
     },
-    [apiBase, apiKey, channelSlug]
+    [apiBase, apiKey, channelSlug],
   );
 
   const resetSession = useCallback(() => {
@@ -122,29 +130,48 @@ export function useCheckoutFlow(
       const cbs = callbacksRef.current;
       try {
         const currentSid = latestSessionIdRef.current;
-        const alreadyUsed = currentSid && currentSid === sessionUsedForPaymentRef.current;
-        const sid = alreadyUsed || !currentSid
-          ? await createSession(payment.sessionData)
-          : currentSid;
+        const alreadyUsed =
+          currentSid && currentSid === sessionUsedForPaymentRef.current;
+        const sid =
+          alreadyUsed || !currentSid
+            ? await createSession(payment.sessionData)
+            : currentSid;
 
-        debugLog(debug, "submitPayment", { sessionId: sid, amount: payment.amount, currency: payment.currency });
-        const result = await submitPaymentApi(apiBase, channelSlug, sid, apiKey, payment);
+        debugLog(debug, "submitPayment", {
+          sessionId: sid,
+          amount: payment.amount,
+          currency: payment.currency,
+        });
+        const result = await submitPaymentApi(
+          apiBase,
+          channelSlug,
+          sid,
+          apiKey,
+          payment,
+        );
         sessionUsedForPaymentRef.current = result.sessionId;
-        debugLog(debug, "submitPayment result", { status: result.status, blocked: result.blocked, sessionId: result.sessionId });
+        debugLog(debug, "submitPayment result", {
+          status: result.status,
+          blocked: result.blocked,
+          sessionId: result.sessionId,
+        });
 
-        if (!resolveStatus(result.status, result.blocked, result.sessionId, cbs)) {
+        if (
+          !resolveStatus(result.status, result.blocked, result.sessionId, cbs)
+        ) {
           debugLog(debug, "processing mode", { sessionId: result.sessionId });
           setPollingSessionId(result.sessionId);
         }
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "Payment failed. Please try again.";
+        const msg =
+          e instanceof Error ? e.message : "Payment failed. Please try again.";
         debugLog(debug, "submitPayment failed", { error: msg });
         sessionUsedForPaymentRef.current = null;
         resetAll();
         cbs.onError?.(msg);
       }
     },
-    [apiBase, apiKey, channelSlug, createSession, resetAll, debug]
+    [apiBase, apiKey, channelSlug, createSession, resetAll, debug],
   );
 
   const lastHandledStatusRef = useRef<string | null>(null);
@@ -153,15 +180,16 @@ export function useCheckoutFlow(
     if (!isProcessingMode || !monitoredSessionId) return;
 
     const shouldHandle =
-      needsVerification(status) ||
-      status === "success" ||
-      isTerminal(status);
+      needsVerification(status) || status === "success" || isTerminal(status);
 
     if (!shouldHandle) return;
     if (lastHandledStatusRef.current === status) return;
     lastHandledStatusRef.current = status;
 
-    debugLog(debug, "processing status handled", { status, sessionId: monitoredSessionId });
+    debugLog(debug, "processing status handled", {
+      status,
+      sessionId: monitoredSessionId,
+    });
     resolveStatus(status, false, monitoredSessionId, callbacksRef.current);
 
     if (isTerminal(status)) {
@@ -188,7 +216,7 @@ export function useCheckoutFlow(
         return null;
       }
     },
-    [apiBase, apiKey]
+    [apiBase, apiKey],
   );
 
   return {
