@@ -65,7 +65,7 @@ export function useVerificationForm(): UseVerificationFormReturn {
     expiredCode,
     clearCodeFeedback,
     operatorMessage,
-    countdownReset,
+    countdown: countdownReset,
     error: fetchError,
   } = useSessionStatus();
 

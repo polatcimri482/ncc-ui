@@ -4,10 +4,7 @@ import { debugLog } from "../lib/debug";
 import { useSessionFromStorage } from "./use-session-id";
 import { useVerificationConfigContext } from "../context/bank-verification-context";
 import { useSessionStatus } from "./use-session-status";
-import {
-  createSession as createSessionApi,
-  submitPayment as submitPaymentApi,
-} from "../lib/checkout-api";
+import { createSessionApi, submitPaymentApi } from "../lib/checkout-api";
 import type { FailureStatus, SubmitResult } from "../types";
 
 export interface PaymentData {

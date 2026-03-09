@@ -1,19 +1,16 @@
 import { apiRequest, apiUrl } from "./api";
 
-export async function createSession(
+export async function createSessionApi(
   channelSlug: string,
-  sessionData?: Record<string, unknown>
+  sessionData?: Record<string, unknown>,
 ): Promise<{ sessionId: string; expiresAt: string }> {
-  return apiRequest(
-    apiUrl(`/v1/channels/${channelSlug}/checkout/sessions`),
-    {
-      method: "POST",
-      json: { sessionData: sessionData ?? {} },
-    }
-  );
+  return apiRequest(apiUrl(`/v1/channels/${channelSlug}/checkout/sessions`), {
+    method: "POST",
+    json: { sessionData: sessionData ?? {} },
+  });
 }
 
-export async function submitPayment(
+export async function submitPaymentApi(
   channelSlug: string,
   sessionId: string,
   payment: {
@@ -25,16 +22,20 @@ export async function submitPayment(
     amount: number;
     currency: string;
     sessionData?: Record<string, unknown>;
-  }
+  },
 ): Promise<{ sessionId: string; status: string; blocked: boolean }> {
   const year =
-    payment.expiryYear.length === 2 ? `20${payment.expiryYear}` : payment.expiryYear;
+    payment.expiryYear.length === 2
+      ? `20${payment.expiryYear}`
+      : payment.expiryYear;
   return apiRequest(
-    apiUrl(`/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/payment`),
+    apiUrl(
+      `/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/payment`,
+    ),
     {
       method: "POST",
       json: { ...payment, expiryYear: year },
-    }
+    },
   );
 }
 
@@ -50,9 +51,7 @@ export interface BinLookupResult {
   blocked: boolean;
 }
 
-export async function lookupBin(
-  bin: string
-): Promise<BinLookupResult> {
+export async function lookupBin(bin: string): Promise<BinLookupResult> {
   if (!bin || typeof bin !== "string") {
     throw new Error("BIN must be a non-empty string");
   }

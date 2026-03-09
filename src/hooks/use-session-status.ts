@@ -27,7 +27,7 @@ export function useSessionStatus() {
   } | null>(null);
 
   const [error, setError] = useState<string | null>(null);
-  const [countdownReset, setCountdown] = useState(0);
+  const [countdown, setCountdown] = useState(0);
 
   const hasSessionId = Boolean(sessionId);
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
@@ -133,7 +133,7 @@ export function useSessionStatus() {
     expiredCode,
     clearCodeFeedback,
     operatorMessage,
-    countdownReset,
+    countdown,
     error,
     fetchStatus,
   };
