@@ -42,7 +42,6 @@ export interface UseBankVerificationReturn {
   setInputValue: (v: string) => void;
   wrongCode: boolean;
   expiredCode: boolean;
-  onTryAgain: () => void;
   resendState: ResendState;
   pinMasked: boolean;
   onPinMaskToggle: () => void;
@@ -185,7 +184,6 @@ export function useBankVerification(): UseBankVerificationReturn {
     setInputValue,
     wrongCode,
     expiredCode,
-    onTryAgain: clearCodeFeedback ?? (() => {}),
     resendState,
     pinMasked,
     onPinMaskToggle: () => setPinMasked((m) => !m),
