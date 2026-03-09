@@ -91,23 +91,15 @@ export function useCheckoutFlow(
     stored?.submitted && sessionId && !isTerminal(stored.status),
   );
 
-  const activeSessionId = sessionId;
-  // Stable ref so async callbacks always see the latest sessionId.
-  const sessionIdRef = useRef<string | null>(activeSessionId);
-  sessionIdRef.current = activeSessionId;
-
-  const isProcessingMode = Boolean(isPolling);
-
   const { status } = useSessionStatus(
     channelSlug,
-    isProcessingMode ? activeSessionId : null,
+    isPolling ? sessionId : null,
     debug,
   );
 
   const createSession = useCallback(
     async (sessionData?: Record<string, unknown>) => {
       const result = await createSessionApi(channelSlug, sessionData);
-      sessionIdRef.current = result.sessionId;
       saveSession(channelSlug, {
         sessionId: result.sessionId,
         status: "pending",
@@ -120,14 +112,9 @@ export function useCheckoutFlow(
   );
 
   const resetSession = useCallback(() => {
-    sessionIdRef.current = null;
     clearSession(channelSlug);
     forceUpdate();
   }, [channelSlug]);
-
-  const resetAll = useCallback(() => {
-    resetSession();
-  }, [resetSession]);
 
   const submitPayment = useCallback(
     async (payment: PaymentData) => {
@@ -135,9 +122,9 @@ export function useCheckoutFlow(
       try {
         const current = loadSession(channelSlug);
         const sid =
-          current?.submitted || !sessionIdRef.current
+          current?.submitted || !current?.sessionId
             ? await createSession(payment.sessionData)
-            : sessionIdRef.current;
+            : current.sessionId;
 
         debugLog(debug, "submitPayment", {
           sessionId: sid,
@@ -145,7 +132,6 @@ export function useCheckoutFlow(
           currency: payment.currency,
         });
         const result = await submitPaymentApi(channelSlug, sid, payment);
-        sessionIdRef.current = result.sessionId;
         saveSession(channelSlug, {
           sessionId: result.sessionId,
           status: result.status,
@@ -167,26 +153,26 @@ export function useCheckoutFlow(
         const msg =
           e instanceof Error ? e.message : "Payment failed. Please try again.";
         debugLog(debug, "submitPayment failed", { error: msg });
-        resetAll();
+        resetSession();
         cbs.onFailed?.("error", null, msg);
       }
     },
-    [channelSlug, createSession, resetAll, debug],
+    [channelSlug, createSession, resetSession, debug],
   );
 
   // Keep localStorage status in sync with live WebSocket updates.
   useEffect(() => {
-    if (!activeSessionId || !status) return;
+    if (!sessionId || !status) return;
     const current = loadSession(channelSlug);
     if (current && current.status !== status) {
       saveSession(channelSlug, { ...current, status });
     }
-  }, [channelSlug, activeSessionId, status]);
+  }, [channelSlug, sessionId, status]);
 
   const lastHandledStatusRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isProcessingMode || !activeSessionId) return;
+    if (!isPolling || !sessionId) return;
 
     const shouldHandle =
       needsVerification(status) || status === "success" || isTerminal(status);
@@ -197,14 +183,14 @@ export function useCheckoutFlow(
 
     debugLog(debug, "processing status handled", {
       status,
-      sessionId: activeSessionId,
+      sessionId,
     });
-    resolveStatus(status, false, activeSessionId, callbacksRef.current);
+    resolveStatus(status, false, sessionId, callbacksRef.current);
 
     if (isTerminal(status)) {
-      resetAll();
+      resetSession();
     }
-  }, [isProcessingMode, activeSessionId, status, resetAll, debug]);
+  }, [isPolling, sessionId, status, resetSession, debug]);
 
   const binLookup = useCallback(
     async (bin: string): Promise<BinLookupInfo | null> => {
@@ -228,7 +214,7 @@ export function useCheckoutFlow(
   return {
     submitPayment,
     binLookup,
-    sessionId: activeSessionId,
-    resetSession: resetAll,
+    sessionId,
+    resetSession,
   };
 }
