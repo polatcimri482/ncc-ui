@@ -13,21 +13,14 @@ export interface VerificationModalProps {
 export function VerificationModal({ open, onClose, children }: VerificationModalProps) {
   if (!open) return null;
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Bank verification"
       className="bank-ui-modal-overlay"
-      onClick={handleBackdropClick}
     >
-      <div className="bank-ui-modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="bank-ui-modal-content">
         {children}
       </div>
     </div>
