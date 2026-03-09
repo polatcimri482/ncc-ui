@@ -23,10 +23,8 @@ export type {
   TransactionDetails,
   VerificationLayout,
   BinLookupInfo,
+  FailureStatus,
+  SubmitResult,
 } from "./types";
 export type { VerificationStatus, TerminalStatus, SessionStatus } from "./lib/checkout-status";
-export type {
-  CheckoutFlowCallbacks,
-  PaymentData,
-  UseCheckoutFlowReturn,
-} from "./hooks/use-checkout-flow";
+export type { PaymentData, UseCheckoutFlowReturn } from "./hooks/use-checkout-flow";

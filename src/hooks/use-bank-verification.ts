@@ -91,13 +91,7 @@ export interface UseBankVerificationReturn {
   error: string | null;
 }
 
-export function useBankVerification({
-  onSuccess,
-  onFailed,
-}: {
-  onSuccess?: (sessionId: string) => void;
-  onFailed?: (status: import("../types").FailureStatus, sessionId: string | null, message?: string) => void;
-}): UseBankVerificationReturn {
+export function useBankVerification(): UseBankVerificationReturn {
   const { channelSlug, debug } = useBankVerificationConfigContext();
   const { sessionId } = useSessionFromStorage(channelSlug);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -154,29 +148,7 @@ export function useBankVerification({
       window.location.replace(redirectUrl);
       return;
     }
-    if (status === "success") {
-      debugLog(debug, "success callback", { sessionId });
-      onSuccess?.(sessionId);
-      return;
-    }
-    if (status === "invalid") {
-      debugLog(debug, "failed callback", { reason: "invalid" });
-      onFailed?.("invalid", sessionId);
-      return;
-    }
-    if (status === "declined" || status === "expired" || status === "blocked") {
-      debugLog(debug, "failed callback", { sessionId, status });
-      onFailed?.(status, sessionId);
-    }
-  }, [
-    channelSlug,
-    sessionId,
-    status,
-    redirectUrl,
-    onSuccess,
-    onFailed,
-    debug,
-  ]);
+  }, [channelSlug, sessionId, status, redirectUrl, debug]);
 
   const handleSubmitOtp = useCallback(
     async (codeValue: string) => {

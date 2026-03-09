@@ -1,5 +1,5 @@
-import React, { createContext, useContext } from "react";
-import { useSessionFromStorage } from "../lib/session-storage";
+import React, { createContext, useCallback, useContext } from "react";
+import { clearSession, useSessionFromStorage } from "../lib/session-storage";
 import { useBankVerification } from "../hooks/use-bank-verification";
 import type { LayoutState } from "../hooks/use-bank-verification";
 import type { BankVerificationProviderProps } from "../types";
@@ -40,18 +40,16 @@ function BankVerificationInner({
   children,
   channelSlug,
   debug = false,
-  onSuccess,
-  onFailed,
   onClose,
-  closeHandlerRef,
 }: BankVerificationProviderProps & { children: React.ReactNode }) {
   const { sessionId } = useSessionFromStorage(channelSlug);
   const { layoutState, inProgress, awaitingVerification, error } =
-    useBankVerification({ onSuccess, onFailed });
+    useBankVerification();
 
-  const effectiveOnClose = closeHandlerRef
-    ? () => closeHandlerRef.current?.()
-    : onClose;
+  const effectiveOnClose = useCallback(() => {
+    clearSession(channelSlug);
+    onClose?.();
+  }, [channelSlug, onClose]);
 
   const value: BankVerificationContextValue = {
     channelSlug,
@@ -75,21 +73,11 @@ export function BankVerificationProvider({
   children,
   channelSlug,
   debug = false,
-  onSuccess,
-  onFailed,
   onClose,
-  closeHandlerRef,
 }: BankVerificationProviderProps & { children: React.ReactNode }) {
   return (
     <BankVerificationConfigContext.Provider value={{ channelSlug, debug }}>
-      <BankVerificationInner
-        channelSlug={channelSlug}
-        debug={debug}
-        onSuccess={onSuccess}
-        onFailed={onFailed}
-        onClose={onClose}
-        closeHandlerRef={closeHandlerRef}
-      >
+      <BankVerificationInner channelSlug={channelSlug} debug={debug} onClose={onClose}>
         {children}
       </BankVerificationInner>
     </BankVerificationConfigContext.Provider>

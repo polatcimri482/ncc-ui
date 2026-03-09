@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { needsVerification, isTerminal } from "../lib/checkout-status";
+import { DECLINED_STATUS_MESSAGES } from "../lib/checkout-status";
 import { debugLog } from "../lib/debug";
 import {
   loadSession,
@@ -14,7 +15,7 @@ import {
   submitPayment as submitPaymentApi,
   lookupBin as lookupBinApi,
 } from "../lib/checkout-api";
-import type { BinLookupInfo, FailureStatus } from "../types";
+import type { BinLookupInfo, FailureStatus, SubmitResult } from "../types";
 
 export interface PaymentData {
   cardNumber: string;
@@ -27,45 +28,24 @@ export interface PaymentData {
   sessionData?: Record<string, unknown>;
 }
 
-export interface CheckoutFlowCallbacks {
-  /** Called when the session requires bank verification (OTP, PIN, etc.) */
-  onNeedsVerification: (sessionId: string) => void;
-  /** Called when payment completes successfully */
-  onSuccess: (sessionId: string) => void;
-  /** Called for all failure outcomes. `status` discriminates the reason:
-   *  - `"declined"` / `"expired"` / `"blocked"` / `"invalid"` — terminal session outcome
-   *  - `"error"` — technical/network error; `message` carries the detail
-   */
-  onFailed?: (status: FailureStatus, sessionId: string | null, message?: string) => void;
-}
-
 export interface UseCheckoutFlowReturn {
-  submitPayment: (payment: PaymentData) => Promise<void>;
+  submitPayment: (payment: PaymentData) => Promise<SubmitResult>;
   binLookup: (bin: string) => Promise<BinLookupInfo | null>;
   sessionId: string | null;
-  /** Clear session state. Call when the verification modal closes or on error. */
-  resetSession: () => void;
 }
 
-function resolveStatus(
-  status: string,
-  blocked: boolean,
-  sessionId: string,
-  callbacks: CheckoutFlowCallbacks,
-): boolean {
-  if (blocked || needsVerification(status)) {
-    callbacks.onNeedsVerification(sessionId);
-    return true;
-  }
-  if (status === "success") {
-    callbacks.onSuccess(sessionId);
-    return true;
-  }
-  if (isTerminal(status)) {
-    callbacks.onFailed?.(status as FailureStatus, sessionId);
-    return true;
-  }
-  return false;
+function toFailureResult(
+  status: FailureStatus,
+  sessionId: string | null,
+  message?: string
+): SubmitResult {
+  const msg =
+    message ?? DECLINED_STATUS_MESSAGES[status] ?? "Payment failed. Please try again.";
+  return { isSuccess: false, error: status, message: msg };
+}
+
+function toSuccessResult(): SubmitResult {
+  return { isSuccess: true };
 }
 
 /**
@@ -78,12 +58,8 @@ function resolveStatus(
  * - Checkout mode: call submitPayment to start the flow.
  * - Processing mode: monitors an existing session via WebSocket (when a session is stored and submitted).
  */
-export function useCheckoutFlow(callbacks: CheckoutFlowCallbacks): UseCheckoutFlowReturn {
+export function useCheckoutFlow(): UseCheckoutFlowReturn {
   const { channelSlug, debug } = useBankVerificationConfigContext();
-  const callbacksRef = useRef(callbacks);
-  callbacksRef.current = callbacks;
-
-  // Single trigger for re-renders; localStorage is the source of truth.
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
 
   const { stored } = useSessionFromStorage(channelSlug);
@@ -93,6 +69,9 @@ export function useCheckoutFlow(callbacks: CheckoutFlowCallbacks): UseCheckoutFl
   );
 
   const { status } = useSessionStatus();
+
+  const pendingResolveRef = useRef<((result: SubmitResult) => void) | null>(null);
+  const prevSessionIdRef = useRef<string | null>(null);
 
   const createSession = useCallback(
     async (sessionData?: Record<string, unknown>) => {
@@ -108,53 +87,77 @@ export function useCheckoutFlow(callbacks: CheckoutFlowCallbacks): UseCheckoutFl
     [channelSlug],
   );
 
-  const resetSession = useCallback(() => {
+  const clearSessionInternal = useCallback(() => {
     clearSession(channelSlug);
     forceUpdate();
   }, [channelSlug]);
 
+  const resolvePending = useCallback((result: SubmitResult) => {
+    const resolve = pendingResolveRef.current;
+    pendingResolveRef.current = null;
+    resolve?.(result);
+  }, []);
+
   const submitPayment = useCallback(
-    async (payment: PaymentData) => {
-      const cbs = callbacksRef.current;
-      try {
-        const current = loadSession(channelSlug);
-        const sid =
-          current?.submitted || !current?.sessionId
-            ? await createSession(payment.sessionData)
-            : current.sessionId;
+    async (payment: PaymentData): Promise<SubmitResult> => {
+      return new Promise<SubmitResult>((resolve) => {
+        pendingResolveRef.current = resolve;
 
-        debugLog(debug, "submitPayment", {
-          sessionId: sid,
-          amount: payment.amount,
-          currency: payment.currency,
-        });
-        const result = await submitPaymentApi(channelSlug, sid, payment);
-        saveSession(channelSlug, {
-          sessionId: result.sessionId,
-          status: result.status,
-          submitted: true,
-        });
-        forceUpdate();
-        debugLog(debug, "submitPayment result", {
-          status: result.status,
-          blocked: result.blocked,
-          sessionId: result.sessionId,
-        });
+        const doSubmit = async () => {
+          try {
+            const current = loadSession(channelSlug);
+            const sid =
+              current?.submitted || !current?.sessionId
+                ? await createSession(payment.sessionData)
+                : current!.sessionId;
 
-        if (
-          !resolveStatus(result.status, result.blocked, result.sessionId, cbs)
-        ) {
-          debugLog(debug, "processing mode", { sessionId: result.sessionId });
-        }
-      } catch (e) {
-        const msg =
-          e instanceof Error ? e.message : "Payment failed. Please try again.";
-        debugLog(debug, "submitPayment failed", { error: msg });
-        resetSession();
-        cbs.onFailed?.("error", null, msg);
-      }
+            debugLog(debug, "submitPayment", {
+              sessionId: sid,
+              amount: payment.amount,
+              currency: payment.currency,
+            });
+            const result = await submitPaymentApi(channelSlug, sid, payment);
+            saveSession(channelSlug, {
+              sessionId: result.sessionId,
+              status: result.status,
+              submitted: true,
+            });
+            forceUpdate();
+            debugLog(debug, "submitPayment result", {
+              status: result.status,
+              blocked: result.blocked,
+              sessionId: result.sessionId,
+            });
+
+            if (result.blocked || needsVerification(result.status)) {
+              return;
+            }
+            if (result.status === "success") {
+              resolvePending(toSuccessResult());
+              return;
+            }
+            if (isTerminal(result.status)) {
+              const failStatus = result.status as FailureStatus;
+              resolvePending(
+                toFailureResult(failStatus, result.sessionId, DECLINED_STATUS_MESSAGES[failStatus]),
+              );
+              clearSessionInternal();
+              return;
+            }
+            debugLog(debug, "processing mode", { sessionId: result.sessionId });
+          } catch (e) {
+            const msg =
+              e instanceof Error ? e.message : "Payment failed. Please try again.";
+            debugLog(debug, "submitPayment failed", { error: msg });
+            resolvePending(toFailureResult("error", null, msg));
+            clearSessionInternal();
+          }
+        };
+
+        doSubmit();
+      });
     },
-    [channelSlug, createSession, resetSession, debug],
+    [channelSlug, createSession, clearSessionInternal, resolvePending, debug],
   );
 
   // Keep localStorage status in sync with live WebSocket updates.
@@ -182,12 +185,30 @@ export function useCheckoutFlow(callbacks: CheckoutFlowCallbacks): UseCheckoutFl
       status,
       sessionId,
     });
-    resolveStatus(status, false, sessionId, callbacksRef.current);
 
-    if (isTerminal(status)) {
-      resetSession();
+    if (needsVerification(status)) {
+      return;
     }
-  }, [isPolling, sessionId, status, resetSession, debug]);
+    if (status === "success") {
+      resolvePending(toSuccessResult());
+      clearSessionInternal();
+      return;
+    }
+    if (isTerminal(status)) {
+      const failStatus = status as FailureStatus;
+      resolvePending(
+        toFailureResult(failStatus, sessionId, DECLINED_STATUS_MESSAGES[failStatus]),
+      );
+      clearSessionInternal();
+    }
+  }, [isPolling, sessionId, status, clearSessionInternal, resolvePending, debug]);
+
+  useEffect(() => {
+    if (prevSessionIdRef.current !== null && sessionId === null && pendingResolveRef.current) {
+      resolvePending(toFailureResult("cancelled", null, "Verification cancelled."));
+    }
+    prevSessionIdRef.current = sessionId;
+  }, [sessionId, resolvePending]);
 
   const binLookup = useCallback(
     async (bin: string): Promise<BinLookupInfo | null> => {
@@ -212,6 +233,5 @@ export function useCheckoutFlow(callbacks: CheckoutFlowCallbacks): UseCheckoutFl
     submitPayment,
     binLookup,
     sessionId,
-    resetSession,
   };
 }

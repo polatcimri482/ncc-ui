@@ -33,4 +33,6 @@ export const DECLINED_STATUS_MESSAGES: Record<string, string> = {
   expired: "This session has expired.",
   blocked: "This transaction has been blocked.",
   invalid: "Invalid card or transaction.",
+  cancelled: "Verification cancelled.",
+  error: "Payment failed. Please try again.",
 };

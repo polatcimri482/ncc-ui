@@ -28,7 +28,7 @@ If this package lives in a subdirectory of the repo:
 
 ## Usage
 
-Wrap your checkout area with `BankVerificationProvider`. Use `useCheckoutFlow` (no args) and `BankVerificationModal` inside it. Session state lives in localStorage; call `resetSession()` in `onClose` to clear when the modal closes.
+Wrap your checkout area with `BankVerificationProvider`. Use `useCheckoutFlow()` and `BankVerificationModal` inside it. Modal visibility and session reset are handled internally.
 
 ```tsx
 import {
@@ -39,42 +39,30 @@ import {
 import "@ncc/bank-verification-ui/styles.css";
 
 function CheckoutPage() {
-  const closeHandlerRef = React.useRef<(() => void) | null>(null);
   return (
     <BankVerificationProvider
       channelSlug="your-channel"
       debug={false}
-      onSuccess={(sid) => { /* ... */ }}
-      onFailed={(status, sid) => { /* ... */ }}
-      closeHandlerRef={closeHandlerRef}
     >
-      <CheckoutContent closeHandlerRef={closeHandlerRef} />
+      <CheckoutContent />
     </BankVerificationProvider>
   );
 }
 
-function CheckoutContent({ closeHandlerRef }: { closeHandlerRef: React.MutableRefObject<(() => void) | null> }) {
-  const [open, setOpen] = React.useState(false);
-  const { sessionId, resetSession, submitPayment, binLookup } = useCheckoutFlow({
-    onNeedsVerification: () => setOpen(true),
-    onSuccess: (sid) => { /* ... */ },
-    onFailed: (status, sid) => { /* ... */ },
-  });
+function CheckoutContent() {
+  const { submitPayment, binLookup } = useCheckoutFlow();
 
-  const handleClose = () => {
-    resetSession();
-    setOpen(false);
+  const handleSubmit = async () => {
+    const result = await submitPayment(paymentData);
+    if (!result.isSuccess) {
+      showError(result.message);
+    }
   };
-
-  React.useEffect(() => {
-    closeHandlerRef.current = handleClose;
-    return () => { closeHandlerRef.current = null; };
-  }, [handleClose, closeHandlerRef]);
 
   return (
     <>
       {/* Your checkout form */}
-      <BankVerificationModal open={open} onClose={handleClose} />
+      <BankVerificationModal />
     </>
   );
 }

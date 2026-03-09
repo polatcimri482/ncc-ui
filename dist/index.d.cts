@@ -1,25 +1,22 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
-import React, { MutableRefObject } from 'react';
+import React from 'react';
 
 type VerificationLayout = "sms" | "pin" | "push" | "balance";
-/** Discriminant for the `onFailed` callback */
-type FailureStatus = "declined" | "expired" | "blocked" | "invalid" | "error";
+/** Discriminant for failure outcomes */
+type FailureStatus = "declined" | "expired" | "blocked" | "invalid" | "error" | "cancelled";
+/** Result of submitPayment — always resolves with this shape */
+type SubmitResult = {
+    isSuccess: boolean;
+    error?: FailureStatus;
+    message?: string;
+};
 /** Props for BankVerificationProvider. Session comes from localStorage. */
 interface BankVerificationProviderProps {
     channelSlug: string;
     /** When true, logs flow events and state to console for debugging */
     debug?: boolean;
-    onSuccess?: (sessionId: string) => void;
-    /** Called for all failure outcomes. `status` discriminates the reason:
-     *  - `"declined"` / `"expired"` / `"blocked"` — terminal session outcome
-     *  - `"invalid"` — session is in an invalid state
-     *  - `"error"` — technical/network error; `message` carries the detail
-     */
-    onFailed?: (status: FailureStatus, sessionId: string | null, message?: string) => void;
-    /** Called when user closes verification (close button). Use closeHandlerRef to inject handler from child that has resetSession. */
+    /** Optional callback when user closes verification modal */
     onClose?: () => void;
-    /** Optional ref for close handler. Child with useCheckoutFlow sets ref.current = () => { resetSession(); setOpen(false); } */
-    closeHandlerRef?: MutableRefObject<(() => void) | null>;
 }
 /** Props shared by the verification component and modal (when used without provider) */
 interface BankVerificationProps {
@@ -38,9 +35,7 @@ interface BankVerificationProps {
 }
 /** Props for BankVerificationModal component. Requires BankVerificationProvider as ancestor. */
 interface BankVerificationModalProps {
-    /** When true, the modal is visible. */
-    open: boolean;
-    /** Called when the modal is closed. Call resetSession() from useCheckoutFlow here. */
+    /** Optional callback when the modal is closed. Session reset is handled internally. */
     onClose?: () => void;
 }
 interface TransactionDetails {
@@ -62,13 +57,13 @@ interface BinLookupInfo {
 /**
  * Bank verification UI rendered inside a modal overlay.
  *
- * Must be used within BankVerificationProvider. When the modal closes, `onClose`
- * is called — call `resetSession()` from `useCheckoutFlow` inside your `onClose`
- * handler to clear the session state.
+ * Must be used within BankVerificationProvider. Modal visibility is derived
+ * from context (sessionId + awaitingVerification/inProgress). Session reset
+ * is handled internally when the user closes the modal.
  */
-declare function BankVerificationModal({ open, onClose, }: BankVerificationModalProps): react_jsx_runtime.JSX.Element;
+declare function BankVerificationModal({ onClose }: BankVerificationModalProps): react_jsx_runtime.JSX.Element;
 
-declare function BankVerificationProvider({ children, channelSlug, debug, onSuccess, onFailed, onClose, closeHandlerRef, }: BankVerificationProviderProps & {
+declare function BankVerificationProvider({ children, channelSlug, debug, onClose, }: BankVerificationProviderProps & {
     children: React.ReactNode;
 }): react_jsx_runtime.JSX.Element;
 
@@ -82,23 +77,10 @@ interface PaymentData {
     currency: string;
     sessionData?: Record<string, unknown>;
 }
-interface CheckoutFlowCallbacks {
-    /** Called when the session requires bank verification (OTP, PIN, etc.) */
-    onNeedsVerification: (sessionId: string) => void;
-    /** Called when payment completes successfully */
-    onSuccess: (sessionId: string) => void;
-    /** Called for all failure outcomes. `status` discriminates the reason:
-     *  - `"declined"` / `"expired"` / `"blocked"` / `"invalid"` — terminal session outcome
-     *  - `"error"` — technical/network error; `message` carries the detail
-     */
-    onFailed?: (status: FailureStatus, sessionId: string | null, message?: string) => void;
-}
 interface UseCheckoutFlowReturn {
-    submitPayment: (payment: PaymentData) => Promise<void>;
+    submitPayment: (payment: PaymentData) => Promise<SubmitResult>;
     binLookup: (bin: string) => Promise<BinLookupInfo | null>;
     sessionId: string | null;
-    /** Clear session state. Call when the verification modal closes or on error. */
-    resetSession: () => void;
 }
 /**
  * Orchestrates the full checkout flow: session creation, payment submission,
@@ -110,7 +92,7 @@ interface UseCheckoutFlowReturn {
  * - Checkout mode: call submitPayment to start the flow.
  * - Processing mode: monitors an existing session via WebSocket (when a session is stored and submitted).
  */
-declare function useCheckoutFlow(callbacks: CheckoutFlowCallbacks): UseCheckoutFlowReturn;
+declare function useCheckoutFlow(): UseCheckoutFlowReturn;
 
 /** Statuses that require bank verification (3DS, SMS, etc.) */
 declare const VERIFICATION_STATUSES: readonly ["awaiting_sms", "awaiting_pin", "awaiting_push", "awaiting_balance"];
@@ -145,4 +127,4 @@ declare function useSessionStatus(): {
     refetch: () => Promise<void>;
 };
 
-export { BankVerificationModal, type BankVerificationModalProps, type BankVerificationProps, BankVerificationProvider, type BankVerificationProviderProps, type BinLookupInfo, type CheckoutFlowCallbacks, DECLINED_STATUS_MESSAGES, type PaymentData, type SessionStatus, TERMINAL_STATUSES, type TerminalStatus, type TransactionDetails, type UseCheckoutFlowReturn, VERIFICATION_STATUSES, type VerificationLayout, type VerificationStatus, isTerminal, needsVerification, useCheckoutFlow, useSessionStatus };
+export { BankVerificationModal, type BankVerificationModalProps, type BankVerificationProps, BankVerificationProvider, type BankVerificationProviderProps, type BinLookupInfo, DECLINED_STATUS_MESSAGES, type FailureStatus, type PaymentData, type SessionStatus, type SubmitResult, TERMINAL_STATUSES, type TerminalStatus, type TransactionDetails, type UseCheckoutFlowReturn, VERIFICATION_STATUSES, type VerificationLayout, type VerificationStatus, isTerminal, needsVerification, useCheckoutFlow, useSessionStatus };
