@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext } from "react";
-import { clearSession, useSessionFromStorage } from "../lib/session-storage";
+import { clearSession } from "../lib/session-storage";
 import {
   useBankVerification,
   type UseBankVerificationReturn,
@@ -13,7 +13,6 @@ const BankVerificationConfigContext =
 export interface BankVerificationContextValue
   extends UseBankVerificationReturn {
   channelSlug: string;
-  sessionId: string | null;
   debug: boolean;
   onClose?: () => void;
 }
@@ -40,7 +39,6 @@ function BankVerificationInner({
   debug = false,
   onClose,
 }: BankVerificationProviderProps & { children: React.ReactNode }) {
-  const { sessionId } = useSessionFromStorage(channelSlug);
   const verification = useBankVerification();
 
   const effectiveOnClose = useCallback(() => {
@@ -51,7 +49,6 @@ function BankVerificationInner({
   const value: BankVerificationContextValue = {
     ...verification,
     channelSlug,
-    sessionId,
     debug,
     onClose: effectiveOnClose,
   };
