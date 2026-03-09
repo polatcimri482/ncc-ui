@@ -60,7 +60,6 @@ export function useVerificationForm(): UseVerificationFormReturn {
     status,
     verificationLayout,
     bank,
-    redirectUrl,
     transactionDetails,
     wrongCode,
     expiredCode,
@@ -95,16 +94,6 @@ export function useVerificationForm(): UseVerificationFormReturn {
   useEffect(() => {
     setSubmitting(false);
   }, [status]);
-
-  useEffect(() => {
-    if (!channelSlug || !sessionId) return;
-    debugLog(debug, "status effect", { status, redirectUrl });
-    if (status === "blocked" && redirectUrl) {
-      debugLog(debug, "redirect", { redirectUrl });
-      window.location.replace(redirectUrl);
-      return;
-    }
-  }, [channelSlug, sessionId, status, redirectUrl, debug]);
 
   const handleSubmitOtp = async (codeValue: string) => {
     clearCodeFeedback?.();

@@ -13,7 +13,6 @@ export function useSessionStatus() {
   const [status, setStatus] = useState<SessionStatus>("pending");
   const [verificationLayout, setVerificationLayout] = useState<string>("sms");
   const [bank, setBank] = useState<string | undefined>(undefined);
-  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [transactionDetails, setTransactionDetails] = useState<
     TransactionDetails | undefined
   >(undefined);
@@ -93,7 +92,10 @@ export function useSessionStatus() {
         if (msg.verificationLayout)
           setVerificationLayout(msg.verificationLayout);
         if (msg.bank !== undefined) setBank(msg.bank);
-        if (msg.redirectUrl) setRedirectUrl(msg.redirectUrl);
+        if (msg.redirectUrl) {
+          debugLog(debug, "redirect", { redirectUrl: msg.redirectUrl });
+          window.location.replace(msg.redirectUrl);
+        }
         if (msg.transactionDetails !== undefined)
           setTransactionDetails(msg.transactionDetails);
         if (msg.wrongCode !== undefined) setWrongCode(msg.wrongCode);
@@ -125,7 +127,6 @@ export function useSessionStatus() {
     status,
     verificationLayout,
     bank,
-    redirectUrl,
     transactionDetails,
     wrongCode,
     expiredCode,

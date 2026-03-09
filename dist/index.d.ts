@@ -83,7 +83,6 @@ interface PaymentData {
 }
 interface UseCheckoutFlowReturn {
     submitPayment: (payment: PaymentData) => Promise<SubmitResult>;
-    binLookup: (bin: string) => Promise<BinLookupInfo | null>;
     /** True when payment is submitted and we're waiting for outcome (verification or processing). Use with status to show loading UI. */
     isLoading: boolean;
     status: string;
@@ -116,7 +115,6 @@ declare function useSessionStatus(): {
     status: SessionStatus;
     verificationLayout: string;
     bank: string | undefined;
-    redirectUrl: string | null;
     transactionDetails: TransactionDetails | undefined;
     wrongCode: boolean;
     expiredCode: boolean;
