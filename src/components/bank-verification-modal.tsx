@@ -5,13 +5,13 @@ import type { BankVerificationModalProps } from "../types";
 
 /**
  * Bank verification UI rendered inside a modal overlay.
- * Use when embedding verification in a page (e.g. checkout) and opening on demand.
- * For full-page/route usage, use BankVerification directly.
+ *
+ * When the modal closes, `onClose` is called — call `resetSession()` from
+ * `useCheckoutFlow` inside your `onClose` handler to clear the session state.
  */
 export function BankVerificationModal({
   open,
   onClose,
-  resetSession,
   apiBase,
   channelSlug,
   sessionId,
@@ -21,13 +21,8 @@ export function BankVerificationModal({
   onError,
   onRedirect,
 }: BankVerificationModalProps) {
-  const handleClose = () => {
-    resetSession?.();
-    onClose?.();
-  };
-
   return (
-    <VerificationModal open={open} onClose={handleClose}>
+    <VerificationModal open={open} onClose={onClose ?? (() => {})}>
       <VerificationUi
         apiBase={apiBase}
         channelSlug={channelSlug}
@@ -37,7 +32,7 @@ export function BankVerificationModal({
         onDeclined={onDeclined}
         onError={onError}
         onRedirect={onRedirect}
-        onClose={handleClose}
+        onClose={onClose}
       />
     </VerificationModal>
   );

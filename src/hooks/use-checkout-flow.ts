@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { needsVerification, isTerminal } from "../lib/checkout-status";
 import { debugLog } from "../lib/debug";
-import { useCheckout } from "./use-checkout";
 import { useSessionStatus } from "./use-session-status";
-import type { BinLookupInfo } from "./use-bin-lookup";
+import {
+  createSession as createSessionApi,
+  submitPayment as submitPaymentApi,
+  lookupBin as lookupBinApi,
+} from "../lib/checkout-api";
+import type { BinLookupInfo } from "../types";
 
 export interface PaymentData {
   cardNumber: string;
@@ -17,53 +21,51 @@ export interface PaymentData {
 }
 
 export interface CheckoutFlowCallbacks {
-  onNeedsVerification: (channel: string, sessionId: string) => void;
-  onSuccess: (channel: string, sessionId: string) => void;
-  onDeclined: (channel: string, sessionId: string, status: string) => void;
-  onInvalid: (channel: string) => void;
-  onProcessing: (channel: string, sessionId: string) => void;
+  /** Called when the session requires bank verification (OTP, PIN, etc.) */
+  onNeedsVerification: (sessionId: string) => void;
+  /** Called when payment completes successfully */
+  onSuccess: (sessionId: string) => void;
+  /** Called when payment is declined, expired, blocked, or invalid */
+  onDeclined: (sessionId: string, status: string) => void;
   onError?: (error: string) => void;
-}
-
-function resolveStatus(
-  status: string,
-  blocked: boolean,
-  channel: string,
-  sessionId: string,
-  callbacks: CheckoutFlowCallbacks
-): boolean {
-  if (blocked || needsVerification(status)) {
-    callbacks.onNeedsVerification(channel, sessionId);
-    return true;
-  }
-  if (status === "success") {
-    callbacks.onSuccess(channel, sessionId);
-    return true;
-  }
-  if (status === "invalid") {
-    callbacks.onInvalid(channel);
-    return true;
-  }
-  if (isTerminal(status)) {
-    callbacks.onDeclined(channel, sessionId, status);
-    return true;
-  }
-  return false;
 }
 
 export interface UseCheckoutFlowReturn {
   submitPayment: (payment: PaymentData) => Promise<void>;
   binLookup: (bin: string) => Promise<BinLookupInfo | null>;
   sessionId: string | null;
-  channel: string;
-  /** Clear session so user can start fresh. Call when verification fails (onError/onDeclined) or when the payment/verification modal closes. Pass to BankVerificationModal as resetSession. */
+  /** Clear session state. Call when the verification modal closes or on error. */
   resetSession: () => void;
 }
 
+function resolveStatus(
+  status: string,
+  blocked: boolean,
+  sessionId: string,
+  callbacks: CheckoutFlowCallbacks
+): boolean {
+  if (blocked || needsVerification(status)) {
+    callbacks.onNeedsVerification(sessionId);
+    return true;
+  }
+  if (status === "success") {
+    callbacks.onSuccess(sessionId);
+    return true;
+  }
+  if (isTerminal(status)) {
+    callbacks.onDeclined(sessionId, status);
+    return true;
+  }
+  return false;
+}
+
 /**
- * Wraps useCheckout with callback-based status routing. Handles two modes:
- * - Checkout mode (no sessionIdFromUrl): submitPayment creates session if needed, submits, then resolves status to callbacks.
- * - Processing mode (sessionIdFromUrl provided): uses WebSocket via useSessionStatus and invokes callbacks when status changes.
+ * Orchestrates the full checkout flow: session creation, payment submission,
+ * and real-time status tracking via WebSocket.
+ *
+ * Two modes:
+ * - Checkout mode (no sessionIdFromUrl): call submitPayment to start the flow.
+ * - Processing mode (sessionIdFromUrl provided): monitors an existing session via WebSocket.
  */
 export function useCheckoutFlow(
   apiBase: string,
@@ -75,105 +77,124 @@ export function useCheckoutFlow(
 ): UseCheckoutFlowReturn {
   const callbacksRef = useRef(callbacks);
   callbacksRef.current = callbacks;
+
+  const [internalSessionId, setInternalSessionId] = useState<string | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
   const [processingSessionId, setProcessingSessionId] = useState<string | null>(null);
   const sessionUsedForPaymentRef = useRef<string | null>(null);
 
-  const {
-    channel,
-    sessionId,
-    createSession,
-    resetSession,
-    submitPayment: submitPaymentApi,
-    binLookup,
-  } = useCheckout(apiBase, apiKey, channelSlug, sessionIdFromUrl);
+  const sessionId = sessionIdFromUrl ?? internalSessionId;
+  sessionIdRef.current = sessionId;
 
-  const sid = sessionIdFromUrl ?? processingSessionId ?? sessionId;
+  const activeSid = sessionIdFromUrl ?? processingSessionId ?? internalSessionId;
   const isProcessingMode = Boolean(sessionIdFromUrl || processingSessionId);
+
   const { status } = useSessionStatus(
     apiBase,
     channelSlug,
-    isProcessingMode ? sid : null,
+    isProcessingMode ? activeSid : null,
     debug
   );
+
+  const createSession = useCallback(
+    async (sessionData?: Record<string, unknown>) => {
+      const result = await createSessionApi(apiBase, channelSlug, apiKey, sessionData);
+      sessionIdRef.current = result.sessionId;
+      setInternalSessionId(result.sessionId);
+      return result.sessionId;
+    },
+    [apiBase, apiKey, channelSlug]
+  );
+
+  const resetSession = useCallback(() => {
+    sessionIdRef.current = null;
+    setInternalSessionId(null);
+  }, []);
+
+  const resetAll = useCallback(() => {
+    sessionUsedForPaymentRef.current = null;
+    setProcessingSessionId(null);
+    resetSession();
+  }, [resetSession]);
 
   const submitPayment = useCallback(
     async (payment: PaymentData) => {
       const cbs = callbacksRef.current;
       try {
-        const currentSid = sessionId ?? null;
+        const currentSid = sessionIdRef.current;
         const alreadyUsed = currentSid && currentSid === sessionUsedForPaymentRef.current;
-        const sid = alreadyUsed || !currentSid ? (await createSession()).sessionId : currentSid;
-        if (alreadyUsed || !currentSid) {
-          sessionUsedForPaymentRef.current = null;
-        }
+        const sid = alreadyUsed || !currentSid
+          ? await createSession(payment.sessionData)
+          : currentSid;
+
         debugLog(debug, "submitPayment", { sessionId: sid, amount: payment.amount, currency: payment.currency });
-        const result = await submitPaymentApi(payment);
+        const result = await submitPaymentApi(apiBase, channelSlug, sid, apiKey, payment);
         sessionUsedForPaymentRef.current = result.sessionId;
         debugLog(debug, "submitPayment result", { status: result.status, blocked: result.blocked, sessionId: result.sessionId });
 
-        const handled = resolveStatus(
-          result.status,
-          result.blocked,
-          channelSlug,
-          result.sessionId,
-          cbs
-        );
-
-        if (!handled) {
+        if (!resolveStatus(result.status, result.blocked, result.sessionId, cbs)) {
           debugLog(debug, "processing mode", { sessionId: result.sessionId });
           setProcessingSessionId(result.sessionId);
-          cbs.onProcessing(channelSlug, result.sessionId);
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Payment failed. Please try again.";
         debugLog(debug, "submitPayment failed", { error: msg });
         sessionUsedForPaymentRef.current = null;
-        resetSession();
-        setProcessingSessionId(null);
+        resetAll();
         cbs.onError?.(msg);
       }
     },
-    [channelSlug, sessionId, createSession, resetSession, submitPaymentApi, debug]
+    [apiBase, apiKey, channelSlug, createSession, resetAll, debug]
   );
 
   const lastHandledStatusRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isProcessingMode || !sid) return;
+    if (!isProcessingMode || !activeSid) return;
 
     const shouldHandle =
       needsVerification(status) ||
       status === "success" ||
-      status === "invalid" ||
       isTerminal(status);
 
     if (!shouldHandle) return;
     if (lastHandledStatusRef.current === status) return;
     lastHandledStatusRef.current = status;
 
-    debugLog(debug, "processing status handled", { status, sessionId: sid });
-    const cbs = callbacksRef.current;
-    resolveStatus(status, false, channelSlug, sid, cbs);
-    if (processingSessionId) {
+    debugLog(debug, "processing status handled", { status, sessionId: activeSid });
+    resolveStatus(status, false, activeSid, callbacksRef.current);
+
+    if (isTerminal(status)) {
+      sessionUsedForPaymentRef.current = null;
+      resetAll();
+    } else {
       setProcessingSessionId(null);
     }
-    if (status === "invalid" || isTerminal(status)) {
-      sessionUsedForPaymentRef.current = null;
-      resetSession();
-    }
-  }, [isProcessingMode, sid, channelSlug, status, processingSessionId, resetSession, debug]);
+  }, [isProcessingMode, activeSid, status, resetAll, debug]);
 
-  const resetSessionAndProcessing = useCallback(() => {
-    sessionUsedForPaymentRef.current = null;
-    setProcessingSessionId(null);
-    resetSession();
-  }, [resetSession]);
+  const binLookup = useCallback(
+    async (bin: string): Promise<BinLookupInfo | null> => {
+      try {
+        const r = await lookupBinApi(apiBase, apiKey, bin);
+        return {
+          brand: r.brand,
+          type: r.type,
+          category: r.category,
+          issuer: r.issuer,
+          isoCode2: r.isoCode2,
+          blocked: r.blocked,
+        };
+      } catch {
+        return null;
+      }
+    },
+    [apiBase, apiKey]
+  );
 
   return {
     submitPayment,
     binLookup,
-    sessionId: sid,
-    channel: channelSlug,
-    resetSession: resetSessionAndProcessing,
+    sessionId: activeSid,
+    resetSession: resetAll,
   };
 }

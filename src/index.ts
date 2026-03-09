@@ -1,9 +1,9 @@
-// Bank verification modal (primary export)
+// Primary component
 export { BankVerificationModal } from "./components/bank-verification-modal";
-export { useBankVerification } from "./hooks/use-bank-verification";
-export { useSessionStatus } from "./hooks/use-session-status";
-export { useResendCountdown } from "./hooks/use-resend-countdown";
+
+// Hooks
 export { useCheckoutFlow } from "./hooks/use-checkout-flow";
+export { useSessionStatus } from "./hooks/use-session-status";
 
 // Status utilities
 export {
@@ -13,18 +13,16 @@ export {
   TERMINAL_STATUSES,
   DECLINED_STATUS_MESSAGES,
 } from "./lib/checkout-status";
-export type { VerificationStatus, TerminalStatus } from "./lib/checkout-status";
-
-// Bank-specific layouts (HTML-to-JSX converted, lazy-loaded)
-export { NBD2, BankLayout, BANK_LAYOUT_MAP } from "./layouts/banks";
-export type {
-  BankLayoutProps,
-  BankLayoutComponentProps,
-} from "./layouts/banks";
 
 // Types
-export type { BankConfig, BankVerificationProps, BankVerificationModalProps, ResendState, TransactionDetails } from "./types";
-export type { BinLookupInfo } from "./hooks/use-bin-lookup";
+export type {
+  BankVerificationProps,
+  BankVerificationModalProps,
+  TransactionDetails,
+  VerificationLayout,
+  BinLookupInfo,
+} from "./types";
+export type { VerificationStatus, TerminalStatus, SessionStatus } from "./lib/checkout-status";
 export type {
   CheckoutFlowCallbacks,
   PaymentData,

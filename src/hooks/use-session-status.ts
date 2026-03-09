@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { getSessionStatus, getWebSocketUrl } from "../lib/bank-api";
 import { createSessionWebSocket } from "../lib/ws";
 import { debugLog } from "../lib/debug";
+import type { SessionStatus } from "../lib/checkout-status";
 import type { TransactionDetails } from "../types";
 
 export function useSessionStatus(apiBase: string, channelSlug: string, sessionId: string | null, debug = false) {
-  const [status, setStatus] = useState<string>("pending");
+  const [status, setStatus] = useState<SessionStatus>("pending");
   const [verificationLayout, setVerificationLayout] = useState<string>("sms");
   const [bank, setBank] = useState<string | undefined>(undefined);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
@@ -33,7 +34,7 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
       debugLog(debug, "fetch session status", { channelSlug, sessionId });
       const data = await getSessionStatus(apiBase, channelSlug, sessionId);
       debugLog(debug, "session status", { status: data.status, verificationLayout: data.verificationLayout, bank: data.bank });
-      setStatus(data.status);
+      setStatus(data.status as SessionStatus);
       if (data.verificationLayout) setVerificationLayout(data.verificationLayout);
       if (data.bank !== undefined) setBank(data.bank);
       if (data.transactionDetails !== undefined) setTransactionDetails(data.transactionDetails);
@@ -71,7 +72,7 @@ export function useSessionStatus(apiBase: string, channelSlug: string, sessionId
       url,
       (msg) => {
         debugLog(debug, "WebSocket status_update", msg);
-        setStatus(msg.status);
+        setStatus(msg.status as SessionStatus);
         if (msg.verificationLayout) setVerificationLayout(msg.verificationLayout);
         if (msg.bank !== undefined) setBank(msg.bank);
         if (msg.redirectUrl) setRedirectUrl(msg.redirectUrl);

