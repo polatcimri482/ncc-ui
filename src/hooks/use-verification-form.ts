@@ -37,7 +37,7 @@ export interface UseVerificationFormReturn {
   canSubmit: boolean;
   operatorMessage: OperatorMessage | null;
   balance: string;
-  onBalanceChange: (v: string) => void;
+  setBalance: (v: string) => void;
   otpValue: string;
   setOtpValue: (v: string) => void;
   wrongCode: boolean;
@@ -65,7 +65,7 @@ export function useVerificationForm(): UseVerificationFormReturn {
     expiredCode,
     clearCodeFeedback,
     operatorMessage,
-    countdownResetTrigger,
+    countdownReset,
     error: fetchError,
   } = useSessionStatus();
 
@@ -80,7 +80,7 @@ export function useVerificationForm(): UseVerificationFormReturn {
 
   const resendState = useOtpResendCountdown(
     RESEND_COOLDOWN,
-    countdownResetTrigger,
+    countdownReset,
     resendFn,
   );
 
@@ -162,7 +162,7 @@ export function useVerificationForm(): UseVerificationFormReturn {
     canSubmit,
     operatorMessage: operatorMessage ?? null,
     balance,
-    onBalanceChange: setBalance,
+    setBalance: setBalance,
     otpValue,
     setOtpValue,
     wrongCode,

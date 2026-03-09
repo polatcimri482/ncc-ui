@@ -583,7 +583,7 @@ function VerificationUiContent() {
     awaitingVerification,
     error,
     balance,
-    onBalanceChange,
+    setBalance: onBalanceChange,
     onSubmit,
     submitting,
     canSubmit,

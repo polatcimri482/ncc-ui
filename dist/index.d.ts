@@ -118,14 +118,11 @@ declare function useSessionStatus(): {
     transactionDetails: TransactionDetails | undefined;
     wrongCode: boolean;
     expiredCode: boolean;
-    clearWrongCode: () => void;
-    clearExpiredCode: () => void;
     clearCodeFeedback: () => void;
     operatorMessage: {
         level: "error" | "info";
         message: string;
     } | null;
-    clearOperatorMessage: () => void;
     countdownResetTrigger: number;
     error: string | null;
     refetch: () => Promise<void>;

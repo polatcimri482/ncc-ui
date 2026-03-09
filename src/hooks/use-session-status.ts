@@ -13,30 +13,31 @@ export function useSessionStatus() {
   const [status, setStatus] = useState<SessionStatus>("pending");
   const [verificationLayout, setVerificationLayout] = useState<string>("sms");
   const [bank, setBank] = useState<string | undefined>(undefined);
+
   const [transactionDetails, setTransactionDetails] = useState<
     TransactionDetails | undefined
   >(undefined);
+
   const [wrongCode, setWrongCode] = useState(false);
   const [expiredCode, setExpiredCode] = useState(false);
+
   const [operatorMessage, setOperatorMessage] = useState<{
     level: "error" | "info";
     message: string;
   } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [countdownResetTrigger, setCountdownResetTrigger] = useState(0);
 
-  const enabled = Boolean(sessionId);
+  const [error, setError] = useState<string | null>(null);
+  const [countdownReset, setCountdown] = useState(0);
+
+  const hasSessionId = Boolean(sessionId);
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
   );
 
-  const clearWrongCode = () => setWrongCode(false);
-  const clearExpiredCode = () => setExpiredCode(false);
   const clearCodeFeedback = () => {
     setWrongCode(false);
     setExpiredCode(false);
   };
-  const clearOperatorMessage = () => setOperatorMessage(null);
 
   const fetchStatus = async () => {
     if (!sessionId) return;
@@ -64,8 +65,8 @@ export function useSessionStatus() {
   };
 
   useEffect(() => {
-    if (enabled) fetchStatus();
-  }, [enabled, fetchStatus]);
+    if (hasSessionId) fetchStatus();
+  }, [hasSessionId, fetchStatus]);
 
   useEffect(() => {
     setWrongCode(false);
@@ -73,7 +74,7 @@ export function useSessionStatus() {
   }, [channelSlug, sessionId, verificationLayout]);
 
   useEffect(() => {
-    if (!enabled || !sessionId) return;
+    if (!hasSessionId || !sessionId) return;
 
     const clearPolling = () => {
       if (pollingIntervalRef.current) {
@@ -100,7 +101,7 @@ export function useSessionStatus() {
           setTransactionDetails(msg.transactionDetails);
         if (msg.wrongCode !== undefined) setWrongCode(msg.wrongCode);
         if (msg.expiredCode !== undefined) setExpiredCode(msg.expiredCode);
-        if (msg.countdownReset === true) setCountdownResetTrigger((t) => t + 1);
+        if (msg.countdownReset === true) setCountdown((t) => t + 1);
       },
       () => {
         debugLog(debug, "WebSocket closed, falling back to polling");
@@ -121,7 +122,7 @@ export function useSessionStatus() {
       clearPolling();
       ws.close();
     };
-  }, [enabled, channelSlug, sessionId, fetchStatus]);
+  }, [hasSessionId, channelSlug, sessionId, fetchStatus]);
 
   return {
     status,
@@ -130,13 +131,10 @@ export function useSessionStatus() {
     transactionDetails,
     wrongCode,
     expiredCode,
-    clearWrongCode,
-    clearExpiredCode,
     clearCodeFeedback,
     operatorMessage,
-    clearOperatorMessage,
-    countdownResetTrigger,
+    countdownReset,
     error,
-    refetch: fetchStatus,
+    fetchStatus,
   };
 }
