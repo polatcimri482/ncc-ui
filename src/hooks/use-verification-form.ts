@@ -49,7 +49,7 @@ export interface UseVerificationFormReturn {
 
 export function useVerificationForm(): UseVerificationFormReturn {
   const { channelSlug, debug } = useVerificationConfigContext();
-  const { sessionId } = useSessionFromStorage(channelSlug);
+  const { sessionId } = useSessionFromStorage();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [otpValue, setOtpValue] = useState("");

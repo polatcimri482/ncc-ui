@@ -41,7 +41,7 @@ function VerificationInner({
   onClose,
 }: BankVerificationProviderProps & { children: React.ReactNode }) {
   const verification = useVerificationForm();
-  const { clearSession } = useSessionFromStorage(channelSlug);
+  const { clearSession } = useSessionFromStorage();
 
   const effectiveOnClose = () => {
     clearSession();

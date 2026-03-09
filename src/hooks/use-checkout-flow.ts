@@ -60,8 +60,7 @@ function toSuccessResult(): SubmitResult {
 export function useCheckoutFlow(): UseCheckoutFlowReturn {
   const { channelSlug, debug } = useVerificationConfigContext();
 
-  const { sessionId, setSession, clearSession } =
-    useSessionFromStorage(channelSlug);
+  const { sessionId, setSession, clearSession } = useSessionFromStorage();
 
   const { status } = useSessionStatus();
   const isLoading = Boolean(sessionId && !isTerminal(status));

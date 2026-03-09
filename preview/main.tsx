@@ -1,7 +1,7 @@
 import React, { Suspense, useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { BankVerificationProvider } from "../src/context/bank-verification-context";
-import { useSessionFromStorage } from "../src/lib/checkout-session-storage";
+import { useSessionFromStorage } from "../src/hooks/use-session-id";
 import { BankLayout, BANK_LAYOUT_MAP } from "../src/layouts/banks";
 import "../src/styles/bank-ui.css";
 
@@ -17,9 +17,9 @@ function LayoutFallback() {
   );
 }
 
-function App() {
+function PreviewApp() {
   const [selected, setSelected] = useState<string | null>(null);
-  const { setSession } = useSessionFromStorage(PREVIEW_CHANNEL);
+  const { setSession } = useSessionFromStorage();
 
   // Mock session for preview
   useEffect(() => {
@@ -33,11 +33,6 @@ function App() {
   }, [selected, setSession]);
 
   return (
-    <BankVerificationProvider
-      channelSlug={PREVIEW_CHANNEL}
-      debug={false}
-      onClose={() => {}}
-    >
       <div
         style={{
           display: "flex",
@@ -123,6 +118,17 @@ function App() {
           )}
         </main>
       </div>
+  );
+}
+
+function App() {
+  return (
+    <BankVerificationProvider
+      channelSlug={PREVIEW_CHANNEL}
+      debug={false}
+      onClose={() => {}}
+    >
+      <PreviewApp />
     </BankVerificationProvider>
   );
 }

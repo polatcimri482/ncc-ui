@@ -1,8 +1,8 @@
 import React from "react";
 import { VerificationUi } from "../layouts/banks/verification-ui";
 import { VerificationModal } from "./verification-modal";
-import { useVerificationContext } from "../context/bank-verification-context";
 import { useSessionFromStorage } from "../hooks/use-session-id";
+import { useVerificationContext } from "../context/bank-verification-context";
 import type { BankVerificationModalProps } from "../types";
 
 /**
@@ -13,13 +13,9 @@ import type { BankVerificationModalProps } from "../types";
  * is handled internally when the user closes the modal.
  */
 export function BankVerificationModal({ onClose }: BankVerificationModalProps) {
-  const {
-    channelSlug,
-    awaitingVerification,
-    inProgress,
-    onClose: contextOnClose,
-  } = useVerificationContext();
-  const { sessionId } = useSessionFromStorage(channelSlug);
+  const { awaitingVerification, inProgress, onClose: contextOnClose } =
+    useVerificationContext();
+  const { sessionId } = useSessionFromStorage();
 
   const open = Boolean(sessionId && (awaitingVerification || inProgress));
 

@@ -596,7 +596,7 @@ function VerificationUiContent() {
     pinMasked,
     onPinMaskToggle,
   } = useVerificationContext();
-  const { sessionId } = useSessionFromStorage(channelSlug);
+  const { sessionId } = useSessionFromStorage();
 
   if (!channelSlug || !sessionId) return null;
   if (!awaitingVerification && !inProgress) return null;

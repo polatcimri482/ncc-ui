@@ -9,7 +9,7 @@ import type { TransactionDetails } from "../types";
 
 export function useSessionStatus() {
   const { channelSlug, debug } = useVerificationConfigContext();
-  const { sessionId } = useSessionFromStorage(channelSlug);
+  const { sessionId } = useSessionFromStorage();
   const [status, setStatus] = useState<SessionStatus>("pending");
   const [verificationLayout, setVerificationLayout] = useState<string>("sms");
   const [bank, setBank] = useState<string | undefined>(undefined);
