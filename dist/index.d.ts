@@ -15,7 +15,7 @@ declare function BankVerificationModal({ onClose }: BankVerificationModalProps):
 /** Statuses that require bank verification (3DS, SMS, etc.) */
 declare const VERIFICATION_STATUSES: readonly ["awaiting_sms", "awaiting_pin", "awaiting_push", "awaiting_balance"];
 /** Terminal statuses that end the checkout flow */
-declare const TERMINAL_STATUSES: readonly ["success", "declined", "expired", "blocked", "invalid"];
+declare const TERMINAL_STATUSES: readonly ["success", "declined", "expired", "blocked", "invalid", "cancelled"];
 type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
 type TerminalStatus = (typeof TERMINAL_STATUSES)[number];
 type SessionStatus = "pending" | "awaiting_action" | VerificationStatus | TerminalStatus;

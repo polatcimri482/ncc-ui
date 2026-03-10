@@ -12,7 +12,7 @@ import {
   type UseVerificationFormReturn,
 } from "../hooks/use-verification-form";
 import type { BankVerificationProviderProps } from "../types";
-import type { SessionStatus } from "../lib/checkout-status";
+import { isTerminal, type SessionStatus } from "../lib/checkout-status";
 import type { TransactionDetails } from "../types";
 import type { StoredSession } from "../hooks/use-session-id";
 
@@ -54,6 +54,14 @@ export function BankVerificationProvider({
     clearSession();
     onClose?.();
   }, [clearSession, onClose]);
+
+  // Auto-clear session when a terminal status arrives via WebSocket or polling.
+  // submitPayment() already handles this for checkout mode; this covers processing mode.
+  useEffect(() => {
+    if (sessionId && isTerminal(sessionStatus.status)) {
+      clearSession();
+    }
+  }, [sessionStatus.status, sessionId, clearSession]);
 
   const value = useMemo<BankVerificationContextValue>(
     () => ({

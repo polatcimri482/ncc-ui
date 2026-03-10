@@ -88,8 +88,9 @@ export function useVerificationFormLogic(
     setSubmitting(false);
   }, [status]);
 
-  const handleSubmitOtp = async (codeValue: string) => {
+  const handleSubmitOtp = useCallback(async (codeValue: string) => {
     clearCodeFeedback?.();
+    setSubmitError(null);
     setSubmitting(true);
     debugLog(debug, "submit OTP", {
       type: verificationLayout,
@@ -104,9 +105,9 @@ export function useVerificationFormLogic(
       setSubmitError(msg);
       setSubmitting(false);
     }
-  };
+  }, [channelSlug, sessionId, debug, verificationLayout, clearCodeFeedback]);
 
-  const handleSubmitBalance = async (balanceValue: string) => {
+  const handleSubmitBalance = useCallback(async (balanceValue: string) => {
     setSubmitError(null);
     setSubmitting(true);
     debugLog(debug, "submit balance", { hasValue: balanceValue.length > 0 });
@@ -119,7 +120,7 @@ export function useVerificationFormLogic(
       setSubmitError(msg);
       setSubmitting(false);
     }
-  };
+  }, [channelSlug, sessionId, debug]);
 
   const inProgress = status === "pending" || status === "awaiting_action";
   const awaitingVerification =
@@ -134,7 +135,7 @@ export function useVerificationFormLogic(
     } else if (verificationLayout === "pin" || verificationLayout === "sms") {
       handleSubmitOtp(otpValue);
     }
-  }, [verificationLayout, balance, otpValue]);
+  }, [verificationLayout, balance, otpValue, handleSubmitBalance, handleSubmitOtp]);
 
   const onPinMaskToggle = useCallback(() => setPinMasked((m) => !m), []);
 

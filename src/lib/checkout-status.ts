@@ -13,6 +13,7 @@ export const TERMINAL_STATUSES = [
   "expired",
   "blocked",
   "invalid",
+  "cancelled",
 ] as const;
 
 export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];

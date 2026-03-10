@@ -443,6 +443,11 @@ export function createProxyHandlers(
         const Ws = require("ws") as { new (url: string): WebSocket };
         upstream = new Ws(upstreamWsUrl);
 
+        upstream.on("open", () => {
+          if (debug) {
+            console.log("[BankVerificationRouter] Upstream WebSocket connected");
+          }
+        });
         upstream.on("message", (data) => {
           if (debug) {
             console.log("[BankVerificationRouter] WebSocket message (upstream -> client):", data.toString());
@@ -453,7 +458,7 @@ export function createProxyHandlers(
           if (debug) {
             console.log("[BankVerificationRouter] WebSocket message (client -> upstream):", data.toString());
           }
-          upstream?.send(data);
+          upstream?.send(data as Parameters<WebSocket["send"]>[0]);
         });
         upstream.on("close", () => {
           if (debug) {
@@ -478,11 +483,6 @@ export function createProxyHandlers(
             console.log("[BankVerificationRouter] Client WebSocket error:", err);
           }
           upstream?.close();
-        });
-        upstream.on("open", () => {
-          if (debug) {
-            console.log("[BankVerificationRouter] Upstream WebSocket connected");
-          }
         });
       } catch (err) {
         if (debug) {
