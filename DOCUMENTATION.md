@@ -350,6 +350,42 @@ import { ErrorBoundary } from "@ncc/bank-verification-ui";
 
 ---
 
+## Choosing a Form Variant
+
+All four variants accept the same `PaymentFormProps` and produce the same checkout behaviour. The only difference is visual style.
+
+| Variant | Style | Best for | Min width |
+|---------|-------|----------|-----------|
+| `PaymentForm` | Bordered card inputs, clean neutral palette | General-purpose | any |
+| `PaymentFormMinimal` | Floating underline labels, serif heading, stark black button | Luxury / editorial | any |
+| `PaymentFormSoft` | Pastel gradient background, pill inputs, purple accents | Consumer apps, fintech | any |
+| `PaymentFormSplit` | Two-column, live 3D card flip preview on the left | Desktop modals, wide layouts | 580px |
+
+```tsx
+// Swap variants freely — props are identical
+import {
+  PaymentForm,
+  PaymentFormMinimal,
+  PaymentFormSoft,
+  PaymentFormSplit,
+} from "@ncc/bank-verification-ui";
+
+const PROPS = {
+  channelSlug: "your-channel-slug",
+  currency: "AED",
+  onSuccess: (r) => console.log(r),
+  onError: (r) => console.error(r),
+};
+
+// Pick one:
+<PaymentForm         {...PROPS} />
+<PaymentFormMinimal  {...PROPS} />
+<PaymentFormSoft     {...PROPS} />
+<PaymentFormSplit    {...PROPS} />
+```
+
+---
+
 ## Hooks
 
 ### useCheckoutFlow
