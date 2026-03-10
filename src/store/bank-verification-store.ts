@@ -8,9 +8,7 @@ import { getSessionStatus, submitOtp, submitBalance, resendOtp } from "../lib/ve
 import type { SessionStatus } from "../lib/checkout-status";
 import type { OperatorMessage, TransactionDetails } from "../types";
 
-// ─── localStorage session helpers ───────────────────────────────────────────
-
-const storageKey = (channelSlug: string) => `ncc_checkout_${channelSlug}`;
+// ─── Session types ───────────────────────────────────────────────────────────
 
 export interface StoredSession {
   sessionId: string;
@@ -18,31 +16,9 @@ export interface StoredSession {
   submitted: boolean;
 }
 
-function loadSession(channelSlug: string): StoredSession | null {
-  try {
-    const raw = localStorage.getItem(storageKey(channelSlug));
-    return raw ? (JSON.parse(raw) as StoredSession) : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveSessionToStorage(channelSlug: string, session: StoredSession): void {
-  try {
-    localStorage.setItem(storageKey(channelSlug), JSON.stringify(session));
-  } catch {}
-}
-
-function clearSessionFromStorage(channelSlug: string): void {
-  try {
-    localStorage.removeItem(storageKey(channelSlug));
-  } catch {}
-}
-
-function getActiveSessionId(stored: StoredSession | null): string | null {
-  if (!stored) return null;
-  if (!stored.submitted || !stored.sessionId || isTerminal(stored.status)) return null;
-  return stored.sessionId;
+function getActiveSessionId(session: StoredSession): string | null {
+  if (!session.submitted || !session.sessionId || isTerminal(session.status)) return null;
+  return session.sessionId;
 }
 
 // ─── Store types ─────────────────────────────────────────────────────────────
@@ -160,8 +136,7 @@ export function createBankVerificationStore(
   debug: boolean,
   onClose: (() => void) | undefined,
 ): BankVerificationStoreApi {
-  const stored = loadSession(channelSlug);
-  const sessionId = getActiveSessionId(stored);
+  const sessionId = null;
 
   const store = createStore<BankVerificationStore>((set, get) => ({
     // Config
@@ -195,7 +170,6 @@ export function createBankVerificationStore(
     patchConfig: (config) => set(config),
 
     setSession: (session) => {
-      saveSessionToStorage(get().channelSlug, session);
       const newSessionId = getActiveSessionId(session);
       // Reset code feedback whenever the session changes
       set({ sessionId: newSessionId, wrongCode: false, expiredCode: false });
@@ -203,7 +177,6 @@ export function createBankVerificationStore(
     },
 
     clearSession: () => {
-      clearSessionFromStorage(get().channelSlug);
       // Reset code feedback on session clear
       set({ sessionId: null, wrongCode: false, expiredCode: false });
     },
@@ -344,11 +317,6 @@ export function createBankVerificationStore(
       }
     },
   }));
-
-  // If there's an active session from localStorage on startup, fetch its status immediately
-  if (sessionId) {
-    Promise.resolve().then(() => store.getState().fetchStatus());
-  }
 
   return store;
 }
