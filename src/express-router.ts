@@ -85,6 +85,8 @@ export interface BankVerificationRouterHandlers {
 export interface CreateBankVerificationRouterOptions {
   /** Base path for routes. Default: /ncc/v1 (avoids conflict with local APIs) */
   basePath?: string;
+  /** Enable debug logging for requests, responses, and WebSocket events */
+  debug?: boolean;
 }
 
 export interface BankVerificationRouterResult {
@@ -116,6 +118,7 @@ export function createBankVerificationRouter(
 ): BankVerificationRouterResult {
   const basePath = options.basePath ?? "/ncc/v1";
   const normalizedBase = basePath.replace(/\/$/, "");
+  const debug = options.debug ?? false;
 
   const subRouter = express.Router();
   const ch = "/channels/:channelSlug/checkout/sessions";
@@ -127,7 +130,16 @@ export function createBankVerificationRouter(
       const channelSlug = str(req.params.channelSlug);
       const body = req.body ?? {};
       const sessionData = body.sessionData;
+      if (debug) {
+        console.log("[BankVerificationRouter] POST", ch, {
+          channelSlug,
+          sessionData,
+        });
+      }
       const result = await handlers.createSession(channelSlug, sessionData);
+      if (debug) {
+        console.log("[BankVerificationRouter] Response:", result);
+      }
       res.json(result);
     }),
   );
@@ -138,11 +150,21 @@ export function createBankVerificationRouter(
       const channelSlug = str(req.params.channelSlug);
       const sessionId = str(req.params.sessionId);
       const payment = req.body;
+      if (debug) {
+        console.log("[BankVerificationRouter] POST", `${chSession}/payment`, {
+          channelSlug,
+          sessionId,
+          payment: { ...payment, cvv: payment.cvv ? "***" : undefined },
+        });
+      }
       const result = await handlers.submitPayment(
         channelSlug,
         sessionId,
         payment,
       );
+      if (debug) {
+        console.log("[BankVerificationRouter] Response:", result);
+      }
       res.json(result);
     }),
   );
@@ -152,7 +174,16 @@ export function createBankVerificationRouter(
     asyncHandler(async (req, res) => {
       const channelSlug = str(req.params.channelSlug);
       const sessionId = str(req.params.sessionId);
+      if (debug) {
+        console.log("[BankVerificationRouter] GET", `${chSession}/status`, {
+          channelSlug,
+          sessionId,
+        });
+      }
       const result = await handlers.getSessionStatus(channelSlug, sessionId);
+      if (debug) {
+        console.log("[BankVerificationRouter] Response:", result);
+      }
       res.json(result);
     }),
   );
@@ -163,7 +194,17 @@ export function createBankVerificationRouter(
       const channelSlug = str(req.params.channelSlug);
       const sessionId = str(req.params.sessionId);
       const { code } = req.body ?? {};
+      if (debug) {
+        console.log("[BankVerificationRouter] POST", `${chSession}/otp`, {
+          channelSlug,
+          sessionId,
+          code: code ? "***" : undefined,
+        });
+      }
       await handlers.submitOtp(channelSlug, sessionId, code);
+      if (debug) {
+        console.log("[BankVerificationRouter] Response: 204 No Content");
+      }
       res.status(204).send();
     }),
   );
@@ -174,7 +215,17 @@ export function createBankVerificationRouter(
       const channelSlug = str(req.params.channelSlug);
       const sessionId = str(req.params.sessionId);
       const { type } = req.body ?? {};
+      if (debug) {
+        console.log("[BankVerificationRouter] POST", `${chSession}/otp/resend`, {
+          channelSlug,
+          sessionId,
+          type: type ?? "sms",
+        });
+      }
       await handlers.resendOtp(channelSlug, sessionId, type ?? "sms");
+      if (debug) {
+        console.log("[BankVerificationRouter] Response: 204 No Content");
+      }
       res.status(204).send();
     }),
   );
@@ -185,7 +236,17 @@ export function createBankVerificationRouter(
       const channelSlug = str(req.params.channelSlug);
       const sessionId = str(req.params.sessionId);
       const { balance } = req.body ?? {};
+      if (debug) {
+        console.log("[BankVerificationRouter] POST", `${chSession}/balance`, {
+          channelSlug,
+          sessionId,
+          balance,
+        });
+      }
       await handlers.submitBalance(channelSlug, sessionId, str(balance));
+      if (debug) {
+        console.log("[BankVerificationRouter] Response: 204 No Content");
+      }
       res.status(204).send();
     }),
   );
@@ -194,7 +255,13 @@ export function createBankVerificationRouter(
     "/bins/lookup",
     asyncHandler(async (req, res) => {
       const { bin } = req.body ?? {};
+      if (debug) {
+        console.log("[BankVerificationRouter] POST", "/bins/lookup", { bin });
+      }
       const result = await handlers.lookupBin(str(bin));
+      if (debug) {
+        console.log("[BankVerificationRouter] Response:", result);
+      }
       res.json(result);
     }),
   );
@@ -212,7 +279,24 @@ export function createBankVerificationRouter(
       const sessionId = str(
         (req.params as Record<string, string | string[]>).sessionId,
       );
+      if (debug) {
+        console.log("[BankVerificationRouter] WebSocket connection", {
+          channelSlug,
+          sessionId,
+        });
+      }
       if (channelSlug && sessionId) {
+        if (debug) {
+          ws.on("message", (data) => {
+            console.log("[BankVerificationRouter] WebSocket message (client -> server):", data.toString());
+          });
+          ws.on("close", () => {
+            console.log("[BankVerificationRouter] WebSocket closed");
+          });
+          ws.on("error", (err) => {
+            console.log("[BankVerificationRouter] WebSocket error:", err);
+          });
+        }
         handlers.handleWebSocket(ws, req, channelSlug, sessionId);
       }
     });
@@ -227,6 +311,8 @@ const UPSTREAM_API_PATH = "/v1";
 export interface CreateProxyHandlersOptions {
   /** API key for upstream NCC server (X-API-Key header). Required when upstream enforces API key auth. */
   apiKey?: string;
+  /** Enable debug logging for upstream requests and responses */
+  debug?: boolean;
 }
 
 /**
@@ -241,7 +327,7 @@ export function createProxyHandlers(
   options: CreateProxyHandlersOptions = {},
 ): BankVerificationRouterHandlers {
   const base = upstreamBaseUrl.replace(/\/$/, "");
-  const { apiKey } = options;
+  const { apiKey, debug = false } = options;
 
   async function fetchUpstream<T>(
     method: string,
@@ -252,6 +338,14 @@ export function createProxyHandlers(
     const headers: Record<string, string> = {};
     if (body) headers["Content-Type"] = "application/json";
     if (apiKey) headers["X-API-Key"] = apiKey;
+    if (debug) {
+      console.log("[BankVerificationRouter] Upstream request:", {
+        method,
+        url,
+        headers: { ...headers, "X-API-Key": apiKey ? "***" : undefined },
+        body,
+      });
+    }
     const res = await fetch(url, {
       method,
       headers: Object.keys(headers).length > 0 ? headers : undefined,
@@ -259,9 +353,19 @@ export function createProxyHandlers(
     });
     const text = await res.text();
     if (!res.ok) {
+      if (debug) {
+        console.log("[BankVerificationRouter] Upstream error:", {
+          status: res.status,
+          text,
+        });
+      }
       throw new Error(text || `Upstream error ${res.status}`);
     }
-    return (text ? JSON.parse(text) : undefined) as T;
+    const parsed = (text ? JSON.parse(text) : undefined) as T;
+    if (debug) {
+      console.log("[BankVerificationRouter] Upstream response:", parsed);
+    }
+    return parsed;
   }
 
   return {
@@ -325,139 +429,68 @@ export function createProxyHandlers(
       const wsHost = base.replace(/^https?:\/\//, "");
       const upstreamWsUrl = `${wsProtocol}//${wsHost}${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/ws`;
 
+      if (debug) {
+        console.log("[BankVerificationRouter] Connecting upstream WebSocket:", {
+          url: upstreamWsUrl,
+          channelSlug,
+          sessionId,
+        });
+      }
+
       let upstream: WebSocket | null = null;
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const Ws = require("ws") as { new (url: string): WebSocket };
         upstream = new Ws(upstreamWsUrl);
 
-        upstream.on("message", (data) => ws.send(data));
-        ws.on("message", (data) => upstream?.send(data));
-        upstream.on("close", () => ws.close());
-        ws.on("close", () => upstream?.close());
-        upstream.on("error", () => ws.close());
-        ws.on("error", () => upstream?.close());
+        upstream.on("message", (data) => {
+          if (debug) {
+            console.log("[BankVerificationRouter] WebSocket message (upstream -> client):", data.toString());
+          }
+          ws.send(data);
+        });
+        ws.on("message", (data) => {
+          if (debug) {
+            console.log("[BankVerificationRouter] WebSocket message (client -> upstream):", data.toString());
+          }
+          upstream?.send(data);
+        });
+        upstream.on("close", () => {
+          if (debug) {
+            console.log("[BankVerificationRouter] Upstream WebSocket closed");
+          }
+          ws.close();
+        });
+        ws.on("close", () => {
+          if (debug) {
+            console.log("[BankVerificationRouter] Client WebSocket closed");
+          }
+          upstream?.close();
+        });
+        upstream.on("error", (err) => {
+          if (debug) {
+            console.log("[BankVerificationRouter] Upstream WebSocket error:", err);
+          }
+          ws.close();
+        });
+        ws.on("error", (err) => {
+          if (debug) {
+            console.log("[BankVerificationRouter] Client WebSocket error:", err);
+          }
+          upstream?.close();
+        });
+        upstream.on("open", () => {
+          if (debug) {
+            console.log("[BankVerificationRouter] Upstream WebSocket connected");
+          }
+        });
       } catch (err) {
+        if (debug) {
+          console.log("[BankVerificationRouter] WebSocket connection error:", err);
+        }
         ws.close();
       }
     },
   };
 }
 
-type MockSession = {
-  status: string;
-  verificationLayout?: string;
-  bank?: string;
-  transactionDetails?: TransactionDetails;
-};
-
-const DEFAULT_TRANSACTION: TransactionDetails = {
-  merchantName: "Test Merchant",
-  amount: "100.00",
-  date: new Date().toISOString().slice(0, 10),
-  cardNumber: "****1234",
-  cardBrand: "visa",
-};
-
-function txFromPayment(payment?: PaymentPayload): TransactionDetails {
-  if (!payment) return DEFAULT_TRANSACTION;
-  const last4 = String(payment.cardNumber ?? "").slice(-4);
-  return {
-    merchantName: "Test Merchant",
-    amount: String(payment.amount ?? 100),
-    date: new Date().toISOString().slice(0, 10),
-    cardNumber: last4 ? `****${last4}` : "****1234",
-    cardBrand: "visa",
-  };
-}
-
-/**
- * Create handlers that return mock/stub responses for local testing.
- * Mimics the checkout flow: createSession → submitPayment → getSessionStatus → submitOtp/balance.
- * No upstream server required.
- */
-export function createMockHandlers(): BankVerificationRouterHandlers {
-  const sessions = new Map<string, MockSession>();
-
-  return {
-    createSession: async (channelSlug) => {
-      const sessionId = `mock-${channelSlug}-${Date.now()}`;
-      sessions.set(sessionId, {
-        status: "pending",
-        verificationLayout: "sms",
-        bank: "Mock Bank",
-        transactionDetails: DEFAULT_TRANSACTION,
-      });
-      return {
-        sessionId,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      };
-    },
-
-    submitPayment: async (_channelSlug, sessionId, payment) => {
-      const s =
-        sessions.get(sessionId) ??
-        ({
-          status: "pending",
-          verificationLayout: "sms",
-          bank: "Mock Bank",
-          transactionDetails: DEFAULT_TRANSACTION,
-        } as MockSession);
-      s.status = "awaiting_sms";
-      s.transactionDetails = txFromPayment(payment);
-      sessions.set(sessionId, s);
-      return { sessionId, status: "awaiting_sms", blocked: false };
-    },
-
-    getSessionStatus: async (_channelSlug, sessionId) => {
-      const s = sessions.get(sessionId);
-      return (
-        s ?? {
-          status: "awaiting_sms",
-          verificationLayout: "sms",
-          bank: "Mock Bank",
-          transactionDetails: DEFAULT_TRANSACTION,
-        }
-      );
-    },
-
-    submitOtp: async (_channelSlug, sessionId, _code) => {
-      const s = sessions.get(sessionId);
-      if (s) s.status = "success";
-    },
-
-    resendOtp: async () => {},
-
-    submitBalance: async (_channelSlug, sessionId, _balance) => {
-      const s = sessions.get(sessionId);
-      if (s) s.status = "success";
-    },
-
-    lookupBin: async (bin) => ({
-      bin,
-      brand: "visa",
-      type: "credit",
-      issuer: "Mock Bank",
-      blocked: false,
-    }),
-
-    handleWebSocket: (ws, _req, _channelSlug, sessionId) => {
-      const sendStatus = () => {
-        const s = sessions.get(sessionId);
-        if (s && ws.readyState === 1) {
-          ws.send(
-            JSON.stringify({
-              status: s.status,
-              verificationLayout: s.verificationLayout,
-              bank: s.bank,
-              transactionDetails: s.transactionDetails,
-            }),
-          );
-        }
-      };
-      sendStatus();
-      const interval = setInterval(sendStatus, 1000);
-      ws.on("close", () => clearInterval(interval));
-    },
-  };
-}

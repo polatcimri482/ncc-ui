@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useMemo } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo } from "react";
 import { useSessionFromStorage } from "../hooks/use-session-id";
 import {
   useVerificationForm,
@@ -80,6 +80,17 @@ function VerificationInner({
       effectiveOnClose,
     ],
   );
+
+  // Log context value every 2 seconds in debug mode
+  useEffect(() => {
+    if (!debug) return;
+
+    const interval = setInterval(() => {
+      console.log("[BankVerificationContext]", value);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [debug, value]);
 
   return (
     <VerificationContext.Provider value={value}>
