@@ -1,6 +1,5 @@
 // Primary components
 export { BankVerificationModal } from "./components/bank-verification-modal";
-export { BankVerificationProvider } from "./context/bank-verification-context";
 export { ErrorBoundary } from "./components/error-boundary";
 
 // Hooks
@@ -19,9 +18,7 @@ export {
 
 // Types
 export type {
-  BankVerificationProps,
   BankVerificationModalProps,
-  BankVerificationProviderProps,
   TransactionDetails,
   VerificationLayout,
   BinLookupInfo,

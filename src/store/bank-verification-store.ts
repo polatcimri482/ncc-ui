@@ -111,6 +111,25 @@ export interface BankVerificationActions {
 export type BankVerificationStore = BankVerificationState & BankVerificationActions;
 export type BankVerificationStoreApi = StoreApi<BankVerificationStore>;
 
+// ─── Store registry ───────────────────────────────────────────────────────────
+
+const storeRegistry = new Map<string, BankVerificationStoreApi>();
+
+/**
+ * Returns the store for the given channelSlug, creating it if it doesn't exist.
+ * Multiple callers (useCheckoutFlow, BankVerificationModal) share the same instance.
+ */
+export function getOrCreateStore(
+  channelSlug: string,
+  debug: boolean = false,
+  onClose?: () => void,
+): BankVerificationStoreApi {
+  if (!storeRegistry.has(channelSlug)) {
+    storeRegistry.set(channelSlug, createBankVerificationStore(channelSlug, debug, onClose));
+  }
+  return storeRegistry.get(channelSlug)!;
+}
+
 // ─── Factory ─────────────────────────────────────────────────────────────────
 
 export function createBankVerificationStore(

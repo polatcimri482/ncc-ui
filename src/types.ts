@@ -12,34 +12,12 @@ export type SubmitResult = {
   isLoading?: boolean;
 };
 
-/** Props for BankVerificationProvider. Session comes from localStorage. */
-export interface BankVerificationProviderProps {
-  channelSlug: string;
-  /** When true, logs flow events and state to console for debugging */
-  debug?: boolean;
-  /** Optional callback when user closes verification modal */
-  onClose?: () => void;
-}
-
-/** Props shared by the verification component and modal (when used without provider) */
-export interface BankVerificationProps {
-  channelSlug: string;
-  sessionId: string | null;
-  /** When true, logs flow events and state to console for debugging */
-  debug?: boolean;
-  onSuccess?: (sessionId: string) => void;
-  /** Called for all failure outcomes. `status` discriminates the reason:
-   *  - `"declined"` / `"expired"` / `"blocked"` — terminal session outcome
-   *  - `"invalid"` — session is in an invalid state
-   *  - `"error"` — technical/network error; `message` carries the detail
-   */
-  onFailed?: (status: FailureStatus, sessionId: string | null, message?: string) => void;
-  onClose?: () => void;
-}
-
-/** Props for BankVerificationModal component. Requires BankVerificationProvider as ancestor. */
+/** Props for BankVerificationModal — the main self-contained UI entry point. */
 export interface BankVerificationModalProps {
-  /** Optional callback when the modal is closed. Session reset is handled internally. */
+  channelSlug: string;
+  /** When true, logs flow events and state to console for debugging */
+  debug?: boolean;
+  /** Optional callback when user closes the modal. Session reset is handled internally. */
   onClose?: () => void;
 }
 

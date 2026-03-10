@@ -1,9 +1,9 @@
+import { useRef } from "react";
+import { useStore } from "zustand";
 import { needsVerification, isTerminal, DECLINED_STATUS_MESSAGES } from "../lib/checkout-status";
 import { debugLog } from "../lib/debug";
-import {
-  useBankVerificationStore,
-  useBankVerificationStoreApi,
-} from "../context/bank-verification-context";
+import { getOrCreateStore } from "../store/bank-verification-store";
+import type { BankVerificationStoreApi } from "../store/bank-verification-store";
 import { createSessionApi, submitPaymentApi } from "../lib/checkout-api";
 import type { FailureStatus, SubmitResult } from "../types";
 
@@ -29,23 +29,33 @@ export interface UseCheckoutFlowReturn {
  * Orchestrates the full checkout flow: session creation, payment submission,
  * and real-time status tracking via WebSocket.
  *
- * Must be used within BankVerificationProvider.
+ * Uses the same store as BankVerificationModal when both receive the same channelSlug.
  */
-export function useCheckoutFlow(): UseCheckoutFlowReturn {
-  const storeApi = useBankVerificationStoreApi();
-  const sessionId = useBankVerificationStore((s) => s.sessionId);
-  const status = useBankVerificationStore((s) => s.status);
+export function useCheckoutFlow(channelSlug: string, debug?: boolean): UseCheckoutFlowReturn {
+  const storeRef = useRef<BankVerificationStoreApi | null>(null);
+  if (!storeRef.current) {
+    storeRef.current = getOrCreateStore(channelSlug, debug ?? false);
+  }
+  const store = storeRef.current;
+
+  const sessionId = useStore(store, (s) => s.sessionId);
+  const status = useStore(store, (s) => s.status);
   const isLoading = Boolean(sessionId && status !== "idle" && !isTerminal(status));
 
   const submitPayment = async (payment: PaymentData): Promise<SubmitResult> => {
-    const { channelSlug, debug, sessionId: currentSessionId, setSession, clearSession } =
-      storeApi.getState();
+    const {
+      channelSlug,
+      debug: storeDebug,
+      sessionId: currentSessionId,
+      setSession,
+      clearSession,
+    } = store.getState();
     try {
       let sid = currentSessionId;
       if (!sid) {
-        debugLog(debug, "createSession", { channelSlug, sessionData: payment.sessionData });
+        debugLog(storeDebug, "createSession", { channelSlug, sessionData: payment.sessionData });
         const result = await createSessionApi(channelSlug, payment.sessionData);
-        debugLog(debug, "createSession result", {
+        debugLog(storeDebug, "createSession result", {
           sessionId: result.sessionId,
           expiresAt: result.expiresAt,
         });
@@ -53,14 +63,14 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
         sid = result.sessionId;
       }
 
-      debugLog(debug, "submitPayment", {
+      debugLog(storeDebug, "submitPayment", {
         sessionId: sid,
         amount: payment.amount,
         currency: payment.currency,
       });
       const result = await submitPaymentApi(channelSlug, sid, payment);
       setSession({ sessionId: result.sessionId, status: result.status, submitted: true });
-      debugLog(debug, "submitPayment result", {
+      debugLog(storeDebug, "submitPayment result", {
         status: result.status,
         blocked: result.blocked,
         sessionId: result.sessionId,
@@ -80,12 +90,12 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
           DECLINED_STATUS_MESSAGES[failStatus] ?? "Payment failed. Please try again.";
         return { isSuccess: false, error: failStatus, message: msg };
       }
-      debugLog(debug, "processing mode", { sessionId: result.sessionId });
+      debugLog(storeDebug, "processing mode", { sessionId: result.sessionId });
       return { isSuccess: false, isLoading: true };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Payment failed. Please try again.";
-      debugLog(debug, "submitPayment failed", { error: msg });
-      storeApi.getState().clearSession();
+      debugLog(store.getState().debug, "submitPayment failed", { error: msg });
+      store.getState().clearSession();
       return { isSuccess: false, error: "error", message: msg };
     }
   };

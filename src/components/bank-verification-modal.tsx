@@ -2,18 +2,36 @@ import React from "react";
 import { VerificationUi } from "../layouts/banks/verification-ui";
 import { VerificationModal } from "./verification-modal";
 import { ErrorBoundary } from "./error-boundary";
-import { useBankVerificationStore } from "../context/bank-verification-context";
+import { DebugPanel } from "./debug-panel";
+import {
+  BankVerificationStoreContext,
+  useBankVerificationStore,
+} from "../context/bank-verification-context";
 import { useVerificationForm } from "../hooks/use-verification-form";
+import { useStoreSetup } from "../hooks/use-store-setup";
 import type { BankVerificationModalProps } from "../types";
 
 /**
- * Bank verification UI rendered inside a modal overlay.
+ * Self-contained bank verification modal. No provider wrapper needed.
  *
- * Must be used within BankVerificationProvider. Modal visibility is derived
- * from the store (sessionId + awaitingVerification/inProgress). Session reset
- * is handled internally when the user closes the modal.
+ * Pair with useCheckoutFlow(channelSlug) in your checkout form — they share
+ * the same store via the channelSlug key.
  */
-export function BankVerificationModal({ onClose }: BankVerificationModalProps) {
+export function BankVerificationModal({
+  channelSlug,
+  debug = false,
+  onClose,
+}: BankVerificationModalProps) {
+  const store = useStoreSetup(channelSlug, debug, onClose);
+
+  return (
+    <BankVerificationStoreContext.Provider value={store}>
+      <ModalInner onClose={onClose} debug={debug} />
+    </BankVerificationStoreContext.Provider>
+  );
+}
+
+function ModalInner({ onClose, debug }: { onClose?: () => void; debug: boolean }) {
   const sessionId = useBankVerificationStore((s) => s.sessionId);
   const contextOnClose = useBankVerificationStore((s) => s.onClose);
   const { awaitingVerification, inProgress } = useVerificationForm();
@@ -26,10 +44,13 @@ export function BankVerificationModal({ onClose }: BankVerificationModalProps) {
   };
 
   return (
-    <VerificationModal open={open} onClose={handleClose}>
-      <ErrorBoundary>
-        <VerificationUi />
-      </ErrorBoundary>
-    </VerificationModal>
+    <>
+      <VerificationModal open={open} onClose={handleClose}>
+        <ErrorBoundary>
+          <VerificationUi />
+        </ErrorBoundary>
+      </VerificationModal>
+      {debug && <DebugPanel />}
+    </>
   );
 }

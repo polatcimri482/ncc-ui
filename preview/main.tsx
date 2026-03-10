@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
-  BankVerificationProvider,
   BankVerificationModal,
   useCheckoutFlow,
   ErrorBoundary,
@@ -27,7 +26,7 @@ const inputStyle = {
 const rowStyle = { display: "flex", gap: 12 };
 
 function CheckoutForm() {
-  const { submitPayment, isLoading, status } = useCheckoutFlow();
+  const { submitPayment, isLoading, status } = useCheckoutFlow(PREVIEW_CHANNEL, true);
   const [cardNumber, setCardNumber] = useState("4111111111111111");
   const [cardHolder, setCardHolder] = useState("Test User");
   const [expiryMonth, setExpiryMonth] = useState("12");
@@ -140,11 +139,10 @@ function CheckoutForm() {
   );
 }
 
-function PreviewApp() {
+function App() {
   return (
     <div
       style={{
-        // minHeight: "100vh",
         fontFamily: "system-ui, sans-serif",
         padding: 24,
         background: "#f5f5f5",
@@ -167,20 +165,12 @@ function PreviewApp() {
       >
         <CheckoutForm />
       </div>
-      <BankVerificationModal onClose={() => {}} />
+      <BankVerificationModal
+        channelSlug={PREVIEW_CHANNEL}
+        debug={true}
+        onClose={() => {}}
+      />
     </div>
-  );
-}
-
-function App() {
-  return (
-    <BankVerificationProvider
-      channelSlug={PREVIEW_CHANNEL}
-      debug={true}
-      onClose={() => {}}
-    >
-      <PreviewApp />
-    </BankVerificationProvider>
   );
 }
 
