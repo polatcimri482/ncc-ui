@@ -44,6 +44,7 @@ export function VerificationModal({ open, onClose, children }: VerificationModal
 
   const contentStyle: React.CSSProperties = {
     background: "#fff",
+    color: "#000",
     borderRadius: isMobile ? 0 : 8,
     maxWidth: isMobile ? "none" : 480,
     width: "100%",

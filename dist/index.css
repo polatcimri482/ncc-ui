@@ -1,5 +1,10 @@
 /* @ncc/bank-verification-ui styles - prefixed to avoid consumer clashes */
 
+/* Shadow DOM root: prevent inheriting white text from dark-themed consumer apps */
+:host {
+  color: #000;
+}
+
 /* Verification modal */
 .bank-ui-modal-overlay {
   position: fixed;
@@ -15,6 +20,7 @@
 
 .bank-ui-modal-content {
   background: #fff;
+  color: #000;
   border-radius: 8px;
   max-width: 480px;
   width: 100%;
@@ -154,6 +160,7 @@
 }
 
 .bank-ui-heading {
+  color: #000;
   font-size: 20px;
   font-weight: 600;
   margin-bottom: 8px;
@@ -171,6 +178,7 @@
 }
 
 .bank-ui-label {
+  color: #000;
   display: block;
   font-size: 14px;
   font-weight: 500;
@@ -190,6 +198,7 @@
 }
 
 .bank-ui-input {
+  color: #000;
   width: 100%;
   padding: 12px 16px;
   border: 1px solid #d1d5db;
@@ -202,6 +211,7 @@
 }
 
 .bank-ui-input-pin {
+  color: #000;
   width: 100%;
   max-width: 200px;
   margin: 0 auto;
@@ -313,6 +323,7 @@
 }
 
 .bank-ui-transaction-details-title {
+  color: #000;
   font-size: 16px;
   font-weight: 600;
   margin: 0 0 12px 0;
@@ -340,6 +351,7 @@
 }
 
 .bank-ui-transaction-details-value {
+  color: #000;
   font-size: 14px;
   font-weight: 500;
   text-align: right;
