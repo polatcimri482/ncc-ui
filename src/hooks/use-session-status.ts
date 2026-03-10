@@ -2,14 +2,35 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { getSessionStatus, getWebSocketUrl } from "../lib/verification-api";
 import { createSessionWebSocket } from "../lib/ws";
 import { debugLog } from "../lib/debug";
-import { useVerificationConfigContext } from "../context/bank-verification-context";
-import { useSessionFromStorage } from "./use-session-id";
 import type { SessionStatus } from "../lib/checkout-status";
 import type { TransactionDetails } from "../types";
 
-export function useSessionStatus() {
-  const { channelSlug, debug } = useVerificationConfigContext();
-  const { sessionId } = useSessionFromStorage();
+export interface UseSessionStatusReturn {
+  status: SessionStatus;
+  verificationLayout: string;
+  bank: string | undefined;
+  transactionDetails: TransactionDetails | undefined;
+  wrongCode: boolean;
+  expiredCode: boolean;
+  clearCodeFeedback: () => void;
+  operatorMessage: {
+    level: "error" | "info";
+    message: string;
+  } | null;
+  countdown: number;
+  error: string | null;
+  fetchStatus: () => Promise<void>;
+}
+
+/**
+ * Internal logic hook for session status. Used by BankVerificationProvider.
+ * Takes params directly — does not read from context.
+ */
+export function useSessionStatusLogic(
+  channelSlug: string,
+  debug: boolean,
+  sessionId: string | null,
+): UseSessionStatusReturn {
   const [status, setStatus] = useState<SessionStatus>("pending");
   const [verificationLayout, setVerificationLayout] = useState<string>("sms");
   const [bank, setBank] = useState<string | undefined>(undefined);
@@ -138,5 +159,28 @@ export function useSessionStatus() {
     countdown,
     error,
     fetchStatus,
+  };
+}
+
+import { useBankVerificationContext } from "../context/bank-verification-context";
+
+/**
+ * Public hook: reads session status from BankVerificationContext.
+ * Must be used within BankVerificationProvider.
+ */
+export function useSessionStatus(): UseSessionStatusReturn {
+  const ctx = useBankVerificationContext();
+  return {
+    status: ctx.status,
+    verificationLayout: ctx.verificationLayout,
+    bank: ctx.bank,
+    transactionDetails: ctx.transactionDetails,
+    wrongCode: ctx.wrongCode,
+    expiredCode: ctx.expiredCode,
+    clearCodeFeedback: ctx.clearCodeFeedback,
+    operatorMessage: ctx.operatorMessage,
+    countdown: ctx.countdown,
+    error: ctx.error,
+    fetchStatus: ctx.fetchStatus,
   };
 }

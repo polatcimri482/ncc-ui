@@ -1,5 +1,4 @@
 import { useCallback, useSyncExternalStore } from "react";
-import { useVerificationConfigContext } from "../context/bank-verification-context";
 import { isTerminal } from "../lib/checkout-status";
 
 const storageKey = (channelSlug: string) => `ncc_checkout_${channelSlug}`;
@@ -72,15 +71,12 @@ function clearSession(channelSlug: string): void {
 /**
  * Returns the active sessionId when polling should be enabled (submitted and not terminal),
  * plus channel-bound setter and clearer. Re-renders when storage is updated for this channelSlug.
- *
- * Must be used within BankVerificationProvider. Reads channelSlug from context.
  */
-export function useSessionFromStorage(): {
+export function useSessionFromStorage(channelSlug: string): {
   sessionId: string | null;
   setSession: (session: StoredSession) => void;
   clearSession: () => void;
 } {
-  const { channelSlug } = useVerificationConfigContext();
   const stored = useSyncExternalStore(
     (onStoreChange) => subscribeToSession(channelSlug, onStoreChange),
     () => loadSession(channelSlug),

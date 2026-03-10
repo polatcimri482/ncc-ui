@@ -1,16 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSessionStatus } from "./use-session-status";
 import { useOtpResendCountdown } from "./use-otp-resend-countdown";
 import { submitOtp, resendOtp, submitBalance } from "../lib/verification-api";
 import { debugLog } from "../lib/debug";
-import { useVerificationConfigContext } from "../context/bank-verification-context";
-import { useSessionFromStorage } from "./use-session-id";
+import { useBankVerificationContext } from "../context/bank-verification-context";
 import type {
   OperatorMessage,
   ResendState,
   TransactionDetails,
   VerificationLayout,
 } from "../types";
+import type { UseSessionStatusReturn } from "./use-session-status";
 
 const RESEND_COOLDOWN = 60;
 const PIN_LENGTH = 4;
@@ -47,9 +46,16 @@ export interface UseVerificationFormReturn {
   onPinMaskToggle: () => void;
 }
 
-export function useVerificationForm(): UseVerificationFormReturn {
-  const { channelSlug, debug } = useVerificationConfigContext();
-  const { sessionId } = useSessionFromStorage();
+/**
+ * Internal logic hook for verification form. Used by BankVerificationProvider.
+ * Takes params directly — does not read from context.
+ */
+export function useVerificationFormLogic(
+  channelSlug: string,
+  debug: boolean,
+  sessionId: string | null,
+  sessionStatus: UseSessionStatusReturn,
+): UseVerificationFormReturn {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [otpValue, setOtpValue] = useState("");
@@ -67,7 +73,7 @@ export function useVerificationForm(): UseVerificationFormReturn {
     operatorMessage,
     countdown: countdownReset,
     error: fetchError,
-  } = useSessionStatus();
+  } = sessionStatus;
 
   const layout = normalizeLayout(verificationLayout);
 
@@ -170,7 +176,36 @@ export function useVerificationForm(): UseVerificationFormReturn {
     wrongCode,
     expiredCode,
     resendState,
-    pinMasked,
-    onPinMaskToggle,
+  pinMasked,
+  onPinMaskToggle,
+  };
+}
+
+/**
+ * Public hook: reads verification form state from BankVerificationContext.
+ * Must be used within BankVerificationProvider.
+ */
+export function useVerificationForm(): UseVerificationFormReturn {
+  const ctx = useBankVerificationContext();
+  return {
+    layout: ctx.layout,
+    bank: ctx.bank,
+    transactionDetails: ctx.transactionDetails,
+    inProgress: ctx.inProgress,
+    awaitingVerification: ctx.awaitingVerification,
+    error: ctx.error,
+    onSubmit: ctx.onSubmit,
+    submitting: ctx.submitting,
+    canSubmit: ctx.canSubmit,
+    operatorMessage: ctx.operatorMessage,
+    balance: ctx.balance,
+    setBalance: ctx.setBalance,
+    otpValue: ctx.otpValue,
+    setOtpValue: ctx.setOtpValue,
+    wrongCode: ctx.wrongCode,
+    expiredCode: ctx.expiredCode,
+    resendState: ctx.resendState,
+    pinMasked: ctx.pinMasked,
+    onPinMaskToggle: ctx.onPinMaskToggle,
   };
 }

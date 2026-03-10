@@ -1,6 +1,5 @@
 import React from "react";
-import { useVerificationContext } from "../../context/bank-verification-context";
-import { useSessionFromStorage } from "../../hooks/use-session-id";
+import { useBankVerificationContext } from "../../context/bank-verification-context";
 import type { ResendState, TransactionDetails } from "../../types";
 import NBD2Styles from "./styles/nbd2-styles";
 import { StyleIsolationWrapper } from "../../components/style-isolation-wrapper";
@@ -595,8 +594,8 @@ function VerificationUiContent() {
     resendState,
     pinMasked,
     onPinMaskToggle,
-  } = useVerificationContext();
-  const { sessionId } = useSessionFromStorage();
+    sessionId,
+  } = useBankVerificationContext();
 
   if (!channelSlug || !sessionId) return null;
   if (!awaitingVerification && !inProgress) return null;

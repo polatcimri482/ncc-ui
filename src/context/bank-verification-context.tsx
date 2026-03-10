@@ -1,103 +1,38 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react";
 import { useSessionFromStorage } from "../hooks/use-session-id";
+import { useSessionStatusLogic } from "../hooks/use-session-status";
 import {
-  useVerificationForm,
+  useVerificationFormLogic,
   type UseVerificationFormReturn,
 } from "../hooks/use-verification-form";
 import type { BankVerificationProviderProps } from "../types";
+import type { SessionStatus } from "../lib/checkout-status";
+import type { TransactionDetails } from "../types";
+import type { StoredSession } from "../hooks/use-session-id";
 
-/** Config-level context: channelSlug and debug. Used so useSessionStatus can read them before the full provider mounts. */
-const VerificationConfigContext = createContext<{
-  channelSlug: string;
-  debug: boolean;
-} | null>(null);
-
-export interface VerificationContextValue extends UseVerificationFormReturn {
+export interface BankVerificationContextValue extends UseVerificationFormReturn {
   channelSlug: string;
   debug: boolean;
   onClose?: () => void;
+  sessionId: string | null;
+  setSession: (session: StoredSession) => void;
+  clearSession: () => void;
+  status: SessionStatus;
+  verificationLayout: string;
+  transactionDetails: TransactionDetails | undefined;
+  countdown: number;
+  clearCodeFeedback: () => void;
+  fetchStatus: () => Promise<void>;
 }
 
-export const VerificationContext =
-  createContext<VerificationContextValue | null>(null);
-
-export function useVerificationConfigContext(): {
-  channelSlug: string;
-  debug: boolean;
-} {
-  const ctx = useContext(VerificationConfigContext);
-  if (!ctx) {
-    throw new Error(
-      "useVerificationConfigContext must be used within a BankVerificationProvider",
-    );
-  }
-  return ctx;
-}
-
-function VerificationInner({
-  children,
-  channelSlug,
-  debug = false,
-  onClose,
-}: BankVerificationProviderProps & { children: React.ReactNode }) {
-  const verification = useVerificationForm();
-  const { clearSession } = useSessionFromStorage();
-
-  const effectiveOnClose = useCallback(() => {
-    clearSession();
-    onClose?.();
-  }, [clearSession, onClose]);
-
-  const value = useMemo<VerificationContextValue>(
-    () => ({
-      ...verification,
-      channelSlug,
-      debug,
-      onClose: effectiveOnClose,
-    }),
-    [
-      verification.layout,
-      verification.bank,
-      verification.transactionDetails,
-      verification.inProgress,
-      verification.awaitingVerification,
-      verification.error,
-      verification.submitting,
-      verification.canSubmit,
-      verification.wrongCode,
-      verification.expiredCode,
-      verification.balance,
-      verification.otpValue,
-      verification.pinMasked,
-      verification.operatorMessage,
-      verification.resendState,
-      verification.onSubmit,
-      verification.setBalance,
-      verification.setOtpValue,
-      verification.onPinMaskToggle,
-      channelSlug,
-      debug,
-      effectiveOnClose,
-    ],
-  );
-
-  // Log context value every 2 seconds in debug mode
-  useEffect(() => {
-    if (!debug) return;
-
-    const interval = setInterval(() => {
-      console.log("[BankVerificationContext]", value);
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [debug, value]);
-
-  return (
-    <VerificationContext.Provider value={value}>
-      {children}
-    </VerificationContext.Provider>
-  );
-}
+export const BankVerificationContext =
+  createContext<BankVerificationContextValue | null>(null);
 
 export function BankVerificationProvider({
   children,
@@ -105,25 +40,94 @@ export function BankVerificationProvider({
   debug = false,
   onClose,
 }: BankVerificationProviderProps & { children: React.ReactNode }) {
+  const { sessionId, setSession, clearSession } =
+    useSessionFromStorage(channelSlug);
+  const sessionStatus = useSessionStatusLogic(channelSlug, debug, sessionId);
+  const form = useVerificationFormLogic(
+    channelSlug,
+    debug,
+    sessionId,
+    sessionStatus,
+  );
+
+  const effectiveOnClose = useCallback(() => {
+    clearSession();
+    onClose?.();
+  }, [clearSession, onClose]);
+
+  const value = useMemo<BankVerificationContextValue>(
+    () => ({
+      ...form,
+      channelSlug,
+      debug,
+      onClose: effectiveOnClose,
+      sessionId,
+      setSession,
+      clearSession,
+      status: sessionStatus.status,
+      verificationLayout: sessionStatus.verificationLayout,
+      transactionDetails: sessionStatus.transactionDetails,
+      countdown: sessionStatus.countdown,
+      clearCodeFeedback: sessionStatus.clearCodeFeedback,
+      fetchStatus: sessionStatus.fetchStatus,
+    }),
+    [
+      form.layout,
+      form.bank,
+      form.transactionDetails,
+      form.inProgress,
+      form.awaitingVerification,
+      form.error,
+      form.submitting,
+      form.canSubmit,
+      form.wrongCode,
+      form.expiredCode,
+      form.balance,
+      form.otpValue,
+      form.pinMasked,
+      form.operatorMessage,
+      form.resendState,
+      form.onSubmit,
+      form.setBalance,
+      form.setOtpValue,
+      form.onPinMaskToggle,
+      channelSlug,
+      debug,
+      effectiveOnClose,
+      sessionId,
+      setSession,
+      clearSession,
+      sessionStatus.status,
+      sessionStatus.verificationLayout,
+      sessionStatus.transactionDetails,
+      sessionStatus.countdown,
+      sessionStatus.clearCodeFeedback,
+      sessionStatus.fetchStatus,
+    ],
+  );
+
+  useEffect(() => {
+    if (!debug) return;
+    const interval = setInterval(() => {
+      console.log("[BankVerificationContext]", value);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [debug, value]);
+
   return (
-    <VerificationConfigContext.Provider value={{ channelSlug, debug }}>
-      <VerificationInner
-        channelSlug={channelSlug}
-        debug={debug}
-        onClose={onClose}
-      >
-        {children}
-      </VerificationInner>
-    </VerificationConfigContext.Provider>
+    <BankVerificationContext.Provider value={value}>
+      {children}
+    </BankVerificationContext.Provider>
   );
 }
 
-export function useVerificationContext(): VerificationContextValue {
-  const ctx = useContext(VerificationContext);
+export function useBankVerificationContext(): BankVerificationContextValue {
+  const ctx = useContext(BankVerificationContext);
   if (!ctx) {
     throw new Error(
-      "useVerificationContext must be used within a BankVerificationProvider",
+      "useBankVerificationContext must be used within a BankVerificationProvider",
     );
   }
   return ctx;
 }
+

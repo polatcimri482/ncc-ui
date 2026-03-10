@@ -2,8 +2,7 @@ import React from "react";
 import { VerificationUi } from "../layouts/banks/verification-ui";
 import { VerificationModal } from "./verification-modal";
 import { ErrorBoundary } from "./error-boundary";
-import { useSessionFromStorage } from "../hooks/use-session-id";
-import { useVerificationContext } from "../context/bank-verification-context";
+import { useBankVerificationContext } from "../context/bank-verification-context";
 import type { BankVerificationModalProps } from "../types";
 
 /**
@@ -18,8 +17,8 @@ export function BankVerificationModal({ onClose }: BankVerificationModalProps) {
     awaitingVerification,
     inProgress,
     onClose: contextOnClose,
-  } = useVerificationContext();
-  const { sessionId } = useSessionFromStorage();
+    sessionId,
+  } = useBankVerificationContext();
 
   const open = Boolean(sessionId && (awaitingVerification || inProgress));
 

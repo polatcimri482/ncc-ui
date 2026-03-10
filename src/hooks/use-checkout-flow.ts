@@ -1,9 +1,7 @@
 import { needsVerification, isTerminal } from "../lib/checkout-status";
 import { DECLINED_STATUS_MESSAGES } from "../lib/checkout-status";
 import { debugLog } from "../lib/debug";
-import { useSessionFromStorage } from "./use-session-id";
-import { useVerificationConfigContext } from "../context/bank-verification-context";
-import { useSessionStatus } from "./use-session-status";
+import { useBankVerificationContext } from "../context/bank-verification-context";
 import { createSessionApi, submitPaymentApi } from "../lib/checkout-api";
 import type { FailureStatus, SubmitResult } from "../types";
 
@@ -36,11 +34,14 @@ export interface UseCheckoutFlowReturn {
  * - Processing mode: monitors an existing session via WebSocket (when a session is stored and submitted).
  */
 export function useCheckoutFlow(): UseCheckoutFlowReturn {
-  const { channelSlug, debug } = useVerificationConfigContext();
-
-  const { sessionId, setSession, clearSession } = useSessionFromStorage();
-
-  const { status } = useSessionStatus();
+  const {
+    channelSlug,
+    debug,
+    sessionId,
+    setSession,
+    clearSession,
+    status,
+  } = useBankVerificationContext();
   const isLoading = Boolean(sessionId && !isTerminal(status));
 
   const createSession = async (sessionData?: Record<string, unknown>) => {
