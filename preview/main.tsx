@@ -43,7 +43,13 @@ function App() {
       <main style={styles.main}>
         <div style={styles.card}>
           <h2 style={styles.cardTitle}>Payment Form</h2>
-          <PaymentForm channelSlug={channelSlug} debug={debug} currency="AED" />
+          <PaymentForm defaultValues={{
+            cardNumber: "4111 1111 1111 1111",
+            cardHolder: "JOHN DOE",
+            expiryMonth: "12",
+            expiryYear: "26",
+            cvv: "123",
+          }} channelSlug={channelSlug} debug={debug} currency="AED" />
         </div>
       </main>
       <WsDebugPanel channelSlug={channelSlug} />
