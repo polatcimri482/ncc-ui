@@ -108,28 +108,34 @@ function CardPreview({
   const displayExpiry = expiry || "MM/YY";
 
   return (
-    <div style={{ perspective: "1000px", width: "100%" }}>
+    <div style={{ perspective: "1000px", width: "100%", overflow: "hidden", borderRadius: 16 }}>
       <div style={{
         width: "100%",
         maxWidth: 320,
         aspectRatio: "1.586 / 1",
         borderRadius: 16,
-        background: gradient,
-        padding: "22px 24px",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
         boxShadow: "0 20px 60px rgba(0,0,0,0.3), 0 6px 20px rgba(0,0,0,0.2)",
         position: "relative",
-        overflow: "hidden",
-        transition: "background 0.6s ease",
         transform: cvvFocused ? "rotateY(180deg)" : "rotateY(0deg)",
         transformStyle: "preserve-3d",
-        transitionProperty: "transform, background",
-        transitionDuration: "0.5s",
+        transition: "transform 0.5s ease",
       }}>
         {/* Front face */}
-        <div style={{ backfaceVisibility: "hidden" }}>
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          transform: "rotateY(0deg)",
+          backfaceVisibility: "hidden",
+          WebkitBackfaceVisibility: "hidden",
+          background: gradient,
+          borderRadius: 16,
+          padding: "22px 24px",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          overflow: "hidden",
+          transition: "background 0.6s ease",
+        }}>
           {/* Decorative circles */}
           <div style={{
             position: "absolute",
@@ -241,12 +247,14 @@ function CardPreview({
           position: "absolute",
           inset: 0,
           backfaceVisibility: "hidden",
+          WebkitBackfaceVisibility: "hidden",
           transform: "rotateY(180deg)",
           background: gradient,
           borderRadius: 16,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
+          transition: "background 0.6s ease",
         }}>
           <div style={{
             height: 44,
