@@ -1,5 +1,5 @@
 import React from "react";
-import { useBankVerificationStore } from "../../context/bank-verification-context";
+import { useBankVerificationStore } from "../../store/bank-verification-store";
 import { useVerificationForm } from "../../hooks/use-verification-form";
 import type { ResendState, TransactionDetails } from "../../types";
 import NBD2Styles from "./styles/nbd2-styles";

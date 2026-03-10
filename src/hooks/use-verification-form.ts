@@ -1,5 +1,5 @@
 import { useOtpResendCountdown } from "./use-otp-resend-countdown";
-import { useBankVerificationStore } from "../context/bank-verification-context";
+import { useBankVerificationStore } from "../store/bank-verification-store";
 import type { OperatorMessage, ResendState, TransactionDetails } from "../types";
 
 const RESEND_COOLDOWN = 60;

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useBankVerificationStore } from "../context/bank-verification-context";
+import React, { useEffect, useRef, useState } from "react";
+import { useBankVerificationStore } from "../store/bank-verification-store";
 import { useVerificationForm } from "../hooks/use-verification-form";
 import {
   getDebugLastEvent,
@@ -70,6 +70,12 @@ export function DebugPanel() {
   const [eventsExpanded, setEventsExpanded] = useState(false);
   const [apiExpanded, setApiExpanded] = useState(false);
   const [wsExpanded, setWsExpanded] = useState(false);
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ x: number; y: number; elLeft: number; elTop: number } | null>(null);
+  const didDragRef = useRef(false);
+
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const sync = () => {
@@ -82,12 +88,71 @@ export function DebugPanel() {
     return subscribeDebugLastEvent(sync);
   }, []);
 
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragStartRef.current || !panelRef.current) return;
+      const el = panelRef.current;
+      const rect = el.getBoundingClientRect();
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+        didDragRef.current = true;
+        setIsDragging(true);
+      }
+      const nextX = dragStartRef.current.elLeft + dx;
+      const nextY = dragStartRef.current.elTop + dy;
+      setPosition({
+        x: Math.max(0, Math.min(nextX, window.innerWidth - rect.width)),
+        y: Math.max(0, Math.min(nextY, window.innerHeight - rect.height)),
+      });
+    };
+    const handleMouseUp = () => {
+      dragStartRef.current = null;
+      setIsDragging(false);
+    };
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
+  const handleHeaderMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    didDragRef.current = false;
+    const el = panelRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const currentPos = position ?? { x: rect.left, y: rect.top };
+    dragStartRef.current = { x: e.clientX, y: e.clientY, elLeft: currentPos.x, elTop: currentPos.y };
+  };
+
+  const handleHeaderClick = () => {
+    if (didDragRef.current) {
+      didDragRef.current = false;
+      return;
+    }
+    setCollapsed((c) => !c);
+  };
+
+  const panelStyle: React.CSSProperties = position
+    ? { left: position.x, top: position.y, right: "auto", bottom: "auto" }
+    : {};
+
   return (
-    <div className="bank-ui-debug-panel" aria-label="Debug status">
+    <div
+      ref={panelRef}
+      className="bank-ui-debug-panel"
+      aria-label="Debug status"
+      style={panelStyle}
+    >
       <button
         type="button"
         className="bank-ui-debug-panel-header"
-        onClick={() => setCollapsed((c) => !c)}
+        style={isDragging ? { cursor: "grabbing" } : undefined}
+        onMouseDown={handleHeaderMouseDown}
+        onClick={handleHeaderClick}
         aria-expanded={!collapsed}
       >
         <span>Debug status</span>

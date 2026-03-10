@@ -6,7 +6,7 @@ import { DebugPanel } from "./debug-panel";
 import {
   BankVerificationStoreContext,
   useBankVerificationStore,
-} from "../context/bank-verification-context";
+} from "../store/bank-verification-store";
 import { useVerificationForm } from "../hooks/use-verification-form";
 import { useStoreSetup } from "../hooks/use-store-setup";
 import type { BankVerificationModalProps } from "../types";

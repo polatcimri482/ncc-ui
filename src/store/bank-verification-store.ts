@@ -1,4 +1,6 @@
 import { createStore } from "zustand/vanilla";
+import { createContext, useContext } from "react";
+import { useStore } from "zustand";
 import type { StoreApi } from "zustand";
 import { isTerminal } from "../lib/checkout-status";
 import { debugLog, setDebugStatusApiPayload } from "../lib/debug";
@@ -110,6 +112,27 @@ export interface BankVerificationActions {
 
 export type BankVerificationStore = BankVerificationState & BankVerificationActions;
 export type BankVerificationStoreApi = StoreApi<BankVerificationStore>;
+
+// ─── React context ────────────────────────────────────────────────────────────
+
+export const BankVerificationStoreContext =
+  createContext<BankVerificationStoreApi | null>(null);
+
+export function useBankVerificationStoreApi(): BankVerificationStoreApi {
+  const store = useContext(BankVerificationStoreContext);
+  if (!store) {
+    throw new Error(
+      "useBankVerificationStoreApi must be used within BankVerificationModal",
+    );
+  }
+  return store;
+}
+
+export function useBankVerificationStore<T>(
+  selector: (state: BankVerificationStore) => T,
+): T {
+  return useStore(useBankVerificationStoreApi(), selector);
+}
 
 // ─── Store registry ───────────────────────────────────────────────────────────
 
