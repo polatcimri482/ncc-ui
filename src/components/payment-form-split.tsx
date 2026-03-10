@@ -434,30 +434,70 @@ export function PaymentFormSplit({
         @keyframes pfs-spin { to { transform: rotate(360deg); } }
         @keyframes pfs-in { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        @media (max-width: 640px) {
+          .pfs-root {
+            flex-direction: column !important;
+            min-width: unset !important;
+            border-radius: 16px !important;
+          }
+          .pfs-left {
+            width: 100% !important;
+            padding: 20px 16px !important;
+            gap: 16px !important;
+          }
+          .pfs-left .pfs-card-wrap {
+            max-width: 100% !important;
+            justify-content: center;
+          }
+          .pfs-left .pfs-card-wrap > div > div {
+            max-width: 280px !important;
+          }
+          .pfs-right {
+            padding: 20px 16px !important;
+          }
+          .pfs-form-title {
+            margin-bottom: 16px !important;
+            font-size: 15px !important;
+          }
+          .pfs-form-row {
+            flex-direction: column !important;
+            gap: 14px !important;
+          }
+          .pfs-form-row > div {
+            flex: 1 1 auto !important;
+          }
+        }
       `}</style>
 
-      <div style={{
-        fontFamily: "'Outfit', 'Helvetica Neue', sans-serif",
-        display: "flex",
-        flexDirection: "row",
-        minWidth: 580,
-        borderRadius: 18,
-        overflow: "hidden",
-        boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
-        background: "#fff",
-      }}>
+      <div
+        className="pfs-root"
+        style={{
+          fontFamily: "'Outfit', 'Helvetica Neue', sans-serif",
+          display: "flex",
+          flexDirection: "row",
+          minWidth: 580,
+          borderRadius: 18,
+          overflow: "hidden",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
+          background: "#fff",
+        }}
+      >
 
         {/* ── Left column: card preview ── */}
-        <div style={{
-          width: 280,
-          flexShrink: 0,
-          background: "linear-gradient(160deg, #0f172a 0%, #1e293b 100%)",
-          padding: "32px 24px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          gap: 24,
-        }}>
+        <div
+          className="pfs-left"
+          style={{
+            width: 280,
+            flexShrink: 0,
+            background: "linear-gradient(160deg, #0f172a 0%, #1e293b 100%)",
+            padding: "32px 24px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            gap: 24,
+          }}
+        >
           {/* Top */}
           <div>
             <p style={{
@@ -481,6 +521,7 @@ export function PaymentFormSplit({
           </div>
 
           {/* Live card */}
+          <div className="pfs-card-wrap" style={{ display: "flex", justifyContent: "flex-start" }}>
           <CardPreview
             cardNumber={form.cardNumber}
             cardHolder={form.cardHolder}
@@ -489,6 +530,7 @@ export function PaymentFormSplit({
             brand={brand}
             cvvFocused={focused === "cvv"}
           />
+          </div>
 
           {/* Bottom info */}
           <div>
@@ -528,8 +570,8 @@ export function PaymentFormSplit({
         </div>
 
         {/* ── Right column: form ── */}
-        <div style={{ flex: 1, padding: "32px 28px", display: "flex", flexDirection: "column" }}>
-          <h3 style={{
+        <div className="pfs-right" style={{ flex: 1, padding: "32px 28px", display: "flex", flexDirection: "column" }}>
+          <h3 className="pfs-form-title" style={{
             margin: "0 0 24px",
             fontSize: 16,
             fontWeight: 600,
@@ -598,7 +640,7 @@ export function PaymentFormSplit({
             </CompactInput>
 
             {/* Expiry + CVV */}
-            <div style={{ display: "flex", gap: 12 }}>
+            <div className="pfs-form-row" style={{ display: "flex", gap: 12 }}>
               <div style={{ flex: 1 }}>
                 <CompactInput label="Expiry date" focused={focused === "expiry"}>
                   <input
