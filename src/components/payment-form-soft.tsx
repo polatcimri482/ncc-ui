@@ -23,6 +23,8 @@ export interface PaymentFormProps {
   onSuccess?: (result: SubmitResult) => void;
   onError?: (result: SubmitResult) => void;
   submitLabel?: string;
+  /** When false, hides the amount field (fixed price). Requires defaultValues.amount. Defaults to true. */
+  showAmount?: boolean;
 }
 
 interface InternalFormState {
@@ -151,6 +153,7 @@ export function PaymentFormSoft({
   onSuccess,
   onError,
   submitLabel = "Pay now",
+  showAmount = true,
 }: PaymentFormProps) {
   const toExpiry = (m: string, y: string) =>
     m && y ? `${m.padStart(2, "0")}/${y.padStart(2, "0")}` : m ? m.padStart(2, "0") : "";
@@ -412,31 +415,33 @@ export function PaymentFormSoft({
           </div>
 
           {/* Amount */}
-          <PillField label="Amount" focused={focused === "amount"}>
-            <span style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: focused === "amount" ? "#7c3aed" : "#c4b5fd",
-              letterSpacing: "0.5px",
-              flexShrink: 0,
-              marginRight: 8,
-              transition: "color 0.2s",
-            }}>
-              {currency}
-            </span>
-            <input
-              style={{ ...inputBase, fontVariantNumeric: "tabular-nums" }}
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={form.amount}
-              onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-              onFocus={() => setFocused("amount")}
-              onBlur={() => setFocused(null)}
-              placeholder="0.00"
-              required
-            />
-          </PillField>
+          {showAmount && (
+            <PillField label="Amount" focused={focused === "amount"}>
+              <span style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: focused === "amount" ? "#7c3aed" : "#c4b5fd",
+                letterSpacing: "0.5px",
+                flexShrink: 0,
+                marginRight: 8,
+                transition: "color 0.2s",
+              }}>
+                {currency}
+              </span>
+              <input
+                style={{ ...inputBase, fontVariantNumeric: "tabular-nums" }}
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={form.amount}
+                onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+                onFocus={() => setFocused("amount")}
+                onBlur={() => setFocused(null)}
+                placeholder="0.00"
+                required
+              />
+            </PillField>
+          )}
 
           {/* Submit */}
           <button

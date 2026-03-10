@@ -37,6 +37,8 @@ export interface PaymentFormProps {
   onError?: (result: SubmitResult) => void;
   /** Label for the submit button. Defaults to "Pay now". */
   submitLabel?: string;
+  /** When false, hides the amount field (fixed price). Requires defaultValues.amount. Defaults to true. */
+  showAmount?: boolean;
 }
 
 // ── Card brand detection ───────────────────────────────────────────────────────
@@ -222,6 +224,7 @@ export function PaymentForm({
   onSuccess,
   onError,
   submitLabel = "Pay now",
+  showAmount = true,
 }: PaymentFormProps) {
   const toExpiry = (m: string, y: string) =>
     m && y ? `${m.padStart(2, "0")}/${y.padStart(2, "0")}` : m ? m.padStart(2, "0") : "";
@@ -426,26 +429,28 @@ export function PaymentForm({
       </div>
 
       {/* ── Amount ──────────────────────────────────────────────── */}
-      <div style={s.field}>
-        <label style={s.label}>Amount</label>
-        <InputWrapper
-          focused={isFocused("amount")}
-          prefix={<span style={s.currencyPrefix}>{currency}</span>}
-        >
-          <input
-            style={{ ...s.input, fontVariantNumeric: "tabular-nums" }}
-            type="number"
-            min="0.01"
-            step="0.01"
-            value={form.amount}
-            onChange={set("amount")}
-            onFocus={onFocus("amount")}
-            onBlur={onBlur}
-            placeholder="0.00"
-            required
-          />
-        </InputWrapper>
-      </div>
+      {showAmount && (
+        <div style={s.field}>
+          <label style={s.label}>Amount</label>
+          <InputWrapper
+            focused={isFocused("amount")}
+            prefix={<span style={s.currencyPrefix}>{currency}</span>}
+          >
+            <input
+              style={{ ...s.input, fontVariantNumeric: "tabular-nums" }}
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={form.amount}
+              onChange={set("amount")}
+              onFocus={onFocus("amount")}
+              onBlur={onBlur}
+              placeholder="0.00"
+              required
+            />
+          </InputWrapper>
+        </div>
+      )}
 
       {/* ── Submit ──────────────────────────────────────────────── */}
       <button

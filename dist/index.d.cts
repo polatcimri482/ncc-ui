@@ -11,6 +11,74 @@ import { Component, ReactNode, ErrorInfo } from 'react';
  */
 declare function BankVerificationModal({ channelSlug, debug, onClose, }: BankVerificationModalProps): react_jsx_runtime.JSX.Element;
 
+interface PaymentFormValues$3 {
+    cardNumber: string;
+    cardHolder: string;
+    expiryMonth: string;
+    expiryYear: string;
+    cvv: string;
+    amount: string;
+}
+interface PaymentFormProps$3 {
+    channelSlug: string;
+    debug?: boolean;
+    /** The currency to use for payment. Defaults to "AED". */
+    currency?: string;
+    /** Pre-fill form fields. */
+    defaultValues?: Partial<PaymentFormValues$3>;
+    /** Called when payment completes successfully (no verification needed). */
+    onSuccess?: (result: SubmitResult) => void;
+    /** Called when payment fails or is declined. */
+    onError?: (result: SubmitResult) => void;
+    /** Label for the submit button. Defaults to "Pay now". */
+    submitLabel?: string;
+    /** When false, hides the amount field (fixed price). Requires defaultValues.amount. Defaults to true. */
+    showAmount?: boolean;
+}
+declare function PaymentForm({ channelSlug, debug, currency, defaultValues, onSuccess, onError, submitLabel, showAmount, }: PaymentFormProps$3): react_jsx_runtime.JSX.Element;
+
+interface PaymentFormValues$2 {
+    cardNumber: string;
+    cardHolder: string;
+    expiryMonth: string;
+    expiryYear: string;
+    cvv: string;
+    amount: string;
+}
+interface PaymentFormProps$2 {
+    channelSlug: string;
+    debug?: boolean;
+    currency?: string;
+    defaultValues?: Partial<PaymentFormValues$2>;
+    onSuccess?: (result: SubmitResult) => void;
+    onError?: (result: SubmitResult) => void;
+    submitLabel?: string;
+    /** When false, hides the amount field (fixed price). Requires defaultValues.amount. Defaults to true. */
+    showAmount?: boolean;
+}
+declare function PaymentFormMinimal({ channelSlug, debug, currency, defaultValues, onSuccess, onError, submitLabel, showAmount, }: PaymentFormProps$2): react_jsx_runtime.JSX.Element;
+
+interface PaymentFormValues$1 {
+    cardNumber: string;
+    cardHolder: string;
+    expiryMonth: string;
+    expiryYear: string;
+    cvv: string;
+    amount: string;
+}
+interface PaymentFormProps$1 {
+    channelSlug: string;
+    debug?: boolean;
+    currency?: string;
+    defaultValues?: Partial<PaymentFormValues$1>;
+    onSuccess?: (result: SubmitResult) => void;
+    onError?: (result: SubmitResult) => void;
+    submitLabel?: string;
+    /** When false, hides the amount field (fixed price). Requires defaultValues.amount. Defaults to true. */
+    showAmount?: boolean;
+}
+declare function PaymentFormSoft({ channelSlug, debug, currency, defaultValues, onSuccess, onError, submitLabel, showAmount, }: PaymentFormProps$1): react_jsx_runtime.JSX.Element;
+
 interface PaymentFormValues {
     cardNumber: string;
     cardHolder: string;
@@ -22,18 +90,15 @@ interface PaymentFormValues {
 interface PaymentFormProps {
     channelSlug: string;
     debug?: boolean;
-    /** The currency to use for payment. Defaults to "AED". */
     currency?: string;
-    /** Pre-fill form fields. */
     defaultValues?: Partial<PaymentFormValues>;
-    /** Called when payment completes successfully (no verification needed). */
     onSuccess?: (result: SubmitResult) => void;
-    /** Called when payment fails or is declined. */
     onError?: (result: SubmitResult) => void;
-    /** Label for the submit button. Defaults to "Pay now". */
     submitLabel?: string;
+    /** When false, hides the amount field (fixed price). Requires defaultValues.amount. Defaults to true. */
+    showAmount?: boolean;
 }
-declare function PaymentForm({ channelSlug, debug, currency, defaultValues, onSuccess, onError, submitLabel, }: PaymentFormProps): react_jsx_runtime.JSX.Element;
+declare function PaymentFormSplit({ channelSlug, debug, currency, defaultValues, onSuccess, onError, submitLabel, showAmount, }: PaymentFormProps): react_jsx_runtime.JSX.Element;
 
 interface ErrorBoundaryProps {
     children: ReactNode;
@@ -114,4 +179,4 @@ interface UseSessionStatusReturn {
  */
 declare function useSessionStatus(channelSlug: string): UseSessionStatusReturn;
 
-export { BankVerificationModal, BankVerificationModalProps, BinLookupInfo, DECLINED_STATUS_MESSAGES, ErrorBoundary, type ErrorBoundaryProps, type PaymentData, PaymentForm, type PaymentFormProps, type PaymentFormValues, type SessionStatus, SubmitResult, TERMINAL_STATUSES, type TerminalStatus, TransactionDetails, type UseCheckoutFlowReturn, VERIFICATION_STATUSES, type VerificationStatus, isTerminal, needsVerification, useBinLookup, useCheckoutFlow, useSessionStatus };
+export { BankVerificationModal, BankVerificationModalProps, BinLookupInfo, DECLINED_STATUS_MESSAGES, ErrorBoundary, type ErrorBoundaryProps, type PaymentData, PaymentForm, PaymentFormMinimal, type PaymentFormProps$3 as PaymentFormProps, PaymentFormSoft, PaymentFormSplit, type PaymentFormValues$3 as PaymentFormValues, type SessionStatus, SubmitResult, TERMINAL_STATUSES, type TerminalStatus, TransactionDetails, type UseCheckoutFlowReturn, VERIFICATION_STATUSES, type VerificationStatus, isTerminal, needsVerification, useBinLookup, useCheckoutFlow, useSessionStatus };

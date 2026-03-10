@@ -143,6 +143,16 @@ import { PaymentForm } from "@ncc/bank-verification-ui";
 />
 ```
 
+Fixed price (amount hidden, not editable):
+
+```tsx
+<PaymentForm
+  channelSlug="test-2"
+  showAmount={false}
+  defaultValues={{ amount: "250.00", cardNumber: "...", ... }}
+/>
+```
+
 **Props**
 
 | Prop | Type | Default | Description |
@@ -153,6 +163,7 @@ import { PaymentForm } from "@ncc/bank-verification-ui";
 | `onSuccess` | `(result: SubmitResult) => void` | — | Called when payment is approved |
 | `onError` | `(result: SubmitResult) => void` | — | Called when payment is declined or fails |
 | `submitLabel` | `string` | `"Pay now"` | Text on the submit button |
+| `showAmount` | `boolean` | `true` | When false, hides the amount field (fixed price). Requires `defaultValues.amount`. |
 | `debug` | `boolean` | `false` | Enables verbose console logging |
 
 **PaymentFormValues**

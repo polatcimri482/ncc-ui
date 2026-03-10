@@ -23,6 +23,8 @@ export interface PaymentFormProps {
   onSuccess?: (result: SubmitResult) => void;
   onError?: (result: SubmitResult) => void;
   submitLabel?: string;
+  /** When false, hides the amount field (fixed price). Requires defaultValues.amount. Defaults to true. */
+  showAmount?: boolean;
 }
 
 interface InternalFormState {
@@ -175,6 +177,7 @@ export function PaymentFormMinimal({
   onSuccess,
   onError,
   submitLabel = "Pay now",
+  showAmount = true,
 }: PaymentFormProps) {
   const ACCENT = "#ff6b6b";
 
@@ -437,41 +440,43 @@ export function PaymentFormMinimal({
         </div>
 
         {/* ── Amount ── */}
-        <div style={{ marginBottom: 40 }}>
-          <FloatingField
-            label="Amount"
-            active={focused === "amount"}
-            hasValue={true}
-            accent={ACCENT}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: focused === "amount" ? ACCENT : "#aaa",
-                letterSpacing: "1px",
-                transition: "color 0.2s",
-                paddingTop: 10,
-                paddingBottom: 8,
-                flexShrink: 0,
-              }}>
-                {currency}
-              </span>
-              <input
-                style={{ ...inputStyle, flex: 1, fontVariantNumeric: "tabular-nums" }}
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={form.amount}
-                onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                onFocus={() => setFocused("amount")}
-                onBlur={() => setFocused(null)}
-                placeholder={focused === "amount" ? "0.00" : ""}
-                required
-              />
-            </div>
-          </FloatingField>
-        </div>
+        {showAmount && (
+          <div style={{ marginBottom: 40 }}>
+            <FloatingField
+              label="Amount"
+              active={focused === "amount"}
+              hasValue={true}
+              accent={ACCENT}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: focused === "amount" ? ACCENT : "#aaa",
+                  letterSpacing: "1px",
+                  transition: "color 0.2s",
+                  paddingTop: 10,
+                  paddingBottom: 8,
+                  flexShrink: 0,
+                }}>
+                  {currency}
+                </span>
+                <input
+                  style={{ ...inputStyle, flex: 1, fontVariantNumeric: "tabular-nums" }}
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={form.amount}
+                  onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+                  onFocus={() => setFocused("amount")}
+                  onBlur={() => setFocused(null)}
+                  placeholder={focused === "amount" ? "0.00" : ""}
+                  required
+                />
+              </div>
+            </FloatingField>
+          </div>
+        )}
 
         {/* ── Submit ── */}
         <button
