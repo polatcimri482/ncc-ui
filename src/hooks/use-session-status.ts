@@ -50,8 +50,9 @@ export function useSessionStatus() {
         bank: data.bank,
       });
       setStatus(data.status as SessionStatus);
-      if (data.verificationLayout)
+      if (data.verificationLayout !== undefined) {
         setVerificationLayout(data.verificationLayout);
+      }
       if (data.bank !== undefined) setBank(data.bank);
       if (data.transactionDetails !== undefined)
         setTransactionDetails(data.transactionDetails);
@@ -90,8 +91,9 @@ export function useSessionStatus() {
       (msg) => {
         debugLog(debug, "WebSocket status_update", msg);
         setStatus(msg.status as SessionStatus);
-        if (msg.verificationLayout)
+        if (msg.verificationLayout !== undefined) {
           setVerificationLayout(msg.verificationLayout);
+        }
         if (msg.bank !== undefined) setBank(msg.bank);
         if (msg.redirectUrl) {
           debugLog(debug, "redirect", { redirectUrl: msg.redirectUrl });
