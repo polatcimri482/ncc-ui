@@ -10,7 +10,10 @@ A React component library for bank card verification in checkout flows. Supports
 2. [Quick Start](#quick-start)
 3. [CSS Setup](#css-setup)
 4. [Components](#components)
-   - [PaymentForm](#paymentform)
+   - [PaymentForm](#paymentform) — default card form
+   - [PaymentFormMinimal](#paymentformminimal) — minimalist editorial style
+   - [PaymentFormSoft](#paymentformsoft) — soft gradient / pastel theme
+   - [PaymentFormSplit](#paymentformsplit) — two-column with live card preview
    - [BankVerificationModal](#bankverificationmodal)
    - [ErrorBoundary](#errorboundary)
 5. [Hooks](#hooks)
@@ -89,7 +92,7 @@ export default function CheckoutPage() {
 }
 ```
 
-That's it. `PaymentForm` handles everything: card input, BIN lookup, payment submission, and bank verification (OTP, PIN, balance check) in a built-in modal.
+That's it. All four form variants (`PaymentForm`, `PaymentFormMinimal`, `PaymentFormSoft`, `PaymentFormSplit`) share the same props and handle everything internally: card input, BIN lookup, payment submission, and bank verification (OTP, PIN, balance check) in a built-in modal. Swap them freely — no other code changes needed.
 
 ---
 
@@ -185,6 +188,106 @@ type FailureStatus = "declined" | "expired" | "blocked" | "invalid" | "error" | 
 - Blocked card detection before submission
 - Expiry auto-formatting (MM/YY)
 - Embedded `BankVerificationModal` — opens automatically for OTP / PIN / balance verification
+
+---
+
+### PaymentFormMinimal
+
+A minimalist, editorial-style form. Uses floating underline labels (no border boxes), a serif display heading, and a stark black submit button. Best for luxury or fashion-adjacent checkout pages.
+
+**Accent color:** coral red (`#ff6b6b`)
+**Font:** DM Sans + DM Serif Display
+
+```tsx
+import { PaymentFormMinimal } from "@ncc/bank-verification-ui";
+
+<PaymentFormMinimal
+  channelSlug="your-channel-slug"
+  currency="AED"
+  submitLabel="Complete order"
+  onSuccess={(result) => console.log("Approved")}
+  onError={(result) => console.error(result.message)}
+/>
+```
+
+**Props** — identical to `PaymentForm`:
+
+| Prop | Type | Default |
+|------|------|---------|
+| `channelSlug` | `string` | required |
+| `currency` | `string` | `"AED"` |
+| `defaultValues` | `Partial<PaymentFormValues>` | — |
+| `onSuccess` | `(result: SubmitResult) => void` | — |
+| `onError` | `(result: SubmitResult) => void` | — |
+| `submitLabel` | `string` | `"Pay now"` |
+| `debug` | `boolean` | `false` |
+
+**Visual features:**
+- Floating labels that animate up on focus
+- Animated underline accent on active field
+- Brand badge shown as a colored bordered tag (e.g. `VISA`)
+- Inline BIN issuer info below card number field
+- Full-width uppercase button with lock icon
+
+---
+
+### PaymentFormSoft
+
+A soft, friendly form with a pastel gradient background, rounded pill-shaped input fields, and a purple-to-blue gradient submit button. Suitable for consumer apps and fintech dashboards.
+
+**Accent color:** purple (`#a78bfa` / `#7c3aed`)
+**Font:** Plus Jakarta Sans
+
+```tsx
+import { PaymentFormSoft } from "@ncc/bank-verification-ui";
+
+<PaymentFormSoft
+  channelSlug="your-channel-slug"
+  currency="AED"
+  onSuccess={(result) => console.log("Approved")}
+  onError={(result) => console.error(result.message)}
+/>
+```
+
+**Props** — identical to `PaymentForm`.
+
+**Visual features:**
+- Pastel gradient background (purple → blue → green tint)
+- Decorative soft-glow blobs
+- Rounded pill inputs (14px radius) with purple focus ring
+- Card brand shown as a colored pill badge
+- Gradient submit button with drop shadow
+- Animated success/error result banner
+
+---
+
+### PaymentFormSplit
+
+A two-column layout: a dark left panel with a live interactive card preview, and a white right panel with compact inputs. The card preview flips to show the CVV when that field is focused.
+
+**Minimum width:** 580px (intended for desktop/modal use)
+**Font:** Outfit
+
+```tsx
+import { PaymentFormSplit } from "@ncc/bank-verification-ui";
+
+<PaymentFormSplit
+  channelSlug="your-channel-slug"
+  currency="AED"
+  onSuccess={(result) => console.log("Approved")}
+  onError={(result) => console.error(result.message)}
+/>
+```
+
+**Props** — identical to `PaymentForm`.
+
+**Visual features:**
+- Live card preview: number, name, expiry update as you type
+- Card flips (3D rotate) when CVV field is focused to show back face
+- Brand-specific card gradient (Visa = navy, Mastercard = dark red, Amex = teal, etc.)
+- EMV chip rendered on card face
+- Issuer info shown below card preview in the dark panel
+- Compact labeled inputs on the right column
 
 ---
 
@@ -462,6 +565,7 @@ All types are exported from the main entry point:
 
 ```ts
 import type {
+  // Shared by all four PaymentForm variants
   PaymentFormProps,
   PaymentFormValues,
   PaymentData,

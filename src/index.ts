@@ -1,6 +1,9 @@
 // Primary components
 export { BankVerificationModal } from "./components/bank-verification-modal";
 export { PaymentForm } from "./components/payment-form";
+export { PaymentFormMinimal } from "./components/payment-form-minimal";
+export { PaymentFormSoft } from "./components/payment-form-soft";
+export { PaymentFormSplit } from "./components/payment-form-split";
 export { ErrorBoundary } from "./components/error-boundary";
 
 // Hooks
