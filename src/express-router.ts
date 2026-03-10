@@ -224,16 +224,24 @@ export function createBankVerificationRouter(
 /** Path the upstream NCC server expects (may differ from local basePath) */
 const UPSTREAM_API_PATH = "/v1";
 
+export interface CreateProxyHandlersOptions {
+  /** API key for upstream NCC server (X-API-Key header). Required when upstream enforces API key auth. */
+  apiKey?: string;
+}
+
 /**
  * Create handlers that proxy all requests to an upstream NCC server.
  * Use when the router is a same-origin BFF that forwards to another server.
  *
  * @param upstreamBaseUrl - Base URL of the NCC server (e.g. "https://srv1462130.hstgr.cloud")
+ * @param options - Optional. apiKey: X-API-Key header value for upstream requests.
  */
 export function createProxyHandlers(
   upstreamBaseUrl: string,
+  options: CreateProxyHandlersOptions = {},
 ): BankVerificationRouterHandlers {
   const base = upstreamBaseUrl.replace(/\/$/, "");
+  const { apiKey } = options;
 
   async function fetchUpstream<T>(
     method: string,
@@ -241,9 +249,12 @@ export function createProxyHandlers(
     body?: unknown,
   ): Promise<T> {
     const url = `${base}${path.startsWith("/") ? "" : "/"}${path}`;
+    const headers: Record<string, string> = {};
+    if (body) headers["Content-Type"] = "application/json";
+    if (apiKey) headers["X-API-Key"] = apiKey;
     const res = await fetch(url, {
       method,
-      headers: body ? { "Content-Type": "application/json" } : undefined,
+      headers: Object.keys(headers).length > 0 ? headers : undefined,
       body: body ? JSON.stringify(body) : undefined,
     });
     const text = await res.text();

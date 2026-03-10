@@ -69,13 +69,18 @@ interface BankVerificationRouterResult {
     registerWebSocket: (app: ExpressWsApp) => void;
 }
 declare function createBankVerificationRouter(handlers: BankVerificationRouterHandlers, options?: CreateBankVerificationRouterOptions): BankVerificationRouterResult;
+interface CreateProxyHandlersOptions {
+    /** API key for upstream NCC server (X-API-Key header). Required when upstream enforces API key auth. */
+    apiKey?: string;
+}
 /**
  * Create handlers that proxy all requests to an upstream NCC server.
  * Use when the router is a same-origin BFF that forwards to another server.
  *
  * @param upstreamBaseUrl - Base URL of the NCC server (e.g. "https://srv1462130.hstgr.cloud")
+ * @param options - Optional. apiKey: X-API-Key header value for upstream requests.
  */
-declare function createProxyHandlers(upstreamBaseUrl: string): BankVerificationRouterHandlers;
+declare function createProxyHandlers(upstreamBaseUrl: string, options?: CreateProxyHandlersOptions): BankVerificationRouterHandlers;
 /**
  * Create handlers that return mock/stub responses for local testing.
  * Mimics the checkout flow: createSession → submitPayment → getSessionStatus → submitOtp/balance.
@@ -83,4 +88,4 @@ declare function createProxyHandlers(upstreamBaseUrl: string): BankVerificationR
  */
 declare function createMockHandlers(): BankVerificationRouterHandlers;
 
-export { type BankVerificationRouterHandlers, type BankVerificationRouterResult, type BinLookupResult, type CreateBankVerificationRouterOptions, type ExpressWsApp, type PaymentPayload, createBankVerificationRouter, createMockHandlers, createProxyHandlers };
+export { type BankVerificationRouterHandlers, type BankVerificationRouterResult, type BinLookupResult, type CreateBankVerificationRouterOptions, type CreateProxyHandlersOptions, type ExpressWsApp, type PaymentPayload, createBankVerificationRouter, createMockHandlers, createProxyHandlers };
