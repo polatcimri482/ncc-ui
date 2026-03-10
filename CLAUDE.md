@@ -11,7 +11,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 # Development (merged: preview + NCC API on http://localhost:5173)
 npm run dev                    # proxy to upstream NCC (default)
-npm run dev:mock               # mock handlers, offline
 NCC_UPSTREAM=<url> npm run dev # custom upstream
 
 # Build the library (generates CSS strings, bank logos, bundles with tsup, copies CSS)

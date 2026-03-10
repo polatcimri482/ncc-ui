@@ -100,4 +100,4 @@ Routes: `/ncc/v1/channels/...`, `/ncc/v1/bins/lookup`, WebSocket at `/ncc/v1/...
 
 ### Local Testing
 
-From this package, run `npm run dev` or `npm run dev:mock`. Preview app and NCC API run together on http://localhost:5173. Default proxies to upstream; `dev:mock` uses mock handlers (offline).
+From this package, run `npm run dev`. Preview app and NCC API run together on http://localhost:5173 (proxies to upstream).

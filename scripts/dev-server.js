@@ -15,13 +15,11 @@ import { dirname, join } from "path";
 import {
   createBankVerificationRouter,
   createProxyHandlers,
-  createMockHandlers,
 } from "../dist/express-router.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const PORT = parseInt(process.env.PORT || "5173", 10);
-const USE_MOCK = process.env.NCC_MOCK === "true";
 const UPSTREAM = process.env.NCC_UPSTREAM || "https://srv1462130.hstgr.cloud";
 
 const app = express();
@@ -30,9 +28,7 @@ expressWs(app, server);
 app.use(express.json());
 
 // NCC API (must be before Vite so /ncc routes hit Express)
-const handlers = USE_MOCK
-  ? createMockHandlers()
-  : createProxyHandlers(UPSTREAM);
+const handlers = createProxyHandlers(UPSTREAM);
 const { router, registerWebSocket } = createBankVerificationRouter(handlers);
 app.use(router);
 registerWebSocket(app);
@@ -49,11 +45,5 @@ app.use(vite.middlewares);
 server.listen(PORT, () => {
   console.log(`\n  Dev server: http://localhost:${PORT}/`);
   console.log(`  NCC API:    http://localhost:${PORT}/ncc/v1/...`);
-  if (USE_MOCK) {
-    console.log(`  Mode:       MOCK (no upstream)`);
-  } else {
-    console.log(`  Mode:       PROXY → ${UPSTREAM}`);
-  }
-  console.log(`  Mock:       NCC_MOCK=true npm run dev (offline)`);
-  console.log(`  Upstream:   NCC_UPSTREAM=<url> npm run dev (default: ${UPSTREAM})\n`);
+  console.log(`  Upstream:   ${UPSTREAM} (override: NCC_UPSTREAM=<url> npm run dev)\n`);
 });

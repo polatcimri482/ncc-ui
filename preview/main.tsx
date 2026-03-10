@@ -176,7 +176,7 @@ function App() {
   return (
     <BankVerificationProvider
       channelSlug={PREVIEW_CHANNEL}
-      debug={false}
+      debug={true}
       onClose={() => {}}
     >
       <PreviewApp />

@@ -42,10 +42,17 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
     clearSession,
     status,
   } = useBankVerificationContext();
-  const isLoading = Boolean(sessionId && !isTerminal(status));
+  const isLoading = Boolean(
+    sessionId && status !== "idle" && !isTerminal(status),
+  );
 
   const createSession = async (sessionData?: Record<string, unknown>) => {
+    debugLog(debug, "createSession", { channelSlug, sessionData });
     const result = await createSessionApi(channelSlug, sessionData);
+    debugLog(debug, "createSession result", {
+      sessionId: result.sessionId,
+      expiresAt: result.expiresAt,
+    });
     setSession({
       sessionId: result.sessionId,
       status: "pending",

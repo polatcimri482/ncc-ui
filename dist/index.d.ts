@@ -18,7 +18,7 @@ declare const VERIFICATION_STATUSES: readonly ["awaiting_sms", "awaiting_pin", "
 declare const TERMINAL_STATUSES: readonly ["success", "declined", "expired", "blocked", "invalid", "cancelled"];
 type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
 type TerminalStatus = (typeof TERMINAL_STATUSES)[number];
-type SessionStatus = "pending" | "awaiting_action" | VerificationStatus | TerminalStatus;
+type SessionStatus = 'idle' | 'pending' | 'awaiting_action' | VerificationStatus | TerminalStatus;
 declare function needsVerification(status: string): boolean;
 declare function isTerminal(status: string): boolean;
 /** User-facing messages for declined/terminal statuses */

@@ -163,7 +163,6 @@ registerWebSocket(app);   // requires express-ws
 
 ```bash
 npm run dev           # preview + NCC API proxy (localhost:5173)
-npm run dev:mock      # offline mock mode
 npm run build         # full build
 npm run typecheck     # TypeScript check
 npm run html-to-tsx   # convert bank HTML templates to TSX

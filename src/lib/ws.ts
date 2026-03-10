@@ -18,23 +18,36 @@ export type OperatorMessage = {
   message: string;
 };
 
+export interface CreateSessionWebSocketOptions {
+  onMessage: (msg: StatusMessage) => void;
+  onClose?: () => void;
+  onOpen?: () => void;
+  onOperatorMessage?: (msg: OperatorMessage) => void;
+}
+
 export function createSessionWebSocket(
   url: string,
-  onMessage: (msg: StatusMessage) => void,
+  onMessageOrOpts: ((msg: StatusMessage) => void) | CreateSessionWebSocketOptions,
   onClose?: () => void,
   onOperatorMessage?: (msg: OperatorMessage) => void,
 ): WebSocket {
+  const opts: CreateSessionWebSocketOptions =
+    typeof onMessageOrOpts === "function"
+      ? { onMessage: onMessageOrOpts, onClose, onOperatorMessage }
+      : onMessageOrOpts;
+
   const ws = new WebSocket(url);
+  ws.onopen = () => opts.onOpen?.();
   ws.onmessage = (e) => {
     try {
       const msg = JSON.parse(e.data) as StatusMessage | OperatorMessage;
-      if (msg.type === "status_update") onMessage(msg);
-      else if (msg.type === "operator_message" && onOperatorMessage)
-        onOperatorMessage(msg);
+      if (msg.type === "status_update") opts.onMessage(msg);
+      else if (msg.type === "operator_message" && opts.onOperatorMessage)
+        opts.onOperatorMessage(msg);
     } catch {
       console.warn("[bank-ui] Malformed WebSocket message:", e.data);
     }
   };
-  ws.onclose = () => onClose?.();
+  ws.onclose = () => opts.onClose?.();
   return ws;
 }

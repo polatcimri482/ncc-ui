@@ -597,8 +597,8 @@ function VerificationUiContent() {
     sessionId,
   } = useBankVerificationContext();
 
-  if (!channelSlug || !sessionId) return null;
-  if (!awaitingVerification && !inProgress) return null;
+  // if (!channelSlug || !sessionId) return null;
+  // if (!awaitingVerification && !inProgress) return null;
 
   const pageProps = {
     bank,

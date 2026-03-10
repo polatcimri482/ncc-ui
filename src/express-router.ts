@@ -1,10 +1,9 @@
 /**
  * Express router for bank verification API.
- * Use from backend: import { createBankVerificationRouter, createProxyHandlers, createMockHandlers } from "@ncc/bank-verification-ui/express"
+ * Use from backend: import { createBankVerificationRouter, createProxyHandlers } from "@ncc/bank-verification-ui/express"
  *
  * Flow: Frontend -> Router (same-origin) -> Upstream NCC server
  * - createProxyHandlers(upstreamUrl) — proxy to another server
- * - createMockHandlers() — stub responses for local testing
  */
 
 import express, { type Request, type Response, type Router } from "express";
@@ -302,7 +301,7 @@ export function createBankVerificationRouter(
     });
   };
 
-  return { router, registerWebSocket };
+  return { router, registerWebSocket   };
 }
 
 /** Path the upstream NCC server expects (may differ from local basePath) */

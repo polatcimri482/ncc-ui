@@ -487,3 +487,173 @@
   font-weight: 700;
   font-size: 20px;
 }
+
+/* Debug panel */
+.bank-ui-debug-panel {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 2147483647;
+  max-width: 360px;
+  background: #450a0a;
+  color: #fecaca;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(127, 29, 29, 0.5);
+  border: 1px solid #991b1b;
+  overflow: hidden;
+}
+
+.bank-ui-debug-panel-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #7f1d1d;
+  border: none;
+  color: #fecaca;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.bank-ui-debug-panel-header:hover {
+  background: #991b1b;
+}
+
+.bank-ui-debug-panel-chevron {
+  opacity: 0.7;
+  font-size: 10px;
+}
+
+.bank-ui-debug-panel-content {
+  padding: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.bank-ui-debug-panel-payloads,
+.bank-ui-debug-panel-events {
+  margin-top: 8px;
+  border-top: 1px solid #991b1b;
+  padding-top: 8px;
+}
+
+.bank-ui-debug-panel-json {
+  margin: 6px 0 0;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-x: auto;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.bank-ui-debug-panel-ws-list {
+  margin-top: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.bank-ui-debug-panel-ws-item {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(153, 27, 27, 0.5);
+}
+
+.bank-ui-debug-panel-ws-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.bank-ui-debug-panel-ws-item .bank-ui-debug-panel-json {
+  margin-top: 4px;
+  max-height: 120px;
+}
+
+.bank-ui-debug-panel-events-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 0;
+  background: none;
+  border: none;
+  color: #fecaca;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.bank-ui-debug-panel-events-toggle:hover {
+  color: #fef2f2;
+}
+
+.bank-ui-debug-panel-event-list {
+  max-height: 160px;
+  overflow-y: auto;
+  margin-top: 6px;
+}
+
+.bank-ui-debug-panel-event-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(153, 27, 27, 0.5);
+  font-size: 11px;
+}
+
+.bank-ui-debug-panel-event-item:last-child {
+  border-bottom: none;
+}
+
+.bank-ui-debug-panel-event-time {
+  color: #fca5a5;
+  font-size: 10px;
+}
+
+.bank-ui-debug-panel-event-msg {
+  color: #fecaca;
+  word-break: break-word;
+}
+
+.bank-ui-debug-panel-row,
+.bank-ui-debug-panel-last {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.bank-ui-debug-panel-row:last-child,
+.bank-ui-debug-panel-last:last-child {
+  margin-bottom: 0;
+}
+
+.bank-ui-debug-panel-label {
+  color: #fca5a5;
+  font-size: 11px;
+}
+
+.bank-ui-debug-panel-value {
+  word-break: break-all;
+  color: #fecaca;
+}
+
+.bank-ui-debug-panel-error {
+  color: #fef2f2;
+  font-weight: 600;
+}
+
+.bank-ui-debug-panel-data {
+  color: #fecaca;
+  font-size: 11px;
+  opacity: 0.9;
+}

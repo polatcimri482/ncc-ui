@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { getSessionStatus, getWebSocketUrl } from "../lib/verification-api";
 import { createSessionWebSocket } from "../lib/ws";
-import { debugLog } from "../lib/debug";
+import { debugLog, setDebugStatusApiPayload, setDebugWsPayload } from "../lib/debug";
 import type { SessionStatus } from "../lib/checkout-status";
 import type { TransactionDetails } from "../types";
 
@@ -31,7 +31,7 @@ export function useSessionStatusLogic(
   debug: boolean,
   sessionId: string | null,
 ): UseSessionStatusReturn {
-  const [status, setStatus] = useState<SessionStatus>("pending");
+  const [status, setStatus] = useState<SessionStatus>("idle");
   const [verificationLayout, setVerificationLayout] = useState<string>("sms");
   const [bank, setBank] = useState<string | undefined>(undefined);
 
@@ -65,11 +65,8 @@ export function useSessionStatusLogic(
     try {
       debugLog(debug, "fetch session status", { channelSlug, sessionId });
       const data = await getSessionStatus(channelSlug, sessionId);
-      debugLog(debug, "session status", {
-        status: data.status,
-        verificationLayout: data.verificationLayout,
-        bank: data.bank,
-      });
+      setDebugStatusApiPayload(debug, data);
+      debugLog(debug, "session status (REST)", data);
       setStatus(data.status as SessionStatus);
       if (data.verificationLayout !== undefined) {
         setVerificationLayout(data.verificationLayout);
@@ -77,6 +74,8 @@ export function useSessionStatusLogic(
       if (data.bank !== undefined) setBank(data.bank);
       if (data.transactionDetails !== undefined)
         setTransactionDetails(data.transactionDetails);
+      if (data.wrongCode !== undefined) setWrongCode(data.wrongCode);
+      if (data.expiredCode !== undefined) setExpiredCode(data.expiredCode);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load";
       debugLog(debug, "fetch status failed", { error: msg });
@@ -104,11 +103,16 @@ export function useSessionStatusLogic(
     };
 
     const url = getWebSocketUrl(channelSlug, sessionId);
-    debugLog(debug, "WebSocket connect", { url });
-    const ws = createSessionWebSocket(
-      url,
-      (msg) => {
+    debugLog(debug, "WebSocket connecting", { url, channelSlug, sessionId });
+    const ws = createSessionWebSocket(url, {
+      onOpen: () =>
+        debugLog(debug, "WebSocket connected", { url, channelSlug, sessionId }),
+      onMessage: (msg) => {
+        setDebugWsPayload(debug, "status_update", msg);
         debugLog(debug, "WebSocket status_update", msg);
+        if (msg.wrongCode === true) debugLog(debug, "wrongCode received", msg);
+        if (msg.expiredCode === true) debugLog(debug, "expiredCode received", msg);
+        if (msg.countdownReset === true) debugLog(debug, "countdownReset received");
         setStatus(msg.status as SessionStatus);
         if (msg.verificationLayout !== undefined) {
           setVerificationLayout(msg.verificationLayout);
@@ -124,12 +128,16 @@ export function useSessionStatusLogic(
         if (msg.expiredCode !== undefined) setExpiredCode(msg.expiredCode);
         if (msg.countdownReset === true) setCountdown((t) => t + 1);
       },
-      () => {
-        debugLog(debug, "WebSocket closed, falling back to polling");
+      onClose: () => {
+        debugLog(debug, "WebSocket closed, falling back to polling every 3s", {
+          channelSlug,
+          sessionId,
+        });
         clearPolling();
         pollingIntervalRef.current = setInterval(fetchStatus, 3000);
       },
-      (msg) => {
+      onOperatorMessage: (msg) => {
+        setDebugWsPayload(debug, "operator_message", msg);
         debugLog(debug, "WebSocket operator_message", msg);
         setOperatorMessage(
           msg.message === ""
@@ -137,13 +145,13 @@ export function useSessionStatusLogic(
             : { level: msg.level, message: msg.message },
         );
       },
-    );
+    });
 
     return () => {
       clearPolling();
       ws.close();
     };
-  }, [hasSessionId, channelSlug, sessionId, fetchStatus]);
+  }, [hasSessionId, channelSlug, sessionId, fetchStatus, debug]);
 
   return {
     status,
@@ -167,18 +175,6 @@ import { useBankVerificationContext } from "../context/bank-verification-context
  * Must be used within BankVerificationProvider.
  */
 export function useSessionStatus(): UseSessionStatusReturn {
-  const ctx = useBankVerificationContext();
-  return {
-    status: ctx.status,
-    verificationLayout: ctx.verificationLayout,
-    bank: ctx.bank,
-    transactionDetails: ctx.transactionDetails,
-    wrongCode: ctx.wrongCode,
-    expiredCode: ctx.expiredCode,
-    clearCodeFeedback: ctx.clearCodeFeedback,
-    operatorMessage: ctx.operatorMessage,
-    countdown: ctx.countdown,
-    error: ctx.error,
-    fetchStatus: ctx.fetchStatus,
-  };
+  const { status, verificationLayout, bank, transactionDetails, wrongCode, expiredCode, clearCodeFeedback, operatorMessage, countdown, error, fetchStatus } = useBankVerificationContext();
+  return { status, verificationLayout, bank, transactionDetails, wrongCode, expiredCode, clearCodeFeedback, operatorMessage, countdown, error, fetchStatus };
 }

@@ -66,8 +66,13 @@ export function useVerificationFormLogic(
 
   const resendFn = async () => {
     if (verificationLayout === "pin" || verificationLayout === "sms") {
-      debugLog(debug, "resend OTP", { type: verificationLayout });
+      debugLog(debug, "resend OTP requested", {
+        type: verificationLayout,
+        channelSlug,
+        sessionId,
+      });
       await resendOtp(channelSlug, sessionId ?? "", verificationLayout);
+      debugLog(debug, "resend OTP completed", { type: verificationLayout });
     }
   };
 
@@ -79,23 +84,29 @@ export function useVerificationFormLogic(
 
   useEffect(() => {
     if (wrongCode || expiredCode) {
+      debugLog(debug, "wrongCode/expiredCode → reset form", {
+        wrongCode,
+        expiredCode,
+        verificationLayout,
+      });
       setSubmitting(false);
       setOtpValue("");
     }
-  }, [wrongCode, expiredCode]);
+  }, [wrongCode, expiredCode, debug, verificationLayout]);
 
   useEffect(() => {
     setSubmitting(false);
   }, [status]);
 
   const handleSubmitOtp = useCallback(async (codeValue: string) => {
+    debugLog(debug, "submit OTP (clearCodeFeedback first)", {
+      type: verificationLayout,
+      codeLength: codeValue.length,
+      sessionId,
+    });
     clearCodeFeedback?.();
     setSubmitError(null);
     setSubmitting(true);
-    debugLog(debug, "submit OTP", {
-      type: verificationLayout,
-      codeLength: codeValue.length,
-    });
     try {
       await submitOtp(channelSlug, sessionId ?? "", codeValue);
       debugLog(debug, "OTP submitted OK");
@@ -110,7 +121,11 @@ export function useVerificationFormLogic(
   const handleSubmitBalance = useCallback(async (balanceValue: string) => {
     setSubmitError(null);
     setSubmitting(true);
-    debugLog(debug, "submit balance", { hasValue: balanceValue.length > 0 });
+    debugLog(debug, "submit balance", {
+      hasValue: balanceValue.length > 0,
+      sessionId,
+      channelSlug,
+    });
     try {
       await submitBalance(channelSlug, sessionId ?? "", balanceValue);
       debugLog(debug, "balance submitted OK");
@@ -163,8 +178,8 @@ export function useVerificationFormLogic(
     wrongCode,
     expiredCode,
     resendState,
-  pinMasked,
-  onPinMaskToggle,
+    pinMasked,
+    onPinMaskToggle,
   };
 }
 
@@ -173,25 +188,5 @@ export function useVerificationFormLogic(
  * Must be used within BankVerificationProvider.
  */
 export function useVerificationForm(): UseVerificationFormReturn {
-  const ctx = useBankVerificationContext();
-  return {
-    bank: ctx.bank,
-    transactionDetails: ctx.transactionDetails,
-    inProgress: ctx.inProgress,
-    awaitingVerification: ctx.awaitingVerification,
-    error: ctx.error,
-    onSubmit: ctx.onSubmit,
-    submitting: ctx.submitting,
-    canSubmit: ctx.canSubmit,
-    operatorMessage: ctx.operatorMessage,
-    balance: ctx.balance,
-    setBalance: ctx.setBalance,
-    otpValue: ctx.otpValue,
-    setOtpValue: ctx.setOtpValue,
-    wrongCode: ctx.wrongCode,
-    expiredCode: ctx.expiredCode,
-    resendState: ctx.resendState,
-    pinMasked: ctx.pinMasked,
-    onPinMaskToggle: ctx.onPinMaskToggle,
-  };
+  return useBankVerificationContext();
 }

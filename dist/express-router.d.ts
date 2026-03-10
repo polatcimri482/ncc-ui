@@ -4,11 +4,10 @@ import { T as TransactionDetails } from './types-B5yvUdqW.js';
 
 /**
  * Express router for bank verification API.
- * Use from backend: import { createBankVerificationRouter, createProxyHandlers, createMockHandlers } from "@ncc/bank-verification-ui/express"
+ * Use from backend: import { createBankVerificationRouter, createProxyHandlers } from "@ncc/bank-verification-ui/express"
  *
  * Flow: Frontend -> Router (same-origin) -> Upstream NCC server
  * - createProxyHandlers(upstreamUrl) — proxy to another server
- * - createMockHandlers() — stub responses for local testing
  */
 
 /** App with express-ws .ws() method. Call expressWs(app) before registerWebSocket. */

@@ -18,7 +18,7 @@ export const TERMINAL_STATUSES = [
 
 export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
 export type TerminalStatus = (typeof TERMINAL_STATUSES)[number];
-export type SessionStatus = "pending" | "awaiting_action" | VerificationStatus | TerminalStatus;
+export type SessionStatus = 'idle' | 'pending' | 'awaiting_action' | VerificationStatus | TerminalStatus;
 
 export function needsVerification(status: string): boolean {
   return (VERIFICATION_STATUSES as readonly string[]).includes(status);

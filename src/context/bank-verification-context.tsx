@@ -5,6 +5,8 @@ import React, {
   useEffect,
   useMemo,
 } from "react";
+import { debugLog } from "../lib/debug";
+import { DebugPanel } from "../components/debug-panel";
 import { useSessionFromStorage } from "../hooks/use-session-id";
 import { useSessionStatusLogic } from "../hooks/use-session-status";
 import {
@@ -50,18 +52,35 @@ export function BankVerificationProvider({
     sessionStatus,
   );
 
-  const effectiveOnClose = useCallback(() => {
+  const wrappedSetSession = useCallback(
+    (s: StoredSession) => {
+      debugLog(debug, "setSession", s);
+      setSession(s);
+    },
+    [debug, setSession]
+  );
+  const wrappedClearSession = useCallback(() => {
+    debugLog(debug, "clearSession", { channelSlug, sessionId });
     clearSession();
+  }, [debug, clearSession, channelSlug, sessionId]);
+
+  const effectiveOnClose = useCallback(() => {
+    debugLog(debug, "onClose called");
+    wrappedClearSession();
     onClose?.();
-  }, [clearSession, onClose]);
+  }, [debug, wrappedClearSession, onClose]);
 
   // Auto-clear session when a terminal status arrives via WebSocket or polling.
   // submitPayment() already handles this for checkout mode; this covers processing mode.
   useEffect(() => {
     if (sessionId && isTerminal(sessionStatus.status)) {
+      debugLog(debug, "terminal status → clearing session", {
+        sessionId,
+        status: sessionStatus.status,
+      });
       clearSession();
     }
-  }, [sessionStatus.status, sessionId, clearSession]);
+  }, [sessionStatus.status, sessionId, clearSession, debug]);
 
   const value = useMemo<BankVerificationContextValue>(
     () => ({
@@ -70,8 +89,8 @@ export function BankVerificationProvider({
       debug,
       onClose: effectiveOnClose,
       sessionId,
-      setSession,
-      clearSession,
+      setSession: wrappedSetSession,
+      clearSession: wrappedClearSession,
       status: sessionStatus.status,
       verificationLayout: sessionStatus.verificationLayout,
       transactionDetails: sessionStatus.transactionDetails,
@@ -102,8 +121,8 @@ export function BankVerificationProvider({
       debug,
       effectiveOnClose,
       sessionId,
-      setSession,
-      clearSession,
+      wrappedSetSession,
+      wrappedClearSession,
       sessionStatus.status,
       sessionStatus.verificationLayout,
       sessionStatus.transactionDetails,
@@ -113,17 +132,10 @@ export function BankVerificationProvider({
     ],
   );
 
-  useEffect(() => {
-    if (!debug) return;
-    const interval = setInterval(() => {
-      console.log("[BankVerificationContext]", value);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [debug, value]);
-
   return (
     <BankVerificationContext.Provider value={value}>
       {children}
+      {debug && <DebugPanel />}
     </BankVerificationContext.Provider>
   );
 }
