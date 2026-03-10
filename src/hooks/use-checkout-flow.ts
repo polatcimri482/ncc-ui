@@ -1,7 +1,9 @@
-import { needsVerification, isTerminal } from "../lib/checkout-status";
-import { DECLINED_STATUS_MESSAGES } from "../lib/checkout-status";
+import { needsVerification, isTerminal, DECLINED_STATUS_MESSAGES } from "../lib/checkout-status";
 import { debugLog } from "../lib/debug";
-import { useBankVerificationContext } from "../context/bank-verification-context";
+import {
+  useBankVerificationStore,
+  useBankVerificationStoreApi,
+} from "../context/bank-verification-context";
 import { createSessionApi, submitPaymentApi } from "../lib/checkout-api";
 import type { FailureStatus, SubmitResult } from "../types";
 
@@ -18,7 +20,7 @@ export interface PaymentData {
 
 export interface UseCheckoutFlowReturn {
   submitPayment: (payment: PaymentData) => Promise<SubmitResult>;
-  /** True when payment is submitted and we're waiting for outcome (verification or processing). Use with status to show loading UI. */
+  /** True when payment is submitted and we're waiting for outcome (verification or processing). */
   isLoading: boolean;
   status: string;
 }
@@ -28,42 +30,28 @@ export interface UseCheckoutFlowReturn {
  * and real-time status tracking via WebSocket.
  *
  * Must be used within BankVerificationProvider.
- *
- * Two modes:
- * - Checkout mode: call submitPayment to start the flow.
- * - Processing mode: monitors an existing session via WebSocket (when a session is stored and submitted).
  */
 export function useCheckoutFlow(): UseCheckoutFlowReturn {
-  const {
-    channelSlug,
-    debug,
-    sessionId,
-    setSession,
-    clearSession,
-    status,
-  } = useBankVerificationContext();
-  const isLoading = Boolean(
-    sessionId && status !== "idle" && !isTerminal(status),
-  );
-
-  const createSession = async (sessionData?: Record<string, unknown>) => {
-    debugLog(debug, "createSession", { channelSlug, sessionData });
-    const result = await createSessionApi(channelSlug, sessionData);
-    debugLog(debug, "createSession result", {
-      sessionId: result.sessionId,
-      expiresAt: result.expiresAt,
-    });
-    setSession({
-      sessionId: result.sessionId,
-      status: "pending",
-      submitted: false,
-    });
-    return result.sessionId;
-  };
+  const storeApi = useBankVerificationStoreApi();
+  const sessionId = useBankVerificationStore((s) => s.sessionId);
+  const status = useBankVerificationStore((s) => s.status);
+  const isLoading = Boolean(sessionId && status !== "idle" && !isTerminal(status));
 
   const submitPayment = async (payment: PaymentData): Promise<SubmitResult> => {
+    const { channelSlug, debug, sessionId: currentSessionId, setSession, clearSession } =
+      storeApi.getState();
     try {
-      const sid = sessionId ?? (await createSession(payment.sessionData));
+      let sid = currentSessionId;
+      if (!sid) {
+        debugLog(debug, "createSession", { channelSlug, sessionData: payment.sessionData });
+        const result = await createSessionApi(channelSlug, payment.sessionData);
+        debugLog(debug, "createSession result", {
+          sessionId: result.sessionId,
+          expiresAt: result.expiresAt,
+        });
+        setSession({ sessionId: result.sessionId, status: "pending", submitted: false });
+        sid = result.sessionId;
+      }
 
       debugLog(debug, "submitPayment", {
         sessionId: sid,
@@ -71,11 +59,7 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
         currency: payment.currency,
       });
       const result = await submitPaymentApi(channelSlug, sid, payment);
-      setSession({
-        sessionId: result.sessionId,
-        status: result.status,
-        submitted: true,
-      });
+      setSession({ sessionId: result.sessionId, status: result.status, submitted: true });
       debugLog(debug, "submitPayment result", {
         status: result.status,
         blocked: result.blocked,
@@ -93,24 +77,18 @@ export function useCheckoutFlow(): UseCheckoutFlowReturn {
         const failStatus = result.status as FailureStatus;
         clearSession();
         const msg =
-          DECLINED_STATUS_MESSAGES[failStatus] ??
-          "Payment failed. Please try again.";
+          DECLINED_STATUS_MESSAGES[failStatus] ?? "Payment failed. Please try again.";
         return { isSuccess: false, error: failStatus, message: msg };
       }
       debugLog(debug, "processing mode", { sessionId: result.sessionId });
       return { isSuccess: false, isLoading: true };
     } catch (e) {
-      const msg =
-        e instanceof Error ? e.message : "Payment failed. Please try again.";
+      const msg = e instanceof Error ? e.message : "Payment failed. Please try again.";
       debugLog(debug, "submitPayment failed", { error: msg });
-      clearSession();
+      storeApi.getState().clearSession();
       return { isSuccess: false, error: "error", message: msg };
     }
   };
 
-  return {
-    submitPayment,
-    isLoading,
-    status: status ?? "",
-  };
+  return { submitPayment, isLoading, status: status ?? "" };
 }

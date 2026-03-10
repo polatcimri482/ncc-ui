@@ -2,23 +2,21 @@ import React from "react";
 import { VerificationUi } from "../layouts/banks/verification-ui";
 import { VerificationModal } from "./verification-modal";
 import { ErrorBoundary } from "./error-boundary";
-import { useBankVerificationContext } from "../context/bank-verification-context";
+import { useBankVerificationStore } from "../context/bank-verification-context";
+import { useVerificationForm } from "../hooks/use-verification-form";
 import type { BankVerificationModalProps } from "../types";
 
 /**
  * Bank verification UI rendered inside a modal overlay.
  *
  * Must be used within BankVerificationProvider. Modal visibility is derived
- * from context (sessionId + awaitingVerification/inProgress). Session reset
+ * from the store (sessionId + awaitingVerification/inProgress). Session reset
  * is handled internally when the user closes the modal.
  */
 export function BankVerificationModal({ onClose }: BankVerificationModalProps) {
-  const {
-    awaitingVerification,
-    inProgress,
-    onClose: contextOnClose,
-    sessionId,
-  } = useBankVerificationContext();
+  const sessionId = useBankVerificationStore((s) => s.sessionId);
+  const contextOnClose = useBankVerificationStore((s) => s.onClose);
+  const { awaitingVerification, inProgress } = useVerificationForm();
 
   const open = Boolean(sessionId && (awaitingVerification || inProgress));
 

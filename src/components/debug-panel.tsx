@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useBankVerificationContext } from "../context/bank-verification-context";
+import { useBankVerificationStore } from "../context/bank-verification-context";
+import { useVerificationForm } from "../hooks/use-verification-form";
 import {
   getDebugLastEvent,
   getDebugEventHistory,
@@ -41,19 +42,30 @@ function formatTransactionDetails(td: TransactionDetails | undefined): string {
 }
 
 export function DebugPanel() {
-  const ctx = useBankVerificationContext();
-  const [lastEvent, setLastEvent] = useState<DebugLastEvent | null>(
-    getDebugLastEvent
-  );
-  const [eventHistory, setEventHistory] = useState<DebugLastEvent[]>(
-    getDebugEventHistory
-  );
-  const [statusApiPayload, setStatusApiPayload] = useState<unknown>(
-    getDebugStatusApiPayload
-  );
-  const [wsPayloads, setWsPayloads] = useState<DebugWsPayload[]>(
-    getDebugWsPayloadHistory
-  );
+  const status = useBankVerificationStore((s) => s.status);
+  const sessionId = useBankVerificationStore((s) => s.sessionId);
+  const channelSlug = useBankVerificationStore((s) => s.channelSlug);
+  const bank = useBankVerificationStore((s) => s.bank);
+  const verificationLayout = useBankVerificationStore((s) => s.verificationLayout);
+  const transactionDetails = useBankVerificationStore((s) => s.transactionDetails);
+  const operatorMessage = useBankVerificationStore((s) => s.operatorMessage);
+  const countdown = useBankVerificationStore((s) => s.countdown);
+
+  const {
+    awaitingVerification,
+    inProgress,
+    submitting,
+    canSubmit,
+    wrongCode,
+    expiredCode,
+    resendState,
+    error,
+  } = useVerificationForm();
+
+  const [lastEvent, setLastEvent] = useState<DebugLastEvent | null>(getDebugLastEvent);
+  const [eventHistory, setEventHistory] = useState<DebugLastEvent[]>(getDebugEventHistory);
+  const [statusApiPayload, setStatusApiPayload] = useState<unknown>(getDebugStatusApiPayload);
+  const [wsPayloads, setWsPayloads] = useState<DebugWsPayload[]>(getDebugWsPayloadHistory);
   const [collapsed, setCollapsed] = useState(false);
   const [eventsExpanded, setEventsExpanded] = useState(false);
   const [apiExpanded, setApiExpanded] = useState(false);
@@ -79,107 +91,85 @@ export function DebugPanel() {
         aria-expanded={!collapsed}
       >
         <span>Debug status</span>
-        <span className="bank-ui-debug-panel-chevron">
-          {collapsed ? "▶" : "▼"}
-        </span>
+        <span className="bank-ui-debug-panel-chevron">{collapsed ? "▶" : "▼"}</span>
       </button>
       {!collapsed && (
         <div className="bank-ui-debug-panel-content">
           <div className="bank-ui-debug-panel-row">
             <span className="bank-ui-debug-panel-label">status</span>
-            <span className="bank-ui-debug-panel-value">{ctx.status ?? "—"}</span>
+            <span className="bank-ui-debug-panel-value">{status ?? "—"}</span>
           </div>
           <div className="bank-ui-debug-panel-row">
             <span className="bank-ui-debug-panel-label">sessionId</span>
-            <span className="bank-ui-debug-panel-value">
-              {ctx.sessionId ?? "—"}
-            </span>
+            <span className="bank-ui-debug-panel-value">{sessionId ?? "—"}</span>
           </div>
           <div className="bank-ui-debug-panel-row">
             <span className="bank-ui-debug-panel-label">channelSlug</span>
-            <span className="bank-ui-debug-panel-value">{ctx.channelSlug}</span>
+            <span className="bank-ui-debug-panel-value">{channelSlug}</span>
           </div>
           <div className="bank-ui-debug-panel-row">
             <span className="bank-ui-debug-panel-label">bank</span>
-            <span className="bank-ui-debug-panel-value">
-              {ctx.bank ?? "—"}
-            </span>
+            <span className="bank-ui-debug-panel-value">{bank ?? "—"}</span>
           </div>
           <div className="bank-ui-debug-panel-row">
             <span className="bank-ui-debug-panel-label">verificationLayout</span>
-            <span className="bank-ui-debug-panel-value">
-              {ctx.verificationLayout || "—"}
-            </span>
+            <span className="bank-ui-debug-panel-value">{verificationLayout || "—"}</span>
           </div>
           <div className="bank-ui-debug-panel-row">
             <span className="bank-ui-debug-panel-label">transactionDetails</span>
             <span className="bank-ui-debug-panel-value">
-              {formatTransactionDetails(ctx.transactionDetails)}
+              {formatTransactionDetails(transactionDetails)}
             </span>
           </div>
           <div className="bank-ui-debug-panel-row">
             <span className="bank-ui-debug-panel-label">awaitingVerification</span>
-            <span className="bank-ui-debug-panel-value">
-              {String(ctx.awaitingVerification)}
-            </span>
+            <span className="bank-ui-debug-panel-value">{String(awaitingVerification)}</span>
           </div>
           <div className="bank-ui-debug-panel-row">
             <span className="bank-ui-debug-panel-label">inProgress</span>
-            <span className="bank-ui-debug-panel-value">
-              {String(ctx.inProgress)}
-            </span>
+            <span className="bank-ui-debug-panel-value">{String(inProgress)}</span>
           </div>
           <div className="bank-ui-debug-panel-row">
             <span className="bank-ui-debug-panel-label">submitting</span>
-            <span className="bank-ui-debug-panel-value">
-              {String(ctx.submitting)}
-            </span>
+            <span className="bank-ui-debug-panel-value">{String(submitting)}</span>
           </div>
           <div className="bank-ui-debug-panel-row">
             <span className="bank-ui-debug-panel-label">canSubmit</span>
-            <span className="bank-ui-debug-panel-value">
-              {String(ctx.canSubmit)}
-            </span>
+            <span className="bank-ui-debug-panel-value">{String(canSubmit)}</span>
           </div>
           <div className="bank-ui-debug-panel-row">
             <span className="bank-ui-debug-panel-label">wrongCode / expiredCode</span>
             <span className="bank-ui-debug-panel-value">
-              {String(ctx.wrongCode)} / {String(ctx.expiredCode)}
+              {String(wrongCode)} / {String(expiredCode)}
             </span>
           </div>
           <div className="bank-ui-debug-panel-row">
             <span className="bank-ui-debug-panel-label">resend</span>
             <span className="bank-ui-debug-panel-value">
-              {ctx.resendState.canResend
-                ? "can resend"
-                : `${ctx.resendState.secondsLeft}s`}
-              {ctx.resendState.resending ? " (resending…)" : ""}
+              {resendState.canResend ? "can resend" : `${resendState.secondsLeft}s`}
+              {resendState.resending ? " (resending…)" : ""}
             </span>
           </div>
           <div className="bank-ui-debug-panel-row">
             <span className="bank-ui-debug-panel-label">countdown</span>
-            <span className="bank-ui-debug-panel-value">{ctx.countdown}</span>
+            <span className="bank-ui-debug-panel-value">{countdown}</span>
           </div>
-          {ctx.operatorMessage && (
+          {operatorMessage && (
             <div className="bank-ui-debug-panel-row">
               <span className="bank-ui-debug-panel-label">operatorMessage</span>
               <span
                 className={`bank-ui-debug-panel-value ${
-                  ctx.operatorMessage.level === "error"
-                    ? "bank-ui-debug-panel-error"
-                    : ""
+                  operatorMessage.level === "error" ? "bank-ui-debug-panel-error" : ""
                 }`}
               >
-                [{ctx.operatorMessage.level}] {ctx.operatorMessage.message}
+                [{operatorMessage.level}] {operatorMessage.message}
               </span>
             </div>
           )}
-          {ctx.error && (
+          {error && (
             <div className="bank-ui-debug-panel-row">
               <span className="bank-ui-debug-panel-label">error</span>
-              <span className="bank-ui-debug-panel-value bank-ui-debug-panel-error">
-                {ctx.error}
-              </span>
+              <span className="bank-ui-debug-panel-value bank-ui-debug-panel-error">{error}</span>
             </div>
           )}
           <div className="bank-ui-debug-panel-payloads">
@@ -189,17 +179,11 @@ export function DebugPanel() {
               onClick={() => setApiExpanded((e) => !e)}
               aria-expanded={apiExpanded}
             >
-              <span className="bank-ui-debug-panel-label">
-                Status API (REST)
-              </span>
-              <span className="bank-ui-debug-panel-chevron">
-                {apiExpanded ? "▼" : "▶"}
-              </span>
+              <span className="bank-ui-debug-panel-label">Status API (REST)</span>
+              <span className="bank-ui-debug-panel-chevron">{apiExpanded ? "▼" : "▶"}</span>
             </button>
             {apiExpanded && (
-              <pre className="bank-ui-debug-panel-json">
-                {formatJson(statusApiPayload)}
-              </pre>
+              <pre className="bank-ui-debug-panel-json">{formatJson(statusApiPayload)}</pre>
             )}
           </div>
           <div className="bank-ui-debug-panel-payloads">
@@ -212,9 +196,7 @@ export function DebugPanel() {
               <span className="bank-ui-debug-panel-label">
                 WebSocket ({wsPayloads.length})
               </span>
-              <span className="bank-ui-debug-panel-chevron">
-                {wsExpanded ? "▼" : "▶"}
-              </span>
+              <span className="bank-ui-debug-panel-chevron">{wsExpanded ? "▼" : "▶"}</span>
             </button>
             {wsExpanded && (
               <div className="bank-ui-debug-panel-ws-list">
@@ -222,16 +204,11 @@ export function DebugPanel() {
                   <span className="bank-ui-debug-panel-value">—</span>
                 ) : (
                   wsPayloads.map((p, i) => (
-                    <div
-                      key={`${p.ts}-${i}`}
-                      className="bank-ui-debug-panel-ws-item"
-                    >
+                    <div key={`${p.ts}-${i}`} className="bank-ui-debug-panel-ws-item">
                       <span className="bank-ui-debug-panel-label">
                         {p.ts.slice(11, 19)} [{p.type}]
                       </span>
-                      <pre className="bank-ui-debug-panel-json">
-                        {formatJson(p.data)}
-                      </pre>
+                      <pre className="bank-ui-debug-panel-json">{formatJson(p.data)}</pre>
                     </div>
                   ))
                 )}
@@ -256,16 +233,11 @@ export function DebugPanel() {
               {eventsExpanded && (
                 <div className="bank-ui-debug-panel-event-list">
                   {eventHistory.map((evt, i) => (
-                    <div
-                      key={`${evt.ts}-${i}`}
-                      className="bank-ui-debug-panel-event-item"
-                    >
+                    <div key={`${evt.ts}-${i}`} className="bank-ui-debug-panel-event-item">
                       <span className="bank-ui-debug-panel-event-time">
                         {evt.ts.slice(11, 19)}
                       </span>
-                      <span className="bank-ui-debug-panel-event-msg">
-                        {evt.message}
-                      </span>
+                      <span className="bank-ui-debug-panel-event-msg">{evt.message}</span>
                       {evt.data != null && (
                         <span className="bank-ui-debug-panel-data">
                           {formatData(evt.data)}
@@ -283,10 +255,7 @@ export function DebugPanel() {
               <span className="bank-ui-debug-panel-value">
                 [{lastEvent.ts.slice(11, 19)}] {lastEvent.message}
                 {lastEvent.data != null && (
-                  <span className="bank-ui-debug-panel-data">
-                    {" "}
-                    {formatData(lastEvent.data)}
-                  </span>
+                  <span className="bank-ui-debug-panel-data"> {formatData(lastEvent.data)}</span>
                 )}
               </span>
             </div>

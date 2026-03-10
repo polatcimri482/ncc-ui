@@ -1,5 +1,6 @@
 import React from "react";
-import { useBankVerificationContext } from "../../context/bank-verification-context";
+import { useBankVerificationStore } from "../../context/bank-verification-context";
+import { useVerificationForm } from "../../hooks/use-verification-form";
 import type { ResendState, TransactionDetails } from "../../types";
 import NBD2Styles from "./styles/nbd2-styles";
 import { StyleIsolationWrapper } from "../../components/style-isolation-wrapper";
@@ -572,14 +573,13 @@ export function VerificationUi() {
 }
 
 function VerificationUiContent() {
+  const onClose = useBankVerificationStore((s) => s.onClose);
+  const verificationLayout = useBankVerificationStore((s) => s.verificationLayout);
+
   const {
-    channelSlug,
-    onClose,
-    verificationLayout,
     bank,
     transactionDetails,
     inProgress,
-    awaitingVerification,
     error,
     balance,
     setBalance: onBalanceChange,
@@ -594,8 +594,7 @@ function VerificationUiContent() {
     resendState,
     pinMasked,
     onPinMaskToggle,
-    sessionId,
-  } = useBankVerificationContext();
+  } = useVerificationForm();
 
   // if (!channelSlug || !sessionId) return null;
   // if (!awaitingVerification && !inProgress) return null;
