@@ -7,7 +7,7 @@ import "../src/styles/bank-ui.css";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const DEFAULT_CHANNEL = "test";
+const DEFAULT_CHANNEL = "test-2";
 
 // ── Root ──────────────────────────────────────────────────────────────────────
 
