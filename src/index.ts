@@ -1,5 +1,6 @@
 // Primary components
 export { BankVerificationModal } from "./components/bank-verification-modal";
+export { PaymentForm } from "./components/payment-form";
 export { ErrorBoundary } from "./components/error-boundary";
 
 // Hooks
@@ -26,6 +27,7 @@ export type {
   SubmitResult,
 } from "./types";
 export type { ErrorBoundaryProps } from "./components/error-boundary";
+export type { PaymentFormProps, PaymentFormValues } from "./components/payment-form";
 export type {
   VerificationStatus,
   TerminalStatus,
