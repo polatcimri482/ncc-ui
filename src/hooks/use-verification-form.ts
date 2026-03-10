@@ -55,7 +55,7 @@ export function useVerificationForm(): UseVerificationFormReturn {
   // OTP countdown timer — kept local since only the form UI needs it
   const resendState = useOtpResendCountdown(RESEND_COOLDOWN, countdown, resendOtpAction);
 
-  const inProgress = status === "pending" || status === "awaiting_action";
+  const inProgress = status === "awaiting_action";
   const awaitingVerification =
     status === "awaiting_sms" ||
     status === "awaiting_pin" ||

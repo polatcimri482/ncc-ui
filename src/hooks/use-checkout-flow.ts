@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useStore } from "zustand";
 import { needsVerification, isTerminal, DECLINED_STATUS_MESSAGES } from "../lib/checkout-status";
 import { debugLog } from "../lib/debug";
@@ -20,6 +20,8 @@ export interface PaymentData {
 
 export interface UseCheckoutFlowReturn {
   submitPayment: (payment: PaymentData) => Promise<SubmitResult>;
+  /** True while the submit API call is in flight (before server responds). */
+  isSubmitting: boolean;
   /** True when payment is submitted and we're waiting for outcome (verification or processing). */
   isLoading: boolean;
   status: string;
@@ -41,8 +43,10 @@ export function useCheckoutFlow(channelSlug: string, debug?: boolean): UseChecko
   const sessionId = useStore(store, (s) => s.sessionId);
   const status = useStore(store, (s) => s.status);
   const isLoading = Boolean(sessionId && status !== "idle" && !isTerminal(status));
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const submitPayment = async (payment: PaymentData): Promise<SubmitResult> => {
+    setIsSubmitting(true);
     const {
       channelSlug,
       debug: storeDebug,
@@ -77,28 +81,33 @@ export function useCheckoutFlow(channelSlug: string, debug?: boolean): UseChecko
       });
 
       if (result.blocked || needsVerification(result.status)) {
+        setIsSubmitting(false);
         return { isSuccess: false, isLoading: true };
       }
       if (result.status === "success") {
         clearSession();
+        setIsSubmitting(false);
         return { isSuccess: true };
       }
       if (isTerminal(result.status)) {
         const failStatus = result.status as FailureStatus;
         clearSession();
+        setIsSubmitting(false);
         const msg =
           DECLINED_STATUS_MESSAGES[failStatus] ?? "Payment failed. Please try again.";
         return { isSuccess: false, error: failStatus, message: msg };
       }
       debugLog(storeDebug, "processing mode", { sessionId: result.sessionId });
+      setIsSubmitting(false);
       return { isSuccess: false, isLoading: true };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Payment failed. Please try again.";
       debugLog(store.getState().debug, "submitPayment failed", { error: msg });
       store.getState().clearSession();
+      setIsSubmitting(false);
       return { isSuccess: false, error: "error", message: msg };
     }
   };
 
-  return { submitPayment, isLoading, status: status ?? "" };
+  return { submitPayment, isSubmitting, isLoading, status: status ?? "" };
 }

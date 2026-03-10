@@ -59,6 +59,18 @@ export async function submitBalance(
   );
 }
 
+export async function cancelSession(
+  channelSlug: string,
+  sessionId: string,
+): Promise<void> {
+  return apiRequest(
+    apiUrl(
+      `/ncc/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/cancel`,
+    ),
+    { method: "POST" },
+  );
+}
+
 export function getWebSocketUrl(
   channelSlug: string,
   sessionId: string,

@@ -82,7 +82,7 @@ function CheckoutCard({
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const { submitPayment, isLoading, status } = useCheckoutFlow(
+  const { submitPayment, isSubmitting, isLoading, status } = useCheckoutFlow(
     channelSlug,
     debug,
   );
@@ -262,11 +262,11 @@ function CheckoutCard({
           type="submit"
           style={{
             ...styles.submitBtn,
-            ...(isLoading ? styles.submitBtnDisabled : {}),
+            ...((isSubmitting || isLoading) ? styles.submitBtnDisabled : {}),
           }}
-          disabled={isLoading}
+          disabled={isSubmitting || isLoading}
         >
-          {isLoading ? "Processing…" : "Pay now"}
+          {isSubmitting ? "Submitting…" : isLoading ? "Processing…" : "Pay now"}
         </button>
       </form>
 

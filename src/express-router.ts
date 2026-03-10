@@ -72,6 +72,7 @@ export interface BankVerificationRouterHandlers {
     sessionId: string,
     balance: string,
   ) => Promise<void>;
+  cancelSession: (channelSlug: string, sessionId: string) => Promise<void>;
   lookupBin: (bin: string) => Promise<BinLookupResult>;
   handleWebSocket: (
     ws: WebSocket,
@@ -251,6 +252,25 @@ export function createBankVerificationRouter(
   );
 
   subRouter.post(
+    `${chSession}/cancel`,
+    asyncHandler(async (req, res) => {
+      const channelSlug = str(req.params.channelSlug);
+      const sessionId = str(req.params.sessionId);
+      if (debug) {
+        console.log("[BankVerificationRouter] POST", `${chSession}/cancel`, {
+          channelSlug,
+          sessionId,
+        });
+      }
+      await handlers.cancelSession(channelSlug, sessionId);
+      if (debug) {
+        console.log("[BankVerificationRouter] Response: 204 No Content");
+      }
+      res.status(204).send();
+    }),
+  );
+
+  subRouter.post(
     "/bins/lookup",
     asyncHandler(async (req, res) => {
       const { bin } = req.body ?? {};
@@ -417,6 +437,13 @@ export function createProxyHandlers(
         {
           balance,
         },
+      );
+    },
+
+    cancelSession: async (channelSlug, sessionId) => {
+      await fetchUpstream(
+        "POST",
+        `${UPSTREAM_API_PATH}/channels/${channelSlug}/checkout/sessions/${sessionId}/cancel`,
       );
     },
 

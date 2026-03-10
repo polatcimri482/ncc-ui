@@ -28,11 +28,10 @@ export function useStoreSetup(
     store.setState({ debug });
   }, [debug, store]);
 
-  // Sync onClose — wrapped to also clear session
+  // Sync onClose — wrapped to cancel session on server then clear local state
   const effectiveOnClose = useCallback(() => {
     debugLog(debug, "onClose called");
-    store.getState().clearSession();
-    onClose?.();
+    store.getState().cancelSessionAction().then(() => onClose?.());
   }, [debug, store, onClose]);
 
   useEffect(() => {

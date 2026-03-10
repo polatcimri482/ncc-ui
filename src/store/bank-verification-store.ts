@@ -4,7 +4,7 @@ import { useStore } from "zustand";
 import type { StoreApi } from "zustand";
 import { isTerminal } from "../lib/checkout-status";
 import { debugLog, setDebugStatusApiPayload } from "../lib/debug";
-import { getSessionStatus, submitOtp, submitBalance, resendOtp } from "../lib/verification-api";
+import { getSessionStatus, submitOtp, submitBalance, resendOtp, cancelSession } from "../lib/verification-api";
 import type { SessionStatus } from "../lib/checkout-status";
 import type { OperatorMessage, TransactionDetails } from "../types";
 
@@ -56,6 +56,7 @@ export interface BankVerificationActions {
 
   setSession: (session: StoredSession) => void;
   clearSession: () => void;
+  cancelSessionAction: () => Promise<void>;
 
   fetchStatus: () => Promise<void>;
 
@@ -179,6 +180,22 @@ export function createBankVerificationStore(
     clearSession: () => {
       // Reset code feedback on session clear
       set({ sessionId: null, wrongCode: false, expiredCode: false });
+    },
+
+    cancelSessionAction: async () => {
+      const { channelSlug, sessionId, status, debug } = get();
+      if (sessionId && !isTerminal(status)) {
+        try {
+          debugLog(debug, "cancelSession", { channelSlug, sessionId });
+          await cancelSession(channelSlug, sessionId);
+          debugLog(debug, "cancelSession OK");
+        } catch (e) {
+          debugLog(debug, "cancelSession failed (ignored)", {
+            error: e instanceof Error ? e.message : e,
+          });
+        }
+      }
+      get().clearSession();
     },
 
     fetchStatus: async () => {
