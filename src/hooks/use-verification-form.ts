@@ -7,7 +7,6 @@ import type {
   OperatorMessage,
   ResendState,
   TransactionDetails,
-  VerificationLayout,
 } from "../types";
 import type { UseSessionStatusReturn } from "./use-session-status";
 
@@ -15,17 +14,7 @@ const RESEND_COOLDOWN = 60;
 const PIN_LENGTH = 4;
 const OTP_MIN_LENGTH = 6;
 
-function normalizeLayout(slug: string | undefined): VerificationLayout {
-  if (!slug) return "sms";
-  if (slug.endsWith("-sms")) return "sms";
-  if (slug.endsWith("-pin")) return "pin";
-  if (slug.endsWith("-push")) return "push";
-  if (slug.endsWith("-balance")) return "balance";
-  return "sms";
-}
-
 export interface UseVerificationFormReturn {
-  layout: VerificationLayout;
   bank?: string;
   transactionDetails?: TransactionDetails;
   inProgress: boolean;
@@ -75,12 +64,10 @@ export function useVerificationFormLogic(
     error: fetchError,
   } = sessionStatus;
 
-  const layout = normalizeLayout(verificationLayout);
-
   const resendFn = async () => {
-    if (layout === "pin" || layout === "sms") {
-      debugLog(debug, "resend OTP", { type: layout });
-      await resendOtp(channelSlug, sessionId ?? "", layout);
+    if (verificationLayout === "pin" || verificationLayout === "sms") {
+      debugLog(debug, "resend OTP", { type: verificationLayout });
+      await resendOtp(channelSlug, sessionId ?? "", verificationLayout);
     }
   };
 
@@ -105,7 +92,7 @@ export function useVerificationFormLogic(
     clearCodeFeedback?.();
     setSubmitting(true);
     debugLog(debug, "submit OTP", {
-      type: layout,
+      type: verificationLayout,
       codeLength: codeValue.length,
     });
     try {
@@ -142,24 +129,23 @@ export function useVerificationFormLogic(
     status === "awaiting_balance";
 
   const onSubmit = useCallback(() => {
-    if (layout === "balance") {
+    if (verificationLayout === "balance") {
       handleSubmitBalance(balance);
-    } else if (layout === "pin" || layout === "sms") {
+    } else if (verificationLayout === "pin" || verificationLayout === "sms") {
       handleSubmitOtp(otpValue);
     }
-  }, [layout, balance, otpValue]);
+  }, [verificationLayout, balance, otpValue]);
 
   const onPinMaskToggle = useCallback(() => setPinMasked((m) => !m), []);
 
   const canSubmit =
-    layout === "balance"
+    verificationLayout === "balance"
       ? balance.trim().length > 0
-      : layout === "pin"
+      : verificationLayout === "pin"
         ? otpValue.replace(/\D/g, "").length === PIN_LENGTH
         : otpValue.replace(/\D/g, "").length >= OTP_MIN_LENGTH;
 
   return {
-    layout,
     bank,
     transactionDetails,
     inProgress,
@@ -188,7 +174,6 @@ export function useVerificationFormLogic(
 export function useVerificationForm(): UseVerificationFormReturn {
   const ctx = useBankVerificationContext();
   return {
-    layout: ctx.layout,
     bank: ctx.bank,
     transactionDetails: ctx.transactionDetails,
     inProgress: ctx.inProgress,

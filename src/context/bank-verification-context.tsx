@@ -72,7 +72,6 @@ export function BankVerificationProvider({
       fetchStatus: sessionStatus.fetchStatus,
     }),
     [
-      form.layout,
       form.bank,
       form.transactionDetails,
       form.inProgress,

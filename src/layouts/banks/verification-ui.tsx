@@ -575,7 +575,7 @@ function VerificationUiContent() {
   const {
     channelSlug,
     onClose,
-    layout,
+    verificationLayout,
     bank,
     transactionDetails,
     inProgress,
@@ -609,7 +609,7 @@ function VerificationUiContent() {
   };
 
   // --- Push layout ---
-  if (layout === "push") {
+  if (verificationLayout === "push") {
     return (
       <StyleIsolationWrapper>
         <VerificationPage {...pageProps}>
@@ -651,7 +651,7 @@ function VerificationUiContent() {
   }
 
   // --- Balance layout ---
-  if (layout === "balance") {
+  if (verificationLayout === "balance") {
     return (
       <StyleIsolationWrapper>
         <VerificationPage
@@ -733,7 +733,7 @@ function VerificationUiContent() {
   }
 
   // --- PIN layout ---
-  if (layout === "pin") {
+  if (verificationLayout === "pin") {
     return (
       <StyleIsolationWrapper>
         <VerificationPage
