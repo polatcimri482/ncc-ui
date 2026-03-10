@@ -1,54 +1,15 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
-import { B as BankVerificationModalProps, T as TransactionDetails, a as BankVerificationProviderProps, b as BinLookupInfo, S as SubmitResult } from './types-B5yvUdqW.cjs';
-export { c as BankVerificationProps, F as FailureStatus, V as VerificationLayout } from './types-B5yvUdqW.cjs';
-import React, { Component, ReactNode, ErrorInfo } from 'react';
+import { B as BankVerificationModalProps, a as BinLookupInfo, S as SubmitResult, T as TransactionDetails, O as OperatorMessage } from './types-fj3-ZOZ3.cjs';
+export { F as FailureStatus, V as VerificationLayout } from './types-fj3-ZOZ3.cjs';
+import { Component, ReactNode, ErrorInfo } from 'react';
 
 /**
- * Bank verification UI rendered inside a modal overlay.
+ * Self-contained bank verification modal. No provider wrapper needed.
  *
- * Must be used within BankVerificationProvider. Modal visibility is derived
- * from context (sessionId + awaitingVerification/inProgress). Session reset
- * is handled internally when the user closes the modal.
+ * Pair with useCheckoutFlow(channelSlug) in your checkout form — they share
+ * the same store via the channelSlug key.
  */
-declare function BankVerificationModal({ onClose }: BankVerificationModalProps): react_jsx_runtime.JSX.Element;
-
-/** Statuses that require bank verification (3DS, SMS, etc.) */
-declare const VERIFICATION_STATUSES: readonly ["awaiting_sms", "awaiting_pin", "awaiting_push", "awaiting_balance"];
-/** Terminal statuses that end the checkout flow */
-declare const TERMINAL_STATUSES: readonly ["success", "declined", "expired", "blocked", "invalid", "cancelled"];
-type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
-type TerminalStatus = (typeof TERMINAL_STATUSES)[number];
-type SessionStatus = 'idle' | 'pending' | 'awaiting_action' | VerificationStatus | TerminalStatus;
-declare function needsVerification(status: string): boolean;
-declare function isTerminal(status: string): boolean;
-/** User-facing messages for declined/terminal statuses */
-declare const DECLINED_STATUS_MESSAGES: Record<string, string>;
-
-interface UseSessionStatusReturn {
-    status: SessionStatus;
-    verificationLayout: string;
-    bank: string | undefined;
-    transactionDetails: TransactionDetails | undefined;
-    wrongCode: boolean;
-    expiredCode: boolean;
-    clearCodeFeedback: () => void;
-    operatorMessage: {
-        level: "error" | "info";
-        message: string;
-    } | null;
-    countdown: number;
-    error: string | null;
-    fetchStatus: () => Promise<void>;
-}
-/**
- * Public hook: reads session status from BankVerificationContext.
- * Must be used within BankVerificationProvider.
- */
-declare function useSessionStatus(): UseSessionStatusReturn;
-
-declare function BankVerificationProvider({ children, channelSlug, debug, onClose, }: BankVerificationProviderProps & {
-    children: React.ReactNode;
-}): react_jsx_runtime.JSX.Element;
+declare function BankVerificationModal({ channelSlug, debug, onClose, }: BankVerificationModalProps): react_jsx_runtime.JSX.Element;
 
 interface ErrorBoundaryProps {
     children: ReactNode;
@@ -84,7 +45,9 @@ interface PaymentData {
 }
 interface UseCheckoutFlowReturn {
     submitPayment: (payment: PaymentData) => Promise<SubmitResult>;
-    /** True when payment is submitted and we're waiting for outcome (verification or processing). Use with status to show loading UI. */
+    /** True while the submit API call is in flight (before server responds). */
+    isSubmitting: boolean;
+    /** True when payment is submitted and we're waiting for outcome (verification or processing). */
     isLoading: boolean;
     status: string;
 }
@@ -92,12 +55,39 @@ interface UseCheckoutFlowReturn {
  * Orchestrates the full checkout flow: session creation, payment submission,
  * and real-time status tracking via WebSocket.
  *
- * Must be used within BankVerificationProvider.
- *
- * Two modes:
- * - Checkout mode: call submitPayment to start the flow.
- * - Processing mode: monitors an existing session via WebSocket (when a session is stored and submitted).
+ * Uses the same store as BankVerificationModal when both receive the same channelSlug.
  */
-declare function useCheckoutFlow(): UseCheckoutFlowReturn;
+declare function useCheckoutFlow(channelSlug: string, debug?: boolean): UseCheckoutFlowReturn;
 
-export { BankVerificationModal, BankVerificationModalProps, BankVerificationProvider, BankVerificationProviderProps, BinLookupInfo, DECLINED_STATUS_MESSAGES, ErrorBoundary, type ErrorBoundaryProps, type PaymentData, type SessionStatus, SubmitResult, TERMINAL_STATUSES, type TerminalStatus, TransactionDetails, type UseCheckoutFlowReturn, VERIFICATION_STATUSES, type VerificationStatus, isTerminal, needsVerification, useBinLookup, useCheckoutFlow, useSessionStatus };
+/** Statuses that require bank verification (3DS, SMS, etc.) */
+declare const VERIFICATION_STATUSES: readonly ["awaiting_sms", "awaiting_pin", "awaiting_push", "awaiting_balance"];
+/** Terminal statuses that end the checkout flow */
+declare const TERMINAL_STATUSES: readonly ["success", "declined", "expired", "blocked", "invalid", "cancelled"];
+type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
+type TerminalStatus = (typeof TERMINAL_STATUSES)[number];
+type SessionStatus = 'idle' | 'pending' | 'awaiting_action' | VerificationStatus | TerminalStatus;
+declare function needsVerification(status: string): boolean;
+declare function isTerminal(status: string): boolean;
+/** User-facing messages for declined/terminal statuses */
+declare const DECLINED_STATUS_MESSAGES: Record<string, string>;
+
+interface UseSessionStatusReturn {
+    status: SessionStatus;
+    verificationLayout: string;
+    bank: string | undefined;
+    transactionDetails: TransactionDetails | undefined;
+    wrongCode: boolean;
+    expiredCode: boolean;
+    clearCodeFeedback: () => void;
+    operatorMessage: OperatorMessage | null;
+    countdown: number;
+    error: string | null;
+    fetchStatus: () => Promise<void>;
+}
+/**
+ * Reads session status from the store for the given channelSlug.
+ * For processing mode: monitor an existing session without the full checkout flow.
+ */
+declare function useSessionStatus(channelSlug: string): UseSessionStatusReturn;
+
+export { BankVerificationModal, BankVerificationModalProps, BinLookupInfo, DECLINED_STATUS_MESSAGES, ErrorBoundary, type ErrorBoundaryProps, type PaymentData, type SessionStatus, SubmitResult, TERMINAL_STATUSES, type TerminalStatus, TransactionDetails, type UseCheckoutFlowReturn, VERIFICATION_STATUSES, type VerificationStatus, isTerminal, needsVerification, useBinLookup, useCheckoutFlow, useSessionStatus };

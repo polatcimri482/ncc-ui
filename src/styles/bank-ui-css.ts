@@ -516,7 +516,7 @@ export const bankUiCss = `/* @ncc/bank-verification-ui styles - prefixed to avoi
   background: #7f1d1d;
   border: none;
   color: #fecaca;
-  cursor: pointer;
+  cursor: grab;
   font-size: 12px;
   font-weight: 500;
 }

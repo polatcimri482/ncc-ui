@@ -1,6 +1,6 @@
 import { Request, Router } from 'express';
 import { WebSocket } from 'ws';
-import { T as TransactionDetails } from './types-B5yvUdqW.js';
+import { T as TransactionDetails } from './types-fj3-ZOZ3.js';
 
 /**
  * Express router for bank verification API.
@@ -54,6 +54,7 @@ interface BankVerificationRouterHandlers {
     submitOtp: (channelSlug: string, sessionId: string, code: string) => Promise<void>;
     resendOtp: (channelSlug: string, sessionId: string, type: "sms" | "pin") => Promise<void>;
     submitBalance: (channelSlug: string, sessionId: string, balance: string) => Promise<void>;
+    cancelSession: (channelSlug: string, sessionId: string) => Promise<void>;
     lookupBin: (bin: string) => Promise<BinLookupResult>;
     handleWebSocket: (ws: WebSocket, req: Request, channelSlug: string, sessionId: string) => void;
 }

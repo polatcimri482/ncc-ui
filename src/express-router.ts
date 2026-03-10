@@ -7,7 +7,7 @@
  */
 
 import express, { type Request, type Response, type Router } from "express";
-import type { WebSocket } from "ws";
+import WsClient, { type WebSocket } from "ws";
 import type { TransactionDetails } from "./types";
 
 /** App with express-ws .ws() method. Call expressWs(app) before registerWebSocket. */
@@ -465,9 +465,7 @@ export function createProxyHandlers(
 
       let upstream: WebSocket | null = null;
       try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const Ws = require("ws") as { new (url: string): WebSocket };
-        upstream = new Ws(upstreamWsUrl);
+        upstream = new WsClient(upstreamWsUrl);
 
         upstream.on("open", () => {
           if (debug) {
