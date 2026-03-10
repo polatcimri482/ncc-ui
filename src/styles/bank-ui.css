@@ -554,29 +554,6 @@
   overflow-y: auto;
 }
 
-.bank-ui-debug-panel-ws-list {
-  margin-top: 6px;
-  max-height: 280px;
-  overflow-y: auto;
-}
-
-.bank-ui-debug-panel-ws-item {
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(153, 27, 27, 0.5);
-}
-
-.bank-ui-debug-panel-ws-item:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-  padding-bottom: 0;
-}
-
-.bank-ui-debug-panel-ws-item .bank-ui-debug-panel-json {
-  margin-top: 4px;
-  max-height: 120px;
-}
-
 .bank-ui-debug-panel-events-toggle {
   display: flex;
   align-items: center;

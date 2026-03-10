@@ -220,8 +220,14 @@ export function createBankVerificationStore(
 
       if (update.status !== undefined) {
         patch.status = update.status as SessionStatus;
-        // Reset submitting state whenever server acknowledges a new status
-        patch.submitting = false;
+        // Reset submitting only when the status actually changes — this keeps the
+        // UI in a waiting/loading state after OTP submission until the server
+        // responds with a meaningful status transition (e.g. authorized, declined,
+        // wrongCode, expiredCode). Same-status echoes from polling or WS heartbeats
+        // must not clear the submitting state prematurely.
+        if (update.status !== current.status) {
+          patch.submitting = false;
+        }
       }
 
       if (update.verificationLayout !== undefined &&

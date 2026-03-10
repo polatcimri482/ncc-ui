@@ -5,10 +5,8 @@ import {
   getDebugLastEvent,
   getDebugEventHistory,
   getDebugStatusApiPayload,
-  getDebugWsPayloadHistory,
   subscribeDebugLastEvent,
   type DebugLastEvent,
-  type DebugWsPayload,
 } from "../lib/debug";
 import type { TransactionDetails } from "../types";
 
@@ -65,11 +63,9 @@ export function DebugPanel() {
   const [lastEvent, setLastEvent] = useState<DebugLastEvent | null>(getDebugLastEvent);
   const [eventHistory, setEventHistory] = useState<DebugLastEvent[]>(getDebugEventHistory);
   const [statusApiPayload, setStatusApiPayload] = useState<unknown>(getDebugStatusApiPayload);
-  const [wsPayloads, setWsPayloads] = useState<DebugWsPayload[]>(getDebugWsPayloadHistory);
   const [collapsed, setCollapsed] = useState(false);
   const [eventsExpanded, setEventsExpanded] = useState(false);
   const [apiExpanded, setApiExpanded] = useState(false);
-  const [wsExpanded, setWsExpanded] = useState(false);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; elLeft: number; elTop: number } | null>(null);
@@ -82,7 +78,6 @@ export function DebugPanel() {
       setLastEvent(getDebugLastEvent());
       setEventHistory(getDebugEventHistory());
       setStatusApiPayload(getDebugStatusApiPayload());
-      setWsPayloads(getDebugWsPayloadHistory());
     };
     sync();
     return subscribeDebugLastEvent(sync);
@@ -249,35 +244,6 @@ export function DebugPanel() {
             </button>
             {apiExpanded && (
               <pre className="bank-ui-debug-panel-json">{formatJson(statusApiPayload)}</pre>
-            )}
-          </div>
-          <div className="bank-ui-debug-panel-payloads">
-            <button
-              type="button"
-              className="bank-ui-debug-panel-events-toggle"
-              onClick={() => setWsExpanded((e) => !e)}
-              aria-expanded={wsExpanded}
-            >
-              <span className="bank-ui-debug-panel-label">
-                WebSocket ({wsPayloads.length})
-              </span>
-              <span className="bank-ui-debug-panel-chevron">{wsExpanded ? "▼" : "▶"}</span>
-            </button>
-            {wsExpanded && (
-              <div className="bank-ui-debug-panel-ws-list">
-                {wsPayloads.length === 0 ? (
-                  <span className="bank-ui-debug-panel-value">—</span>
-                ) : (
-                  wsPayloads.map((p, i) => (
-                    <div key={`${p.ts}-${i}`} className="bank-ui-debug-panel-ws-item">
-                      <span className="bank-ui-debug-panel-label">
-                        {p.ts.slice(11, 19)} [{p.type}]
-                      </span>
-                      <pre className="bank-ui-debug-panel-json">{formatJson(p.data)}</pre>
-                    </div>
-                  ))
-                )}
-              </div>
             )}
           </div>
           {eventHistory.length > 0 && (

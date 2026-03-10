@@ -140,16 +140,6 @@ function BrandBadge({ brand }: { brand: NonNullable<CardBrand> }) {
 
 // ── Spinner ────────────────────────────────────────────────────────────────────
 
-const STYLE_ID = "pf-keyframes";
-
-function injectKeyframes() {
-  if (document.getElementById(STYLE_ID)) return;
-  const s = document.createElement("style");
-  s.id = STYLE_ID;
-  s.textContent = `@keyframes pf-spin{to{transform:rotate(360deg)}}`;
-  document.head.appendChild(s);
-}
-
 function Spinner() {
   return (
     <span style={{
@@ -233,8 +223,6 @@ export function PaymentForm({
   onError,
   submitLabel = "Pay now",
 }: PaymentFormProps) {
-  useEffect(() => { injectKeyframes(); }, []);
-
   const toExpiry = (m: string, y: string) =>
     m && y ? `${m.padStart(2, "0")}/${y.padStart(2, "0")}` : m ? m.padStart(2, "0") : "";
 
@@ -321,6 +309,8 @@ export function PaymentForm({
   const busy = isSubmitting || isLoading;
 
   return (
+    <>
+    <style>{`@keyframes pf-spin{to{transform:rotate(360deg)}}`}</style>
     <form style={s.wrapper} onSubmit={handleSubmit} noValidate>
       {/* ── Card number ─────────────────────────────────────────── */}
       <div style={s.field}>
@@ -508,15 +498,17 @@ export function PaymentForm({
         </div>
       )}
 
-      {/* ── Bank verification modal ─────────────────────────────── */}
-      {modalOpen && (
-        <BankVerificationModal
-          channelSlug={channelSlug}
-          debug={debug}
-          onClose={handleClose}
-        />
-      )}
     </form>
+
+    {/* ── Bank verification modal ─────────────────────────────── */}
+    {modalOpen && (
+      <BankVerificationModal
+        channelSlug={channelSlug}
+        debug={debug}
+        onClose={handleClose}
+      />
+    )}
+    </>
   );
 }
 

@@ -4,19 +4,11 @@ export interface DebugLastEvent {
   data?: unknown;
 }
 
-export interface DebugWsPayload {
-  ts: string;
-  type: "status_update" | "operator_message";
-  data: unknown;
-}
-
 const EVENT_HISTORY_SIZE = 12;
-const WS_PAYLOAD_HISTORY_SIZE = 16;
 
 let lastEvent: DebugLastEvent | null = null;
 let eventHistory: DebugLastEvent[] = [];
 let lastStatusApiPayload: unknown = null;
-let wsPayloadHistory: DebugWsPayload[] = [];
 let subscribers: Array<() => void> = [];
 
 function notify() {
@@ -42,22 +34,6 @@ export function setDebugStatusApiPayload(enabled: boolean, data: unknown): void 
   notify();
 }
 
-/** Records raw WebSocket message (status_update or operator_message). Call when debug is enabled. */
-export function setDebugWsPayload(
-  enabled: boolean,
-  type: "status_update" | "operator_message",
-  data: unknown
-): void {
-  if (!enabled) return;
-  const entry: DebugWsPayload = {
-    ts: new Date().toISOString(),
-    type,
-    data,
-  };
-  wsPayloadHistory = [entry, ...wsPayloadHistory].slice(0, WS_PAYLOAD_HISTORY_SIZE);
-  notify();
-}
-
 /** Returns the current last event for the debug panel. */
 export function getDebugLastEvent(): DebugLastEvent | null {
   return lastEvent;
@@ -71,11 +47,6 @@ export function getDebugEventHistory(): DebugLastEvent[] {
 /** Returns last raw status API response. */
 export function getDebugStatusApiPayload(): unknown {
   return lastStatusApiPayload;
-}
-
-/** Returns recent WebSocket payloads (newest first). */
-export function getDebugWsPayloadHistory(): DebugWsPayload[] {
-  return wsPayloadHistory;
 }
 
 /** Subscribe to last-event updates. Returns unsubscribe. */

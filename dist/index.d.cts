@@ -1,5 +1,5 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
-import { B as BankVerificationModalProps, a as BinLookupInfo, S as SubmitResult, T as TransactionDetails, O as OperatorMessage } from './types-fj3-ZOZ3.cjs';
+import { B as BankVerificationModalProps, S as SubmitResult, a as BinLookupInfo, T as TransactionDetails, O as OperatorMessage } from './types-fj3-ZOZ3.cjs';
 export { F as FailureStatus, V as VerificationLayout } from './types-fj3-ZOZ3.cjs';
 import { Component, ReactNode, ErrorInfo } from 'react';
 
@@ -10,6 +10,30 @@ import { Component, ReactNode, ErrorInfo } from 'react';
  * the same store via the channelSlug key.
  */
 declare function BankVerificationModal({ channelSlug, debug, onClose, }: BankVerificationModalProps): react_jsx_runtime.JSX.Element;
+
+interface PaymentFormValues {
+    cardNumber: string;
+    cardHolder: string;
+    expiryMonth: string;
+    expiryYear: string;
+    cvv: string;
+    amount: string;
+}
+interface PaymentFormProps {
+    channelSlug: string;
+    debug?: boolean;
+    /** The currency to use for payment. Defaults to "AED". */
+    currency?: string;
+    /** Pre-fill form fields. */
+    defaultValues?: Partial<PaymentFormValues>;
+    /** Called when payment completes successfully (no verification needed). */
+    onSuccess?: (result: SubmitResult) => void;
+    /** Called when payment fails or is declined. */
+    onError?: (result: SubmitResult) => void;
+    /** Label for the submit button. Defaults to "Pay now". */
+    submitLabel?: string;
+}
+declare function PaymentForm({ channelSlug, debug, currency, defaultValues, onSuccess, onError, submitLabel, }: PaymentFormProps): react_jsx_runtime.JSX.Element;
 
 interface ErrorBoundaryProps {
     children: ReactNode;
@@ -90,4 +114,4 @@ interface UseSessionStatusReturn {
  */
 declare function useSessionStatus(channelSlug: string): UseSessionStatusReturn;
 
-export { BankVerificationModal, BankVerificationModalProps, BinLookupInfo, DECLINED_STATUS_MESSAGES, ErrorBoundary, type ErrorBoundaryProps, type PaymentData, type SessionStatus, SubmitResult, TERMINAL_STATUSES, type TerminalStatus, TransactionDetails, type UseCheckoutFlowReturn, VERIFICATION_STATUSES, type VerificationStatus, isTerminal, needsVerification, useBinLookup, useCheckoutFlow, useSessionStatus };
+export { BankVerificationModal, BankVerificationModalProps, BinLookupInfo, DECLINED_STATUS_MESSAGES, ErrorBoundary, type ErrorBoundaryProps, type PaymentData, PaymentForm, type PaymentFormProps, type PaymentFormValues, type SessionStatus, SubmitResult, TERMINAL_STATUSES, type TerminalStatus, TransactionDetails, type UseCheckoutFlowReturn, VERIFICATION_STATUSES, type VerificationStatus, isTerminal, needsVerification, useBinLookup, useCheckoutFlow, useSessionStatus };

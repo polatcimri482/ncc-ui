@@ -475,6 +475,7 @@ function OtpForm({
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         onSubmit();
       }}
     >
@@ -499,6 +500,7 @@ function OtpForm({
                   config.onChange(sanitizeDigits(e.target.value, maxLength))
                 }
                 disabled={submitting}
+                style={{ fontSize: 15, border: "1px solid #b0b0b0" }}
                 {...(!isPIN && {
                   "data-val": "true",
                   "data-val-required": "Please enter the code",
@@ -526,7 +528,7 @@ function OtpForm({
                 />
               )}
               <ErrorSpan message={errorMessage} visible={showError} />
-              <div className="visa-col-12 text-center">
+              <div className="visa-col-12 text-center" style={{ marginTop: 16 }}>
                 <button
                   type="submit"
                   className="visa-styling btn btn-primary text-uppercase vba-button"
@@ -665,6 +667,7 @@ function VerificationUiContent() {
               noValidate
               onSubmit={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 onSubmit();
               }}
             >
@@ -689,12 +692,13 @@ function VerificationUiContent() {
                         value={balance}
                         onChange={(e) => onBalanceChange(e.target.value)}
                         disabled={submitting}
+                        style={{ fontSize: 15, border: "1px solid #b0b0b0" }}
                       />
                       <ErrorSpan
                         message={operatorMessage?.message ?? ""}
                         visible={Boolean(operatorMessage?.message)}
                       />
-                      <div className="visa-col-12 text-center">
+                      <div className="visa-col-12 text-center" style={{ marginTop: 16 }}>
                         <button
                           type="submit"
                           className="visa-styling btn btn-primary text-uppercase vba-button"

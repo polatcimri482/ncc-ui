@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useStore } from "zustand";
 import { getOrCreateStore } from "../store/bank-verification-store";
 import type { BankVerificationStoreApi } from "../store/bank-verification-store";
-import { debugLog, setDebugWsPayload } from "../lib/debug";
+import { debugLog } from "../lib/debug";
 import { getWebSocketUrl } from "../lib/verification-api";
 import { createSessionWebSocket } from "../lib/ws";
 
@@ -61,7 +61,6 @@ export function useStoreSetup(
         debugLog(store.getState().debug, "WebSocket connected", { url, channelSlug, sessionId }),
       onMessage: (msg) => {
         const { debug } = store.getState();
-        setDebugWsPayload(debug, "status_update", msg);
         debugLog(debug, "WebSocket status_update", msg);
         if (msg.wrongCode) debugLog(debug, "wrongCode received", msg);
         if (msg.expiredCode) debugLog(debug, "expiredCode received", msg);
@@ -79,7 +78,6 @@ export function useStoreSetup(
       },
       onOperatorMessage: (msg) => {
         const { debug } = store.getState();
-        setDebugWsPayload(debug, "operator_message", msg);
         debugLog(debug, "WebSocket operator_message", msg);
         store.getState().applyOperatorMessage(msg);
       },
