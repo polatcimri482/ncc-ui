@@ -42,7 +42,10 @@ export function useStoreSetup(
 
   // WebSocket connection + polling fallback — requires cleanup so stays as an effect
   useEffect(() => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      store.setState({ wsConnectionStatus: "idle" });
+      return;
+    }
 
     let cancelled = false;
     let pollingInterval: ReturnType<typeof setInterval> | null = null;
@@ -55,11 +58,14 @@ export function useStoreSetup(
 
     const { channelSlug, fetchStatus } = store.getState();
     const url = getWebSocketUrl(channelSlug, sessionId);
+    store.setState({ wsConnectionStatus: "connecting" });
     debugLog(store.getState().debug, "WebSocket connecting", { url, channelSlug, sessionId });
 
     const ws = createSessionWebSocket(url, {
-      onOpen: () =>
-        debugLog(store.getState().debug, "WebSocket connected", { url, channelSlug, sessionId }),
+      onOpen: () => {
+        store.setState({ wsConnectionStatus: "connected" });
+        debugLog(store.getState().debug, "WebSocket connected", { url, channelSlug, sessionId });
+      },
       onMessage: (msg) => {
         const { debug } = store.getState();
         debugLog(debug, "WebSocket status_update", msg);
@@ -70,6 +76,7 @@ export function useStoreSetup(
       },
       onClose: () => {
         if (cancelled) return;
+        store.setState({ wsConnectionStatus: "polling" });
         const { debug } = store.getState();
         debugLog(debug, "WebSocket closed, falling back to polling every 3s", {
           channelSlug,
@@ -90,6 +97,7 @@ export function useStoreSetup(
       cancelled = true;
       clearPolling();
       ws.close();
+      store.setState({ wsConnectionStatus: "idle" });
     };
   }, [sessionId, store]);
 

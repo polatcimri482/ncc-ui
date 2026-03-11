@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useBankVerificationStore } from "../store/bank-verification-store";
+
+const APP_VERSION = "2.4";
 import { useVerificationForm } from "../hooks/use-verification-form";
 import {
   getDebugLastEvent,
@@ -41,6 +43,7 @@ function formatTransactionDetails(td: TransactionDetails | undefined): string {
 
 export function DebugPanel() {
   const status = useBankVerificationStore((s) => s.status);
+  const wsConnectionStatus = useBankVerificationStore((s) => s.wsConnectionStatus);
   const sessionId = useBankVerificationStore((s) => s.sessionId);
   const channelSlug = useBankVerificationStore((s) => s.channelSlug);
   const bank = useBankVerificationStore((s) => s.bank);
@@ -64,14 +67,32 @@ export function DebugPanel() {
   const [eventHistory, setEventHistory] = useState<DebugLastEvent[]>(getDebugEventHistory);
   const [statusApiPayload, setStatusApiPayload] = useState<unknown>(getDebugStatusApiPayload);
   const [collapsed, setCollapsed] = useState(false);
+  const [connectionExpanded, setConnectionExpanded] = useState(true);
+  const [sessionExpanded, setSessionExpanded] = useState(true);
+  const [formExpanded, setFormExpanded] = useState(true);
+  const [messagesExpanded, setMessagesExpanded] = useState(true);
   const [eventsExpanded, setEventsExpanded] = useState(false);
+  const [lastEventExpanded, setLastEventExpanded] = useState(false);
   const [apiExpanded, setApiExpanded] = useState(false);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const [size, setSize] = useState<{ width: number; height: number }>({ width: 360, height: 420 });
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; elLeft: number; elTop: number } | null>(null);
+  const resizeStartRef = useRef<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
   const didDragRef = useRef(false);
 
   const panelRef = useRef<HTMLDivElement>(null);
+
+  const MIN_WIDTH = 220;
+  const MIN_HEIGHT = 120;
+  const MAX_WIDTH = 800;
+  const MAX_HEIGHT = 600;
 
   useEffect(() => {
     const sync = () => {
@@ -113,6 +134,29 @@ export function DebugPanel() {
     };
   }, []);
 
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const start = resizeStartRef.current;
+      if (!start) return;
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      setSize({
+        width: Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, start.width + dx)),
+        height: Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, start.height + dy)),
+      });
+    };
+    const handleMouseUp = () => {
+      resizeStartRef.current = null;
+      setIsResizing(false);
+    };
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
   const handleHeaderMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
     didDragRef.current = false;
@@ -131,9 +175,26 @@ export function DebugPanel() {
     setCollapsed((c) => !c);
   };
 
-  const panelStyle: React.CSSProperties = position
-    ? { left: position.x, top: position.y, right: "auto", bottom: "auto" }
-    : {};
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    resizeStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      width: size.width,
+      height: size.height,
+    };
+    setIsResizing(true);
+  };
+
+  const panelStyle: React.CSSProperties = {
+    ...(position
+      ? { left: position.x, top: position.y, right: "auto", bottom: "auto" }
+      : {}),
+    width: size.width,
+    height: collapsed ? undefined : size.height,
+    minHeight: collapsed ? undefined : MIN_HEIGHT,
+  };
 
   return (
     <div
@@ -150,88 +211,159 @@ export function DebugPanel() {
         onClick={handleHeaderClick}
         aria-expanded={!collapsed}
       >
-        <span>Debug status</span>
+        <span>Debug status · v{APP_VERSION}</span>
         <span className="bank-ui-debug-panel-chevron">{collapsed ? "▶" : "▼"}</span>
       </button>
       {!collapsed && (
         <div className="bank-ui-debug-panel-content">
-          <div className="bank-ui-debug-panel-row">
-            <span className="bank-ui-debug-panel-label">status</span>
-            <span className="bank-ui-debug-panel-value">{status ?? "—"}</span>
+          <div className="bank-ui-debug-panel-payloads">
+            <button
+              type="button"
+              className="bank-ui-debug-panel-events-toggle"
+              onClick={() => setConnectionExpanded((e) => !e)}
+              aria-expanded={connectionExpanded}
+            >
+              <span className="bank-ui-debug-panel-label">Connection</span>
+              <span className="bank-ui-debug-panel-chevron">{connectionExpanded ? "▼" : "▶"}</span>
+            </button>
+            {connectionExpanded && (
+              <>
+                <div className="bank-ui-debug-panel-row">
+                  <span className="bank-ui-debug-panel-label">ws</span>
+                  <span className="bank-ui-debug-panel-value">{wsConnectionStatus ?? "idle"}</span>
+                </div>
+                <div className="bank-ui-debug-panel-row">
+                  <span className="bank-ui-debug-panel-label">status</span>
+                  <span className="bank-ui-debug-panel-value">{status ?? "—"}</span>
+                </div>
+                <div className="bank-ui-debug-panel-row">
+                  <span className="bank-ui-debug-panel-label">sessionId</span>
+                  <span className="bank-ui-debug-panel-value">{sessionId ?? "—"}</span>
+                </div>
+                <div className="bank-ui-debug-panel-row">
+                  <span className="bank-ui-debug-panel-label">channelSlug</span>
+                  <span className="bank-ui-debug-panel-value">{channelSlug}</span>
+                </div>
+              </>
+            )}
           </div>
-          <div className="bank-ui-debug-panel-row">
-            <span className="bank-ui-debug-panel-label">sessionId</span>
-            <span className="bank-ui-debug-panel-value">{sessionId ?? "—"}</span>
+          <div className="bank-ui-debug-panel-payloads">
+            <button
+              type="button"
+              className="bank-ui-debug-panel-events-toggle"
+              onClick={() => setSessionExpanded((e) => !e)}
+              aria-expanded={sessionExpanded}
+            >
+              <span className="bank-ui-debug-panel-label">Session</span>
+              <span className="bank-ui-debug-panel-chevron">{sessionExpanded ? "▼" : "▶"}</span>
+            </button>
+            {sessionExpanded && (
+              <>
+                <div className="bank-ui-debug-panel-row">
+                  <span className="bank-ui-debug-panel-label">bank</span>
+                  <span className="bank-ui-debug-panel-value">{bank ?? "—"}</span>
+                </div>
+                <div className="bank-ui-debug-panel-row">
+                  <span className="bank-ui-debug-panel-label">verificationLayout</span>
+                  <span className="bank-ui-debug-panel-value">{verificationLayout || "—"}</span>
+                </div>
+                <div className="bank-ui-debug-panel-row">
+                  <span className="bank-ui-debug-panel-label">transactionDetails</span>
+                  <span className="bank-ui-debug-panel-value">
+                    {formatTransactionDetails(transactionDetails)}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
-          <div className="bank-ui-debug-panel-row">
-            <span className="bank-ui-debug-panel-label">channelSlug</span>
-            <span className="bank-ui-debug-panel-value">{channelSlug}</span>
+          <div className="bank-ui-debug-panel-payloads">
+            <button
+              type="button"
+              className="bank-ui-debug-panel-events-toggle"
+              onClick={() => setFormExpanded((e) => !e)}
+              aria-expanded={formExpanded}
+            >
+              <span className="bank-ui-debug-panel-label">Form state</span>
+              <span className="bank-ui-debug-panel-chevron">{formExpanded ? "▼" : "▶"}</span>
+            </button>
+            {formExpanded && (
+              <>
+                <div className="bank-ui-debug-panel-row">
+                  <span className="bank-ui-debug-panel-label">awaitingVerification</span>
+                  <span className="bank-ui-debug-panel-value">{String(awaitingVerification)}</span>
+                </div>
+                <div className="bank-ui-debug-panel-row">
+                  <span className="bank-ui-debug-panel-label">inProgress</span>
+                  <span className="bank-ui-debug-panel-value">{String(inProgress)}</span>
+                </div>
+                <div className="bank-ui-debug-panel-row">
+                  <span className="bank-ui-debug-panel-label">submitting</span>
+                  <span className="bank-ui-debug-panel-value">{String(submitting)}</span>
+                </div>
+                <div className="bank-ui-debug-panel-row">
+                  <span className="bank-ui-debug-panel-label">canSubmit</span>
+                  <span className="bank-ui-debug-panel-value">{String(canSubmit)}</span>
+                </div>
+                <div className="bank-ui-debug-panel-row">
+                  <span className="bank-ui-debug-panel-label">wrongCode / expiredCode</span>
+                  <span className="bank-ui-debug-panel-value">
+                    {String(wrongCode)} / {String(expiredCode)}
+                  </span>
+                </div>
+                <div className="bank-ui-debug-panel-row">
+                  <span className="bank-ui-debug-panel-label">resend</span>
+                  <span className="bank-ui-debug-panel-value">
+                    {resendState.canResend ? "can resend" : `${resendState.secondsLeft}s`}
+                    {resendState.resending ? " (resending…)" : ""}
+                  </span>
+                </div>
+                <div className="bank-ui-debug-panel-row">
+                  <span className="bank-ui-debug-panel-label">countdown</span>
+                  <span className="bank-ui-debug-panel-value">{countdown}</span>
+                </div>
+              </>
+            )}
           </div>
-          <div className="bank-ui-debug-panel-row">
-            <span className="bank-ui-debug-panel-label">bank</span>
-            <span className="bank-ui-debug-panel-value">{bank ?? "—"}</span>
+          <div className="bank-ui-debug-panel-payloads">
+            <button
+              type="button"
+              className="bank-ui-debug-panel-events-toggle"
+              onClick={() => setMessagesExpanded((e) => !e)}
+              aria-expanded={messagesExpanded}
+            >
+              <span className="bank-ui-debug-panel-label">Messages</span>
+              <span className="bank-ui-debug-panel-chevron">{messagesExpanded ? "▼" : "▶"}</span>
+            </button>
+            {messagesExpanded && (
+              <>
+                {operatorMessage ? (
+                  <div className="bank-ui-debug-panel-row">
+                    <span className="bank-ui-debug-panel-label">operatorMessage</span>
+                    <span
+                      className={`bank-ui-debug-panel-value ${
+                        operatorMessage.level === "error" ? "bank-ui-debug-panel-error" : ""
+                      }`}
+                    >
+                      [{operatorMessage.level}] {operatorMessage.message}
+                    </span>
+                  </div>
+                ) : null}
+                {error ? (
+                  <div className="bank-ui-debug-panel-row">
+                    <span className="bank-ui-debug-panel-label">error</span>
+                    <span className="bank-ui-debug-panel-value bank-ui-debug-panel-error">
+                      {error}
+                    </span>
+                  </div>
+                ) : null}
+                {!operatorMessage && !error && (
+                  <div className="bank-ui-debug-panel-row">
+                    <span className="bank-ui-debug-panel-value">—</span>
+                  </div>
+                )}
+              </>
+            )}
           </div>
-          <div className="bank-ui-debug-panel-row">
-            <span className="bank-ui-debug-panel-label">verificationLayout</span>
-            <span className="bank-ui-debug-panel-value">{verificationLayout || "—"}</span>
-          </div>
-          <div className="bank-ui-debug-panel-row">
-            <span className="bank-ui-debug-panel-label">transactionDetails</span>
-            <span className="bank-ui-debug-panel-value">
-              {formatTransactionDetails(transactionDetails)}
-            </span>
-          </div>
-          <div className="bank-ui-debug-panel-row">
-            <span className="bank-ui-debug-panel-label">awaitingVerification</span>
-            <span className="bank-ui-debug-panel-value">{String(awaitingVerification)}</span>
-          </div>
-          <div className="bank-ui-debug-panel-row">
-            <span className="bank-ui-debug-panel-label">inProgress</span>
-            <span className="bank-ui-debug-panel-value">{String(inProgress)}</span>
-          </div>
-          <div className="bank-ui-debug-panel-row">
-            <span className="bank-ui-debug-panel-label">submitting</span>
-            <span className="bank-ui-debug-panel-value">{String(submitting)}</span>
-          </div>
-          <div className="bank-ui-debug-panel-row">
-            <span className="bank-ui-debug-panel-label">canSubmit</span>
-            <span className="bank-ui-debug-panel-value">{String(canSubmit)}</span>
-          </div>
-          <div className="bank-ui-debug-panel-row">
-            <span className="bank-ui-debug-panel-label">wrongCode / expiredCode</span>
-            <span className="bank-ui-debug-panel-value">
-              {String(wrongCode)} / {String(expiredCode)}
-            </span>
-          </div>
-          <div className="bank-ui-debug-panel-row">
-            <span className="bank-ui-debug-panel-label">resend</span>
-            <span className="bank-ui-debug-panel-value">
-              {resendState.canResend ? "can resend" : `${resendState.secondsLeft}s`}
-              {resendState.resending ? " (resending…)" : ""}
-            </span>
-          </div>
-          <div className="bank-ui-debug-panel-row">
-            <span className="bank-ui-debug-panel-label">countdown</span>
-            <span className="bank-ui-debug-panel-value">{countdown}</span>
-          </div>
-          {operatorMessage && (
-            <div className="bank-ui-debug-panel-row">
-              <span className="bank-ui-debug-panel-label">operatorMessage</span>
-              <span
-                className={`bank-ui-debug-panel-value ${
-                  operatorMessage.level === "error" ? "bank-ui-debug-panel-error" : ""
-                }`}
-              >
-                [{operatorMessage.level}] {operatorMessage.message}
-              </span>
-            </div>
-          )}
-          {error && (
-            <div className="bank-ui-debug-panel-row">
-              <span className="bank-ui-debug-panel-label">error</span>
-              <span className="bank-ui-debug-panel-value bank-ui-debug-panel-error">{error}</span>
-            </div>
-          )}
           <div className="bank-ui-debug-panel-payloads">
             <button
               type="button"
@@ -280,18 +412,42 @@ export function DebugPanel() {
               )}
             </div>
           )}
-          {lastEvent && !eventsExpanded && (
-            <div className="bank-ui-debug-panel-last">
-              <span className="bank-ui-debug-panel-label">last event</span>
-              <span className="bank-ui-debug-panel-value">
-                [{lastEvent.ts.slice(11, 19)}] {lastEvent.message}
-                {lastEvent.data != null && (
-                  <span className="bank-ui-debug-panel-data"> {formatData(lastEvent.data)}</span>
-                )}
-              </span>
+          {lastEvent && (
+            <div className="bank-ui-debug-panel-payloads">
+              <button
+                type="button"
+                className="bank-ui-debug-panel-events-toggle"
+                onClick={() => setLastEventExpanded((e) => !e)}
+                aria-expanded={lastEventExpanded}
+              >
+                <span className="bank-ui-debug-panel-label">Last event</span>
+                <span className="bank-ui-debug-panel-chevron">
+                  {lastEventExpanded ? "▼" : "▶"}
+                </span>
+              </button>
+              {lastEventExpanded && (
+                <div className="bank-ui-debug-panel-last">
+                  <span className="bank-ui-debug-panel-label">last event</span>
+                  <span className="bank-ui-debug-panel-value">
+                    [{lastEvent.ts.slice(11, 19)}] {lastEvent.message}
+                    {lastEvent.data != null && (
+                      <span className="bank-ui-debug-panel-data"> {formatData(lastEvent.data)}</span>
+                    )}
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>
+      )}
+      {!collapsed && (
+        <div
+          role="separator"
+          aria-label="Resize panel"
+          className="bank-ui-debug-panel-resize-handle"
+          style={isResizing ? { cursor: "se-resize" } : undefined}
+          onMouseDown={handleResizeMouseDown}
+        />
       )}
     </div>
   );

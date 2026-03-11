@@ -32,6 +32,9 @@ export interface BankVerificationState {
   // Session
   sessionId: string | null;
 
+  /** WebSocket connection state: idle | connecting | connected | polling */
+  wsConnectionStatus: "idle" | "connecting" | "connected" | "polling";
+
   // Status (from WebSocket / polling)
   status: SessionStatus;
   verificationLayout: string;
@@ -147,6 +150,9 @@ export function createBankVerificationStore(
 
     // Session
     sessionId,
+
+    // WebSocket
+    wsConnectionStatus: "idle" as const,
 
     // Status
     status: "idle",

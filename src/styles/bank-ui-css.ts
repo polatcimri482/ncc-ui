@@ -508,7 +508,7 @@ export const bankUiCss = `/* @ncc/bank-verification-ui styles - prefixed to avoi
   bottom: 16px;
   right: 16px;
   z-index: 2147483647;
-  max-width: 360px;
+  min-width: 220px;
   background: #450a0a;
   color: #fecaca;
   font-family: ui-monospace, monospace;
@@ -517,9 +517,39 @@ export const bankUiCss = `/* @ncc/bank-verification-ui styles - prefixed to avoi
   box-shadow: 0 4px 12px rgba(127, 29, 29, 0.5);
   border: 1px solid #991b1b;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.bank-ui-debug-panel-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: se-resize;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    transparent 50%,
+    rgba(153, 27, 27, 0.6) 50%,
+    rgba(153, 27, 27, 0.6) 100%
+  );
+  border-radius: 0 0 8px 0;
+}
+
+.bank-ui-debug-panel-resize-handle:hover {
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    transparent 50%,
+    rgba(185, 28, 28, 0.9) 50%,
+    rgba(185, 28, 28, 0.9) 100%
+  );
 }
 
 .bank-ui-debug-panel-header {
+  flex-shrink: 0;
   width: 100%;
   display: flex;
   align-items: center;
@@ -544,7 +574,8 @@ export const bankUiCss = `/* @ncc/bank-verification-ui styles - prefixed to avoi
 
 .bank-ui-debug-panel-content {
   padding: 12px;
-  max-height: 420px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
