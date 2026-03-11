@@ -44,6 +44,7 @@ export function useStoreSetup(
   useEffect(() => {
     if (!sessionId) return;
 
+    let cancelled = false;
     let pollingInterval: ReturnType<typeof setInterval> | null = null;
     const clearPolling = () => {
       if (pollingInterval) {
@@ -68,12 +69,14 @@ export function useStoreSetup(
         store.getState().applyStatusUpdate(msg);
       },
       onClose: () => {
+        if (cancelled) return;
         const { debug } = store.getState();
         debugLog(debug, "WebSocket closed, falling back to polling every 3s", {
           channelSlug,
           sessionId,
         });
         clearPolling();
+        fetchStatus();
         pollingInterval = setInterval(fetchStatus, 3000);
       },
       onOperatorMessage: (msg) => {
@@ -84,6 +87,7 @@ export function useStoreSetup(
     });
 
     return () => {
+      cancelled = true;
       clearPolling();
       ws.close();
     };

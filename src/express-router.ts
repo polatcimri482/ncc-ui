@@ -476,25 +476,37 @@ export function createProxyHandlers(
           if (debug) {
             console.log("[BankVerificationRouter] WebSocket message (upstream -> client):", data.toString());
           }
-          ws.send(data);
+          if (ws.readyState !== 1) return;
+          try {
+            ws.send(data);
+          } catch {
+            /* connection closed */
+          }
         });
         ws.on("message", (data) => {
           if (debug) {
             console.log("[BankVerificationRouter] WebSocket message (client -> upstream):", data.toString());
           }
-          upstream?.send(data as Parameters<WebSocket["send"]>[0]);
+          if (upstream?.readyState !== 1) return;
+          try {
+            upstream.send(data as Parameters<WebSocket["send"]>[0]);
+          } catch {
+            /* connection closed */
+          }
         });
-        upstream.on("close", () => {
+        const toReasonStr = (r: string | Buffer | undefined): string =>
+          typeof r === "string" ? r : Buffer.isBuffer(r) ? r.toString() : "";
+        upstream.on("close", (code, reason) => {
           if (debug) {
             console.log("[BankVerificationRouter] Upstream WebSocket closed");
           }
-          ws.close();
+          if (ws.readyState === 1) ws.close(code, toReasonStr(reason));
         });
-        ws.on("close", () => {
+        ws.on("close", (code, reason) => {
           if (debug) {
             console.log("[BankVerificationRouter] Client WebSocket closed");
           }
-          upstream?.close();
+          if (upstream?.readyState === 1) upstream.close(code, toReasonStr(reason));
         });
         upstream.on("error", (err) => {
           if (debug) {
