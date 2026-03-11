@@ -8,7 +8,7 @@ import "../src/styles/bank-ui.css";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const DEFAULT_CHANNEL = "test-2";
+const DEFAULT_CHANNEL = "test";
 
 const DEFAULT_VALUES = {
   cardNumber: "4111 1111 1111 1111",
