@@ -68,6 +68,29 @@ For backend use, also install:
 npm install express express-ws
 ```
 
+### Required versions
+
+All consumer projects **must** use these exact version ranges. Mismatches — especially Express 4 vs 5 — silently break WebSocket (connection opens but no data flows; falls back to HTTP polling with no error shown).
+
+| Package | Required | ❌ Known broken |
+|---------|----------|----------------|
+| `express` | `^4.18.0` | Express 5.x — **not supported** |
+| `express-ws` | `^5.0.0` | |
+| `react` / `react-dom` | `^18.0.0` | |
+| `vite` | `^5.4.0`, `^6.0.0`, or `^7.0.0` | |
+| `ws` | `^8.0.0` (via express-ws) | |
+
+Recommended `package.json` entries for the backend:
+
+```json
+{
+  "dependencies": {
+    "express": "^4.21.0",
+    "express-ws": "^5.0.2"
+  }
+}
+```
+
 ---
 
 ## Quick Start
@@ -692,30 +715,58 @@ DECLINED_STATUS_MESSAGES["cancelled"];  // "Verification cancelled."
 
 The package ships an Express router that proxies frontend requests to the upstream NCC server. Import from the `/express` sub-path.
 
-### Minimal proxy setup
+> **Critical:** Follow the exact setup order below. Wrong ordering or wrong `expressWs` / Vite configuration will silently break WebSocket — the connection establishes but messages are never received, and the client falls back to slow HTTP polling. See `scripts/dev-server.js` in the library repo for the canonical reference.
+
+### Required setup (with Vite in middleware mode)
+
+All consumer projects **must** follow this pattern exactly:
 
 ```ts
+import http from "http";
 import express from "express";
 import expressWs from "express-ws";
+import { createServer as createViteServer } from "vite";
 import {
   createBankVerificationRouter,
   createProxyHandlers,
 } from "@ncc/bank-verification-ui/express";
 
 const app = express();
-expressWs(app);
+
+// 1. Create httpServer explicitly — required for expressWs + Vite to share the same server
+const httpServer = http.createServer(app);
+expressWs(app, httpServer);  // Must pass BOTH app and httpServer
+
 app.use(express.json());
 
-const handlers = createProxyHandlers("https://your-ncc-server.com", {
+// 2. NCC router + WebSocket BEFORE Vite middleware
+const handlers = createProxyHandlers(process.env.NCC_UPSTREAM ?? "https://your-ncc-server.com", {
   apiKey: process.env.NCC_API_KEY,
 });
-
 const { router, registerWebSocket } = createBankVerificationRouter(handlers);
 app.use(router);         // Mounts routes at /ncc/v1/...
-registerWebSocket(app);  // Registers WS route
+registerWebSocket(app);  // Registers WS upgrade handler
 
-app.listen(3000);
+// 3. Vite: pass httpServer via middlewareMode object — NOT middlewareMode:true + hmr:{server}
+const vite = await createViteServer({
+  server: { middlewareMode: { server: httpServer } },
+});
+app.use(vite.middlewares);
+
+httpServer.listen(3000);
 ```
+
+### Setup rules
+
+| Rule | Why |
+|------|-----|
+| `expressWs(app, httpServer)` — pass both args | Without `httpServer`, express-ws creates its own internal server that won't receive upgrades from the real listener |
+| NCC routes registered before Vite | Vite's catch-all intercepts all unmatched requests; NCC WS routes must be registered first |
+| `middlewareMode: { server: httpServer }` | Tells Vite to share the existing HTTP server for HMR without competing for upgrade events. Using `middlewareMode: true` + `hmr: { server }` is subtly different and can break WS in some Vite versions |
+
+### Binary WebSocket frames (handled automatically)
+
+The upstream NCC server sends WebSocket frames as **binary** (`Buffer`). The proxy inside `createProxyHandlers` automatically converts them to UTF-8 text before forwarding to the browser so `JSON.parse` works correctly. No action needed on the consumer side.
 
 ### Custom base path & debug logging
 

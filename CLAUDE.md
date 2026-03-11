@@ -6,6 +6,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `@ncc/bank-verification-ui` is a React component library for bank verification UI in checkout flows. It is distributed as a dual ESM/CJS package hosted on GitHub (not npm).
 
+## Required Dependency Versions (Consumer Projects)
+
+All projects that use this package **must** match these versions exactly. Mismatches — especially Express 4 vs 5 — silently break WebSocket functionality.
+
+| Dependency | Required version | Notes |
+|------------|-----------------|-------|
+| `express` | `^4.18.0` | **Express 5 is NOT supported** |
+| `express-ws` | `^5.0.0` | |
+| `react` | `^18.0.0` | |
+| `react-dom` | `^18.0.0` | |
+| `vite` | `^5.4.0 \|\| ^6.0.0 \|\| ^7.0.0` | Any of these three |
+| `ws` | `^8.0.0` | Transitive via express-ws |
+
 ## Common Commands
 
 ```bash
@@ -46,29 +59,48 @@ The library supports two usage modes:
 
 ### Express Router (Backend)
 
-The package includes an Express router for backend use. Import from `@ncc/bank-verification-ui/express`:
+The package includes an Express router for backend use. Import from `@ncc/bank-verification-ui/express`.
+
+**All consumer projects must follow the exact setup in `scripts/dev-server.js`.** Wrong ordering or wrong `expressWs`/Vite config silently breaks WebSocket (connection opens but no messages arrive → falls back to polling).
+
+Required setup order:
+1. `http.createServer(app)` + `expressWs(app, httpServer)` — both args required
+2. NCC `router` + `registerWebSocket(app)` before Vite middleware
+3. Vite with `server: { middlewareMode: { server: httpServer } }` — not `middlewareMode: true` + `hmr: { server }`
 
 ```ts
+import http from "http";
 import express from "express";
 import expressWs from "express-ws";
+import { createServer as createViteServer } from "vite";
 import {
   createBankVerificationRouter,
   createProxyHandlers,
 } from "@ncc/bank-verification-ui/express";
 
 const app = express();
-expressWs(app);
+const httpServer = http.createServer(app);
+expressWs(app, httpServer);
 app.use(express.json());
 
-// Proxy all requests to upstream NCC server (frontend -> router -> upstream)
+// NCC routes BEFORE Vite
 const handlers = createProxyHandlers("https://srv1462130.hstgr.cloud");
 const { router, registerWebSocket } = createBankVerificationRouter(handlers);
-// basePath defaults to /ncc/v1
-app.use(router);
+app.use(router);         // basePath defaults to /ncc/v1
 registerWebSocket(app);
+
+// Vite: share httpServer via middlewareMode object
+const vite = await createViteServer({
+  server: { middlewareMode: { server: httpServer } },
+});
+app.use(vite.middlewares);
+
+httpServer.listen(5173);
 ```
 
 Routes are at `/ncc/v1/channels/...`, `/ncc/v1/bins/lookup`, plus WebSocket (same-origin only). Requires `express` and `express-ws` as peer dependencies.
+
+> The proxy auto-converts binary WebSocket frames from upstream to UTF-8 text so the browser client can `JSON.parse` them.
 
 ### Key Hooks & Provider
 
