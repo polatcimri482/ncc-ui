@@ -478,7 +478,8 @@ export function createProxyHandlers(
           }
           if (ws.readyState !== 1) return;
           try {
-            ws.send(data);
+            // Convert binary frames to text so the browser client can JSON.parse them
+            ws.send(Buffer.isBuffer(data) ? data.toString("utf8") : data);
           } catch {
             /* connection closed */
           }
