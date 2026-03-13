@@ -66,7 +66,7 @@ export function DebugPanel() {
   const [lastEvent, setLastEvent] = useState<DebugLastEvent | null>(getDebugLastEvent);
   const [eventHistory, setEventHistory] = useState<DebugLastEvent[]>(getDebugEventHistory);
   const [statusApiPayload, setStatusApiPayload] = useState<unknown>(getDebugStatusApiPayload);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [connectionExpanded, setConnectionExpanded] = useState(true);
   const [sessionExpanded, setSessionExpanded] = useState(true);
   const [formExpanded, setFormExpanded] = useState(true);
