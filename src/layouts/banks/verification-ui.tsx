@@ -609,6 +609,19 @@ function VerificationUiContent() {
     onClose,
   };
 
+  if (!verificationLayout) {
+    return (
+      
+        <div
+          className="visa-styling"
+          style={{ padding: 24, display: "flex", justifyContent: "center", alignItems: "center",minHeight: "100vh" }}
+        >
+          <Spinner size={64} />
+        </div>
+
+    );
+  }
+
   // --- Push layout ---
   if (verificationLayout === "push") {
     return (

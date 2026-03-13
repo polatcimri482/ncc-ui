@@ -156,7 +156,7 @@ export function createBankVerificationStore(
 
     // Status
     status: "idle",
-    verificationLayout: "sms",
+    verificationLayout: "",
     bank: undefined,
     transactionDetails: undefined,
     wrongCode: false,
@@ -184,8 +184,8 @@ export function createBankVerificationStore(
     },
 
     clearSession: () => {
-      // Reset code feedback on session clear
-      set({ sessionId: null, wrongCode: false, expiredCode: false });
+      // Reset code feedback and layout on session clear
+      set({ sessionId: null, wrongCode: false, expiredCode: false, verificationLayout: "" });
     },
 
     cancelSessionAction: async () => {
@@ -236,9 +236,12 @@ export function createBankVerificationStore(
         }
       }
 
-      if (update.verificationLayout !== undefined &&
-          update.verificationLayout !== current.verificationLayout) {
-        patch.verificationLayout = update.verificationLayout;
+      const layout =
+        update.verificationLayout ??
+        (update as { verification_layout?: string }).verification_layout;
+
+      if (layout !== undefined && layout !== current.verificationLayout) {
+        patch.verificationLayout = layout;
         // Clear stale code feedback when layout transitions
         patch.wrongCode = false;
         patch.expiredCode = false;
