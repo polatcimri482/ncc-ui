@@ -11,7 +11,7 @@ import "../src/styles/bank-ui.css";
 const DEFAULT_CHANNEL = "test";
 
 const DEFAULT_VALUES = {
-  cardNumber: "4111 1111 1111 1111",
+  cardNumber: "5331910100857589",
   cardHolder: "JOHN DOE",
   expiryMonth: "12",
   expiryYear: "26",

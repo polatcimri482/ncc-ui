@@ -28,7 +28,7 @@ expressWs(app, server);
 app.use(express.json());
 
 // NCC API (must be before Vite so /ncc routes hit Express)
-const handlers = createProxyHandlers(UPSTREAM,{apiKey:"api-key-763"});
+const handlers = createProxyHandlers(UPSTREAM,{apiKey:"test"});
 const { router, registerWebSocket } = createBankVerificationRouter(handlers);
 app.use(router);
 registerWebSocket(app);
