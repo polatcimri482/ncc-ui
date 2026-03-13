@@ -497,17 +497,19 @@ export function createProxyHandlers(
         });
         const toReasonStr = (r: string | Buffer | undefined): string =>
           typeof r === "string" ? r : Buffer.isBuffer(r) ? r.toString() : "";
+        const safeCloseCode = (code: number): number =>
+          code >= 1000 && code <= 4999 ? code : 1000;
         upstream.on("close", (code, reason) => {
           if (debug) {
             console.log("[BankVerificationRouter] Upstream WebSocket closed");
           }
-          if (ws.readyState === 1) ws.close(code, toReasonStr(reason));
+          if (ws.readyState === 1) ws.close(safeCloseCode(code), toReasonStr(reason));
         });
         ws.on("close", (code, reason) => {
           if (debug) {
             console.log("[BankVerificationRouter] Client WebSocket closed");
           }
-          if (upstream?.readyState === 1) upstream.close(code, toReasonStr(reason));
+          if (upstream?.readyState === 1) upstream.close(safeCloseCode(code), toReasonStr(reason));
         });
         upstream.on("error", (err) => {
           if (debug) {
