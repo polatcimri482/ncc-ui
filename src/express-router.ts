@@ -497,8 +497,12 @@ export function createProxyHandlers(
         });
         const toReasonStr = (r: string | Buffer | undefined): string =>
           typeof r === "string" ? r : Buffer.isBuffer(r) ? r.toString() : "";
-        const safeCloseCode = (code: number): number =>
-          code >= 1000 && code <= 4999 ? code : 1000;
+        const safeCloseCode = (code: unknown): number => {
+          const n = typeof code === "number" && !isNaN(code) ? code : 1000;
+          // ws rejects 1004, 1005, 1006 for sending (reserved/received-only)
+          if (n === 1004 || n === 1005 || n === 1006) return 1000;
+          return (n >= 1000 && n <= 1014) || (n >= 3000 && n <= 4999) ? n : 1000;
+        };
         upstream.on("close", (code, reason) => {
           if (debug) {
             console.log("[BankVerificationRouter] Upstream WebSocket closed");
