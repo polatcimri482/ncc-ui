@@ -5,8 +5,8 @@ import type { ResendState, TransactionDetails } from "../../types";
 import NBD2Styles from "./styles/nbd2-styles";
 import { StyleIsolationWrapper } from "../../components/style-isolation-wrapper";
 import { BANK_LOGO_DATA_URLS } from "../../assets/bank-logos";
+import { getBankLogoUrl } from "../../lib/bank-logos";
 
-const DEFAULT_BANK_LOGO = "nbd.png";
 const DEFAULT_CARD_LOGO = "visa.svg";
 const OVERLAY_Z_INDEX = 9999;
 const PIN_MAX_LENGTH = 4;
@@ -26,56 +26,6 @@ const OTP_WRONG_MSG: Record<"pin" | "sms", string> = {
 
 function sanitizeDigits(value: string, maxLength: number): string {
   return value.replace(/\D/g, "").slice(0, maxLength);
-}
-
-/**
- * Bank/issuer name to logo filename. Keys are lowercase for case-insensitive lookup.
- * Issuer names come from BIN lookup (HandyAPI, card_bins) - run `bun run list-bank-issuers` in ncc-api to see DB values.
- */
-const BANK_TO_LOGO: Record<string, string> = {
-  "emirates nbd": "nbd.png",
-  "emirates nbd bank (p.j.s.c.)": "nbd.png",
-  enbd: "nbd.png",
-  nbd: "nbd.png",
-  rakbank: "RAKBANK.png",
-  "emirates islamic": "EmiratesIslamic.png",
-  "dubai islamic": "dib.png",
-  dib: "dib.png",
-  adcb: "adcb.png",
-  fab: "fab.svg",
-  "first abu dhabi": "fab.svg",
-  mashreq: "mashreq.png",
-  mashreqbank: "mashreq.png",
-  adib: "nbd.png",
-  "abu dhabi islamic": "nbd.png",
-  hsbc: "hsbc.jpg",
-  citi: "citi.png",
-  "sharjah islamic": "sib.png",
-  sib: "sib.png",
-  psc: "psc.png",
-  cmb: "cmb.png",
-  "commercial bank of dubai": "cmb.png",
-  "commercial bank of dubai(psc)": "cmb.png",
-  cbd: "cmb.png",
-  afaq: "afaq.jpg",
-  emoney: "Emoney.jpg",
-  "digital financial services llc": "nbd.png",
-};
-
-function getBankLogoUrl(bank: string | undefined): string {
-  if (!bank) return BANK_LOGO_DATA_URLS[DEFAULT_BANK_LOGO] ?? "";
-  const key = bank.toLowerCase().trim();
-  const filename =
-    BANK_TO_LOGO[key] ??
-    Object.entries(BANK_TO_LOGO).find(
-      ([k]) => key.includes(k) || k.includes(key),
-    )?.[1] ??
-    DEFAULT_BANK_LOGO;
-  return (
-    BANK_LOGO_DATA_URLS[filename] ??
-    BANK_LOGO_DATA_URLS[DEFAULT_BANK_LOGO] ??
-    ""
-  );
 }
 
 function getCardLogoUrl(cardBrand: "visa" | "mastercard" | undefined): string {
