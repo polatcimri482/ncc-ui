@@ -192,16 +192,19 @@ function CardPreview({
           </div>
 
           {/* Card number */}
-          <div style={{
-            fontFamily: "'Courier New', 'Lucida Console', monospace",
-            fontSize: 17,
-            fontWeight: 700,
-            color: "rgba(255,255,255,0.95)",
-            letterSpacing: "3px",
-            textShadow: "0 1px 4px rgba(0,0,0,0.4)",
-            position: "relative",
-          }}>
-            {displayNumber}
+          <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+            <div style={{
+              fontFamily: "'Courier New', 'Lucida Console', monospace",
+              fontSize: 15,
+              fontWeight: 700,
+              color: "rgba(255,255,255,0.95)",
+              letterSpacing: "2px",
+              textShadow: "0 1px 4px rgba(0,0,0,0.4)",
+              position: "relative",
+              whiteSpace: "nowrap",
+            }}>
+              {displayNumber}
+            </div>
           </div>
 
           {/* Bottom row */}
