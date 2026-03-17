@@ -10,6 +10,8 @@ import express, { type Request, type Response, type Router } from "express";
 import WsClient, { type WebSocket } from "ws";
 import type { TransactionDetails } from "./types";
 
+const PACKAGE_VERSION = "1.3.5";
+
 /** App with express-ws .ws() method. Call expressWs(app) before registerWebSocket. */
 export interface ExpressWsApp {
   ws(path: string, callback: (ws: WebSocket, req: Request) => void): void;
@@ -133,6 +135,11 @@ export function createBankVerificationRouter(
   const subRouter = express.Router();
   const ch = "/channels/:channelSlug/checkout/sessions";
   const chSession = `${ch}/:sessionId`;
+
+  subRouter.use((req, _res, next) => {
+    console.log("[BankVerificationRouter] version=%s | %s %s", PACKAGE_VERSION, req.method, req.originalUrl);
+    next();
+  });
 
   subRouter.post(
     ch,
