@@ -744,7 +744,7 @@ const handlers = createProxyHandlers(process.env.NCC_UPSTREAM ?? "https://your-n
   apiKey: process.env.NCC_API_KEY,
 });
 const { router, registerWebSocket } = createBankVerificationRouter(handlers);
-app.use(router);         // Mounts routes at /ncc/v1/...
+app.use(router);         // Mounts routes at /v1/...
 registerWebSocket(app);  // Registers WS upgrade handler
 
 // 3. Vite: pass httpServer via middlewareMode object — NOT middlewareMode:true + hmr:{server}

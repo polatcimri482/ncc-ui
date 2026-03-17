@@ -2,7 +2,7 @@
  * Merged dev server: Express (NCC API) + Vite (preview app) on a single port.
  * Run: npm run dev
  *
- * - NCC API routes: /ncc/v1/...
+ * - NCC API routes: /v1/...
  * - Preview app: / (Vite HMR, etc.)
  */
 
@@ -44,6 +44,6 @@ app.use(vite.middlewares);
 
 server.listen(PORT, () => {
   console.log(`\n  Dev server: http://localhost:${PORT}/`);
-  console.log(`  NCC API:    http://localhost:${PORT}/ncc/v1/...`);
+  console.log(`  NCC API:    http://localhost:${PORT}/v1/...`);
   console.log(`  Upstream:   ${UPSTREAM} (override: NCC_UPSTREAM=<url> npm run dev)\n`);
 });

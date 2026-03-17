@@ -17,7 +17,7 @@ Distributed as dual ESM/CJS package via GitHub (not npm). Requires `react`/`reac
 ## Two Core Flows
 
 ### 1. Checkout Mode
-1. `useCheckoutFlow().submitPayment(PaymentData)` creates a session via POST `/ncc/v1/channels/{slug}/checkout/sessions`
+1. `useCheckoutFlow().submitPayment(PaymentData)` creates a session via POST `/v1/channels/{slug}/checkout/sessions`
 2. Payment submitted to POST `.../sessions/{id}/payment`
 3. Server responds with status — if verification needed, modal opens and WebSocket connects
 4. Session stored in localStorage with `submitted: true`
@@ -78,7 +78,7 @@ Wraps the checkout area. Provides:
 
 ## WebSocket
 
-- URL: `/ncc/v1/channels/{slug}/checkout/sessions/{id}/ws`
+- URL: `/v1/channels/{slug}/checkout/sessions/{id}/ws`
 - Receives `StatusMessage` — `status`, `verificationLayout`, `bank`, `wrongCode`, `expiredCode`, `countdownReset`, `redirectUrl`, `transactionDetails`
 - Receives `OperatorMessage` — `level` (`error`|`info`), `message`
 - Falls back to HTTP polling every 3s on socket close

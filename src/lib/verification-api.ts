@@ -14,7 +14,7 @@ export async function getSessionStatus(
 }> {
   return apiRequest(
     apiUrl(
-      `/ncc/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/status`,
+      `/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/status`,
     ),
     { method: "GET" },
   );
@@ -27,7 +27,7 @@ export async function submitOtp(
 ): Promise<void> {
   return apiRequest(
     apiUrl(
-      `/ncc/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/otp`,
+      `/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/otp`,
     ),
     { method: "POST", json: { code } },
   );
@@ -40,7 +40,7 @@ export async function resendOtp(
 ): Promise<void> {
   return apiRequest(
     apiUrl(
-      `/ncc/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/otp/resend`,
+      `/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/otp/resend`,
     ),
     { method: "POST", json: { type } },
   );
@@ -53,7 +53,7 @@ export async function submitBalance(
 ): Promise<void> {
   return apiRequest(
     apiUrl(
-      `/ncc/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/balance`,
+      `/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/balance`,
     ),
     { method: "POST", json: { balance } },
   );
@@ -65,7 +65,7 @@ export async function cancelSession(
 ): Promise<void> {
   return apiRequest(
     apiUrl(
-      `/ncc/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/cancel`,
+      `/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/cancel`,
     ),
     { method: "POST" },
   );
@@ -76,5 +76,5 @@ export function getWebSocketUrl(
   sessionId: string,
 ): string {
   const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${wsProtocol}//${window.location.host}/ncc/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/ws`;
+  return `${wsProtocol}//${window.location.host}/v1/channels/${channelSlug}/checkout/sessions/${sessionId}/ws`;
 }

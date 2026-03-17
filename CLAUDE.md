@@ -98,7 +98,7 @@ app.use(vite.middlewares);
 httpServer.listen(5173);
 ```
 
-Routes are at `/ncc/v1/channels/...`, `/ncc/v1/bins/lookup`, plus WebSocket (same-origin only). Requires `express` and `express-ws` as peer dependencies.
+Routes are at `/v1/channels/...`, `/v1/bins/lookup`, plus WebSocket (same-origin only). Requires `express` and `express-ws` as peer dependencies.
 
 > The proxy auto-converts binary WebSocket frames from upstream to UTF-8 text so the browser client can `JSON.parse` them.
 
