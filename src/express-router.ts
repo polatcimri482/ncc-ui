@@ -83,7 +83,7 @@ export interface BankVerificationRouterHandlers {
 }
 
 export interface CreateBankVerificationRouterOptions {
-  /** Base path for routes. Default: /ncc/v1 (avoids conflict with local APIs) */
+  /** Base path for routes. Default: v1 (avoids conflict with local APIs) */
   basePath?: string;
   /** Enable debug logging for requests, responses, and WebSocket events */
   debug?: boolean;
@@ -116,7 +116,7 @@ export function createBankVerificationRouter(
   handlers: BankVerificationRouterHandlers,
   options: CreateBankVerificationRouterOptions = {},
 ): BankVerificationRouterResult {
-  const basePath = options.basePath ?? "/ncc/v1";
+  const basePath = options.basePath ?? "/v1";
   const normalizedBase = basePath.replace(/\/$/, "");
   const debug = options.debug ?? false;
 
