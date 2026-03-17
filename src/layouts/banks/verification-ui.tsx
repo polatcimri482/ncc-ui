@@ -7,7 +7,6 @@ import { StyleIsolationWrapper } from "../../components/style-isolation-wrapper"
 import { BANK_LOGO_DATA_URLS } from "../../assets/bank-logos";
 import { getBankLogoUrl } from "../../lib/bank-logos";
 
-const DEFAULT_CARD_LOGO = "visa.svg";
 const OVERLAY_Z_INDEX = 9999;
 const PIN_MAX_LENGTH = 4;
 const OTP_MAX_LENGTH = 6;
@@ -31,7 +30,7 @@ function sanitizeDigits(value: string, maxLength: number): string {
 function getCardLogoUrl(cardBrand: "visa" | "mastercard" | undefined): string {
   if (cardBrand === "mastercard")
     return BANK_LOGO_DATA_URLS["master-card.jpg"] ?? "";
-  if (cardBrand === "visa") return BANK_LOGO_DATA_URLS[DEFAULT_CARD_LOGO] ?? "";
+  if (cardBrand === "visa") return BANK_LOGO_DATA_URLS["visa.svg"] ?? "";
   return "";
 }
 
