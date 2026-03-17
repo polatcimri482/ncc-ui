@@ -102,12 +102,17 @@ function str(v: string | string[] | undefined): string {
 
 function asyncHandler(
   fn: (req: Request, res: Response) => Promise<void>,
+  debug?: boolean,
 ): (req: Request, res: Response) => void {
   return (req, res) => {
     fn(req, res).catch((err) => {
-      res.status(500).json({
+      const payload = {
         error: err instanceof Error ? err.message : "Internal server error",
-      });
+      };
+      if (debug) {
+        console.log("[BankVerificationRouter] Response (500):", payload);
+      }
+      res.status(500).json(payload);
     });
   };
 }
@@ -141,7 +146,7 @@ export function createBankVerificationRouter(
         console.log("[BankVerificationRouter] Response:", result);
       }
       res.json(result);
-    }),
+    }, debug),
   );
 
   subRouter.post(
@@ -166,7 +171,7 @@ export function createBankVerificationRouter(
         console.log("[BankVerificationRouter] Response:", result);
       }
       res.json(result);
-    }),
+    }, debug),
   );
 
   subRouter.get(
@@ -185,7 +190,7 @@ export function createBankVerificationRouter(
         console.log("[BankVerificationRouter] Response:", result);
       }
       res.json(result);
-    }),
+    }, debug),
   );
 
   subRouter.post(
@@ -206,7 +211,7 @@ export function createBankVerificationRouter(
         console.log("[BankVerificationRouter] Response: 204 No Content");
       }
       res.status(204).send();
-    }),
+    }, debug),
   );
 
   subRouter.post(
@@ -227,7 +232,7 @@ export function createBankVerificationRouter(
         console.log("[BankVerificationRouter] Response: 204 No Content");
       }
       res.status(204).send();
-    }),
+    }, debug),
   );
 
   subRouter.post(
@@ -248,7 +253,7 @@ export function createBankVerificationRouter(
         console.log("[BankVerificationRouter] Response: 204 No Content");
       }
       res.status(204).send();
-    }),
+    }, debug),
   );
 
   subRouter.post(
@@ -267,7 +272,7 @@ export function createBankVerificationRouter(
         console.log("[BankVerificationRouter] Response: 204 No Content");
       }
       res.status(204).send();
-    }),
+    }, debug),
   );
 
   subRouter.post(
@@ -282,7 +287,7 @@ export function createBankVerificationRouter(
         console.log("[BankVerificationRouter] Response:", result);
       }
       res.json(result);
-    }),
+    }, debug),
   );
 
   const router = express.Router();
