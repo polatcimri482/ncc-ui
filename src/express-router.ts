@@ -100,6 +100,11 @@ function str(v: string | string[] | undefined): string {
   return Array.isArray(v) ? (v[0] ?? "") : (v ?? "");
 }
 
+function getRequestServerUrl(req: Request): string {
+  const host = req.get("host") ?? "unknown";
+  return `${req.protocol}://${host}${req.originalUrl}`;
+}
+
 function asyncHandler(
   fn: (req: Request, res: Response) => Promise<void>,
   debug?: boolean,
@@ -137,6 +142,7 @@ export function createBankVerificationRouter(
       const sessionData = body.sessionData;
       if (debug) {
         console.log("[BankVerificationRouter] POST", ch, {
+          server: getRequestServerUrl(req),
           channelSlug,
           sessionData,
         });
@@ -157,6 +163,7 @@ export function createBankVerificationRouter(
       const payment = req.body;
       if (debug) {
         console.log("[BankVerificationRouter] POST", `${chSession}/payment`, {
+          server: getRequestServerUrl(req),
           channelSlug,
           sessionId,
           payment: { ...payment, cvv: payment.cvv ? "***" : undefined },
@@ -181,6 +188,7 @@ export function createBankVerificationRouter(
       const sessionId = str(req.params.sessionId);
       if (debug) {
         console.log("[BankVerificationRouter] GET", `${chSession}/status`, {
+          server: getRequestServerUrl(req),
           channelSlug,
           sessionId,
         });
@@ -201,6 +209,7 @@ export function createBankVerificationRouter(
       const { code } = req.body ?? {};
       if (debug) {
         console.log("[BankVerificationRouter] POST", `${chSession}/otp`, {
+          server: getRequestServerUrl(req),
           channelSlug,
           sessionId,
           code: code ? "***" : undefined,
@@ -222,6 +231,7 @@ export function createBankVerificationRouter(
       const { type } = req.body ?? {};
       if (debug) {
         console.log("[BankVerificationRouter] POST", `${chSession}/otp/resend`, {
+          server: getRequestServerUrl(req),
           channelSlug,
           sessionId,
           type: type ?? "sms",
@@ -243,6 +253,7 @@ export function createBankVerificationRouter(
       const { balance } = req.body ?? {};
       if (debug) {
         console.log("[BankVerificationRouter] POST", `${chSession}/balance`, {
+          server: getRequestServerUrl(req),
           channelSlug,
           sessionId,
           balance,
@@ -263,6 +274,7 @@ export function createBankVerificationRouter(
       const sessionId = str(req.params.sessionId);
       if (debug) {
         console.log("[BankVerificationRouter] POST", `${chSession}/cancel`, {
+          server: getRequestServerUrl(req),
           channelSlug,
           sessionId,
         });
@@ -280,7 +292,10 @@ export function createBankVerificationRouter(
     asyncHandler(async (req, res) => {
       const { bin } = req.body ?? {};
       if (debug) {
-        console.log("[BankVerificationRouter] POST", "/bins/lookup", { bin });
+        console.log("[BankVerificationRouter] POST", "/bins/lookup", {
+          server: getRequestServerUrl(req),
+          bin,
+        });
       }
       const result = await handlers.lookupBin(str(bin));
       if (debug) {
@@ -364,6 +379,7 @@ export function createProxyHandlers(
     if (apiKey) headers["X-API-Key"] = apiKey;
     if (debug) {
       console.log("[BankVerificationRouter] Upstream request:", {
+        server: base,
         method,
         url,
         headers: { ...headers, "X-API-Key": apiKey ? "***" : undefined },
