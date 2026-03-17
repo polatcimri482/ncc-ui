@@ -59,7 +59,7 @@ interface BankVerificationRouterHandlers {
     handleWebSocket: (ws: WebSocket, req: Request, channelSlug: string, sessionId: string) => void;
 }
 interface CreateBankVerificationRouterOptions {
-    /** Base path for routes. Default: /ncc/v1 (avoids conflict with local APIs) */
+    /** Base path for routes. Default: v1 (avoids conflict with local APIs) */
     basePath?: string;
     /** Enable debug logging for requests, responses, and WebSocket events */
     debug?: boolean;
