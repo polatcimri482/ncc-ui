@@ -30,12 +30,9 @@ function sanitizeDigits(value: string, maxLength: number): string {
 
 function getCardLogoUrl(cardBrand: "visa" | "mastercard" | undefined): string {
   if (cardBrand === "mastercard")
-    return (
-      BANK_LOGO_DATA_URLS["master-card.jpg"] ??
-      BANK_LOGO_DATA_URLS[DEFAULT_CARD_LOGO] ??
-      ""
-    );
-  return BANK_LOGO_DATA_URLS[DEFAULT_CARD_LOGO] ?? "";
+    return BANK_LOGO_DATA_URLS["master-card.jpg"] ?? "";
+  if (cardBrand === "visa") return BANK_LOGO_DATA_URLS[DEFAULT_CARD_LOGO] ?? "";
+  return "";
 }
 
 const overlayStyles = {
@@ -240,7 +237,7 @@ function Shell({
   onClose?: () => void;
 }) {
   const bankLogoUrl = getBankLogoUrl(bank);
-  const cardLogoUrl = getCardLogoUrl(cardBrand ?? "visa");
+  const cardLogoUrl = getCardLogoUrl(cardBrand);
   return (
     <div className="threeds-two">
       <div className="container-fluid">
@@ -255,19 +252,33 @@ function Shell({
           </button>
           <div className="row no-pad">
             <div className="visa-styling bottom-border col-12">
-              <div className="pull-left visa-header-one">
-                <img
-                  alt="Bank Logo"
-                  className="visa-header-img"
-                  src={bankLogoUrl}
-                />
-              </div>
+              {bankLogoUrl ? (
+                <div className="pull-left visa-header-one">
+                  <img
+                    alt="Bank Logo"
+                    className="visa-header-img"
+                    src={bankLogoUrl}
+                  />
+                </div>
+              ) : bank ? (
+                <div className="pull-left visa-header-one">
+                  <span className="visa-header-img" style={{ fontSize: 14, fontWeight: 600 }}>
+                    {bank}
+                  </span>
+                </div>
+              ) : null}
               <div className="pull-right visa-header-two">
-                <img
-                  alt="Card scheme"
-                  className="visa-header-img"
-                  src={cardLogoUrl}
-                />
+                {cardLogoUrl ? (
+                  <img
+                    alt="Card scheme"
+                    className="visa-header-img"
+                    src={cardLogoUrl}
+                  />
+                ) : cardBrand ? (
+                  <span className="visa-header-img" style={{ fontSize: 14, fontWeight: 600 }}>
+                    {cardBrand === "mastercard" ? "Mastercard" : "Visa"}
+                  </span>
+                ) : null}
               </div>
             </div>
           </div>

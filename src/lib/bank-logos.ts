@@ -42,9 +42,8 @@ export const BANK_TO_LOGO: Record<string, string> = {
  */
 export function getBankLogoUrl(
   bank: string | undefined,
-  options?: { useDefaultFallback?: boolean }
 ): string {
-  const useDefaultFallback = options?.useDefaultFallback ?? true;
+  const useDefaultFallback = false
   if (!bank) {
     return useDefaultFallback
       ? BANK_LOGO_DATA_URLS[DEFAULT_BANK_LOGO] ?? ""
