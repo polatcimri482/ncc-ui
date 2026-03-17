@@ -357,6 +357,8 @@ const UPSTREAM_API_PATH = "/v1";
 export interface CreateProxyHandlersOptions {
   /** API key for upstream NCC server (X-API-Key header). Required when upstream enforces API key auth. */
   apiKey?: string;
+  /** Timeout in ms for upstream requests. Default: 30000. */
+  timeout?: number;
   /** Enable debug logging for upstream requests and responses */
   debug?: boolean;
 }
@@ -373,7 +375,7 @@ export function createProxyHandlers(
   options: CreateProxyHandlersOptions = {},
 ): BankVerificationRouterHandlers {
   const base = upstreamBaseUrl.replace(/\/$/, "");
-  const { apiKey, debug = false } = options;
+  const { apiKey, debug = false, timeout = 30000 } = options;
 
   async function fetchUpstream<T>(
     method: string,
@@ -393,26 +395,46 @@ export function createProxyHandlers(
         body,
       });
     }
-    const res = await fetch(url, {
-      method,
-      headers: Object.keys(headers).length > 0 ? headers : undefined,
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    const text = await res.text();
-    if (!res.ok) {
-      if (debug) {
-        console.log("[BankVerificationRouter] Upstream error:", {
-          status: res.status,
-          text,
-        });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    let isUpstreamHttpError = false;
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: Object.keys(headers).length > 0 ? headers : undefined,
+        body: body ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      const text = await res.text();
+      if (!res.ok) {
+        if (debug) {
+          console.log("[BankVerificationRouter] Upstream error:", {
+            status: res.status,
+            text,
+          });
+        }
+        isUpstreamHttpError = true;
+        throw new Error(text || `Upstream error ${res.status}`);
       }
-      throw new Error(text || `Upstream error ${res.status}`);
+      const parsed = (text ? JSON.parse(text) : undefined) as T;
+      if (debug) {
+        console.log("[BankVerificationRouter] Upstream response:", parsed);
+      }
+      return parsed;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (isUpstreamHttpError) throw err;
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new Error(
+          `Upstream request timed out after ${timeout}ms (${method} ${path})`,
+        );
+      }
+      throw new Error(
+        `Upstream connection failed: ${msg}. Check server connectivity to ${base} (DNS, firewall, SSL)`,
+      );
     }
-    const parsed = (text ? JSON.parse(text) : undefined) as T;
-    if (debug) {
-      console.log("[BankVerificationRouter] Upstream response:", parsed);
-    }
-    return parsed;
   }
 
   return {

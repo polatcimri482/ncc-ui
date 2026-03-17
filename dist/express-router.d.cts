@@ -74,6 +74,8 @@ declare function createBankVerificationRouter(handlers: BankVerificationRouterHa
 interface CreateProxyHandlersOptions {
     /** API key for upstream NCC server (X-API-Key header). Required when upstream enforces API key auth. */
     apiKey?: string;
+    /** Timeout in ms for upstream requests. Default: 30000. */
+    timeout?: number;
     /** Enable debug logging for upstream requests and responses */
     debug?: boolean;
 }
