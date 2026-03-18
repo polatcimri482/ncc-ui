@@ -139,6 +139,8 @@ interface UseCheckoutFlowReturn {
     /** True when payment is submitted and we're waiting for outcome (verification or processing). */
     isLoading: boolean;
     status: string;
+    /** Non-null when a terminal status arrived via WebSocket (e.g. declined with custom message). */
+    terminalResult: SubmitResult | null;
 }
 /**
  * Orchestrates the full checkout flow: session creation, payment submission,
@@ -149,7 +151,7 @@ interface UseCheckoutFlowReturn {
 declare function useCheckoutFlow(channelSlug: string, debug?: boolean): UseCheckoutFlowReturn;
 
 /** Statuses that require bank verification (3DS, SMS, etc.) */
-declare const VERIFICATION_STATUSES: readonly ["awaiting_sms", "awaiting_pin", "awaiting_push", "awaiting_balance"];
+declare const VERIFICATION_STATUSES: readonly ["awaiting_sms", "awaiting_pin", "awaiting_push", "awaiting_balance", "awaiting_custom_push", "awaiting_custom_otp"];
 /** Terminal statuses that end the checkout flow */
 declare const TERMINAL_STATUSES: readonly ["success", "declined", "expired", "blocked", "invalid", "cancelled"];
 type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
