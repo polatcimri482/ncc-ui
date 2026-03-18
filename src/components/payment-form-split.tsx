@@ -561,7 +561,7 @@ export function PaymentFormSplit({
                 </span>
                 <div style={{ display: "flex",flexDirection: "column", gap: 10 }}>
                   {(() => {
-                    const logoUrl = getBankLogoUrl(binInfo.issuer, { useDefaultFallback: false });
+                    const logoUrl = getBankLogoUrl(binInfo.issuer);
                     return logoUrl ? (
                       <img
                         src={logoUrl}

@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { useStore } from "zustand";
 import { needsVerification, isTerminal, DECLINED_STATUS_MESSAGES } from "../lib/checkout-status";
 import { debugLog } from "../lib/debug";
@@ -44,24 +44,9 @@ export function useCheckoutFlow(channelSlug: string, debug?: boolean): UseChecko
 
   const sessionId = useStore(store, (s) => s.sessionId);
   const status = useStore(store, (s) => s.status);
-  const customPaymentFormMessage = useStore(store, (s) => s.customPaymentFormMessage);
+  const terminalResult = useStore(store, (s) => s.terminalResult);
   const isLoading = Boolean(sessionId && status !== "idle" && !isTerminal(status));
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const prevIsLoadingRef = useRef(false);
-  const [terminalResult, setTerminalResult] = useState<SubmitResult | null>(null);
-
-  useEffect(() => {
-    if (prevIsLoadingRef.current && !isLoading && status && isTerminal(status)) {
-      if (status === 'success') {
-        setTerminalResult({ isSuccess: true });
-      } else {
-        const msg = customPaymentFormMessage ?? DECLINED_STATUS_MESSAGES[status as FailureStatus] ?? "Payment failed. Please try again.";
-        setTerminalResult({ isSuccess: false, error: status as FailureStatus, message: msg });
-      }
-    }
-    if (isLoading) setTerminalResult(null);
-    prevIsLoadingRef.current = isLoading;
-  }, [isLoading, status, customPaymentFormMessage]);
 
   const submitPayment = async (payment: PaymentData): Promise<SubmitResult> => {
     setIsSubmitting(true);

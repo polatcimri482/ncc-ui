@@ -2,11 +2,11 @@ import { createStore } from "zustand/vanilla";
 import { createContext, useContext } from "react";
 import { useStore } from "zustand";
 import type { StoreApi } from "zustand";
-import { isTerminal } from "../lib/checkout-status";
+import { isTerminal, DECLINED_STATUS_MESSAGES } from "../lib/checkout-status";
 import { debugLog, setDebugStatusApiPayload } from "../lib/debug";
 import { getSessionStatus, submitOtp, submitBalance, resendOtp, cancelSession } from "../lib/verification-api";
 import type { SessionStatus } from "../lib/checkout-status";
-import type { OperatorMessage, TransactionDetails } from "../types";
+import type { FailureStatus, OperatorMessage, TransactionDetails, SubmitResult } from "../types";
 
 // ─── Session types ───────────────────────────────────────────────────────────
 
@@ -47,6 +47,7 @@ export interface BankVerificationState {
   countdown: number;
   error: string | null;
   customPaymentFormMessage: string | null;
+  terminalResult: SubmitResult | null;
 
   // Form state
   submitting: boolean;
@@ -170,6 +171,7 @@ export function createBankVerificationStore(
     countdown: 0,
     error: null,
     customPaymentFormMessage: null,
+    terminalResult: null,
 
     // Form
     submitting: false,
@@ -184,8 +186,8 @@ export function createBankVerificationStore(
 
     setSession: (session) => {
       const newSessionId = getActiveSessionId(session);
-      // Reset code feedback whenever the session changes
-      set({ sessionId: newSessionId, wrongCode: false, expiredCode: false });
+      // Reset code feedback and terminalResult whenever a new session starts
+      set({ sessionId: newSessionId, wrongCode: false, expiredCode: false, terminalResult: null });
       if (newSessionId) get().fetchStatus();
     },
 
@@ -282,12 +284,23 @@ export function createBankVerificationStore(
         patch.customPaymentFormMessage = update.customPaymentFormMessage ?? null;
       }
 
-      set(patch);
-
-      // Auto-clear session when a terminal status arrives
+      // Compute terminalResult from live payload when terminal status arrives
       if (update.status && isTerminal(update.status as string)) {
+        if (update.status === 'success') {
+          patch.terminalResult = { isSuccess: true };
+        } else {
+          const msg =
+            update.customPaymentFormMessage ??
+            DECLINED_STATUS_MESSAGES[update.status as FailureStatus] ??
+            "Payment failed. Please try again.";
+          patch.terminalResult = { isSuccess: false, error: update.status as FailureStatus, message: msg };
+        }
+        set(patch);
         get().clearSession();
+        return;
       }
+
+      set(patch);
     },
 
     applyOperatorMessage: (msg) => {
