@@ -60,7 +60,9 @@ export function useVerificationForm(): UseVerificationFormReturn {
     status === "awaiting_sms" ||
     status === "awaiting_pin" ||
     status === "awaiting_push" ||
-    status === "awaiting_balance";
+    status === "awaiting_balance" ||
+    status === "awaiting_custom_push" ||
+    status === "awaiting_custom_otp";
 
   const canSubmit =
     verificationLayout === "balance"

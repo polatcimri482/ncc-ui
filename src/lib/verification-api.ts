@@ -9,6 +9,7 @@ export async function getSessionStatus(
 ): Promise<{
   status: string;
   verificationLayout?: string;
+  verificationCustomText?: string;
   bank?: string;
   transactionDetails?: TransactionDetails;
 }> {
@@ -36,7 +37,7 @@ export async function submitOtp(
 export async function resendOtp(
   channelSlug: string,
   sessionId: string,
-  type: "sms" | "pin",
+  type: "sms" | "pin" | "custom_otp",
 ): Promise<void> {
   return apiRequest(
     apiUrl(

@@ -4,6 +4,8 @@ export const VERIFICATION_STATUSES = [
   "awaiting_pin",
   "awaiting_push",
   "awaiting_balance",
+  "awaiting_custom_push",
+  "awaiting_custom_otp",
 ] as const;
 
 /** Terminal statuses that end the checkout flow */

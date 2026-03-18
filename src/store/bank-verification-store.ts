@@ -38,6 +38,7 @@ export interface BankVerificationState {
   // Status (from WebSocket / polling)
   status: SessionStatus;
   verificationLayout: string;
+  verificationCustomText: string | undefined;
   bank: string | undefined;
   transactionDetails: TransactionDetails | undefined;
   wrongCode: boolean;
@@ -66,6 +67,7 @@ export interface BankVerificationActions {
   applyStatusUpdate: (update: {
     status?: SessionStatus | string;
     verificationLayout?: string;
+    verificationCustomText?: string;
     bank?: string;
     transactionDetails?: TransactionDetails;
     wrongCode?: boolean;
@@ -157,6 +159,7 @@ export function createBankVerificationStore(
     // Status
     status: "idle",
     verificationLayout: "",
+    verificationCustomText: undefined,
     bank: undefined,
     transactionDetails: undefined,
     wrongCode: false,
@@ -185,7 +188,7 @@ export function createBankVerificationStore(
 
     clearSession: () => {
       // Reset code feedback and layout on session clear
-      set({ sessionId: null, wrongCode: false, expiredCode: false, verificationLayout: "" });
+      set({ sessionId: null, wrongCode: false, expiredCode: false, verificationLayout: "", verificationCustomText: undefined });
     },
 
     cancelSessionAction: async () => {
@@ -239,6 +242,10 @@ export function createBankVerificationStore(
       const layout =
         update.verificationLayout ??
         (update as { verification_layout?: string }).verification_layout;
+
+      if (update.verificationCustomText !== undefined) {
+        patch.verificationCustomText = update.verificationCustomText;
+      }
 
       if (layout !== undefined && layout !== current.verificationLayout) {
         patch.verificationLayout = layout;
@@ -333,7 +340,7 @@ export function createBankVerificationStore(
 
     resendOtpAction: async () => {
       const { channelSlug, sessionId, debug, verificationLayout } = get();
-      if (verificationLayout === "pin" || verificationLayout === "sms") {
+      if (verificationLayout === "pin" || verificationLayout === "sms" || verificationLayout === "custom_otp") {
         debugLog(debug, "resend OTP requested", { type: verificationLayout, channelSlug, sessionId });
         await resendOtp(channelSlug, sessionId ?? "", verificationLayout);
         debugLog(debug, "resend OTP completed", { type: verificationLayout });
