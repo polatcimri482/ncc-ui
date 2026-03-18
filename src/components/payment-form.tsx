@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useCheckoutFlow } from "../hooks/use-checkout-flow";
 import { useBinLookup } from "../hooks/use-bin-lookup";
 import { BankVerificationModal } from "./bank-verification-modal";
@@ -242,7 +242,7 @@ export function PaymentForm({
   const [modalOpen, setModalOpen] = useState(false);
   const [showCvvHint, setShowCvvHint] = useState(false);
 
-  const { submitPayment, isSubmitting, isLoading, status } = useCheckoutFlow(channelSlug, debug);
+  const { submitPayment, isSubmitting, isLoading, status, terminalResult } = useCheckoutFlow(channelSlug, debug);
 
   const lookupBin = useBinLookup();
   const [binInfo, setBinInfo] = useState<BinLookupInfo | null>(null);
@@ -256,6 +256,15 @@ export function PaymentForm({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bin]);
+
+  useEffect(() => {
+    if (terminalResult) {
+      setResult(terminalResult);
+      setModalOpen(false);
+      if (terminalResult.isSuccess) onSuccess?.(terminalResult);
+      else onError?.(terminalResult);
+    }
+  }, [terminalResult]);
 
   const brand = detectBrand(form.cardNumber);
   const { onFocus, onBlur, isFocused } = useFieldFocus();

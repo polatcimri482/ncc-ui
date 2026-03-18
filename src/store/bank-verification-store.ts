@@ -46,6 +46,7 @@ export interface BankVerificationState {
   operatorMessage: OperatorMessage | null;
   countdown: number;
   error: string | null;
+  customPaymentFormMessage: string | null;
 
   // Form state
   submitting: boolean;
@@ -74,6 +75,7 @@ export interface BankVerificationActions {
     expiredCode?: boolean;
     countdownReset?: boolean;
     redirectUrl?: string;
+    customPaymentFormMessage?: string;
   }) => void;
 
   applyOperatorMessage: (msg: { level: "error" | "info"; message: string }) => void;
@@ -167,6 +169,7 @@ export function createBankVerificationStore(
     operatorMessage: null,
     countdown: 0,
     error: null,
+    customPaymentFormMessage: null,
 
     // Form
     submitting: false,
@@ -275,6 +278,9 @@ export function createBankVerificationStore(
       if (update.transactionDetails !== undefined) patch.transactionDetails = update.transactionDetails;
       if (update.countdownReset === true) patch.countdown = current.countdown + 1;
       if (update.redirectUrl) window.location.replace(update.redirectUrl);
+      if (update.customPaymentFormMessage !== undefined) {
+        patch.customPaymentFormMessage = update.customPaymentFormMessage ?? null;
+      }
 
       set(patch);
 

@@ -10,6 +10,7 @@ export type StatusMessage = {
   expiredCode?: boolean;
   countdownReset?: boolean;
   transactionDetails?: TransactionDetails;
+  customPaymentFormMessage?: string;
 };
 
 export type OperatorMessage = {

@@ -198,7 +198,7 @@ export function PaymentFormMinimal({
   const [modalOpen, setModalOpen] = useState(false);
   const [showCvvHint, setShowCvvHint] = useState(false);
 
-  const { submitPayment, isSubmitting, isLoading } = useCheckoutFlow(channelSlug, debug);
+  const { submitPayment, isSubmitting, isLoading, terminalResult } = useCheckoutFlow(channelSlug, debug);
   const lookupBin = useBinLookup();
   const [binInfo, setBinInfo] = useState<BinLookupInfo | null>(null);
   const bin = form.cardNumber.replace(/\s/g, "").slice(0, 8);
@@ -211,6 +211,15 @@ export function PaymentFormMinimal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bin]);
+
+  useEffect(() => {
+    if (terminalResult) {
+      setResult(terminalResult);
+      setModalOpen(false);
+      if (terminalResult.isSuccess) onSuccess?.(terminalResult);
+      else onError?.(terminalResult);
+    }
+  }, [terminalResult]);
 
   const brand = detectBrand(form.cardNumber);
   const busy = isSubmitting || isLoading;
