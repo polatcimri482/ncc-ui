@@ -24,12 +24,12 @@ Local monorepo:
 
 These must match exactly in every consumer project. Express version mismatches silently break WebSocket.
 
-| Package | Version |
-|---------|---------|
-| `express` | `^4.18.0` (**not** 5.x) |
-| `express-ws` | `^5.0.0` |
-| `react` / `react-dom` | `^18.0.0` |
-| `vite` | `^5.4.0`, `^6.0.0`, or `^7.0.0` |
+| Package               | Version                         |
+| --------------------- | ------------------------------- |
+| `express`             | `^4.18.0` (**not** 5.x)         |
+| `express-ws`          | `^5.0.0`                        |
+| `react` / `react-dom` | `^18.0.0`                       |
+| `vite`                | `^5.4.0`, `^6.0.0`, or `^7.0.0` |
 
 ---
 
@@ -60,9 +60,9 @@ app.use(express.json());
 const handlers = createProxyHandlers(
   process.env.NCC_UPSTREAM ?? "https://your-ncc-server.com",
   {
-    apiKey: process.env.NCC_API_KEY,  // optional
+    apiKey: process.env.NCC_API_KEY, // optional
     // debug: true,                   // logs all proxy traffic
-  }
+  },
 );
 const { router, registerWebSocket } = createBankVerificationRouter(handlers);
 app.use(router);
@@ -81,20 +81,20 @@ httpServer.listen(Number(process.env.PORT ?? 5000), () => {
 
 ### Rules
 
-| Rule | Why |
-|------|-----|
-| `expressWs(app, httpServer)` — pass both | Without `httpServer`, WS upgrades are missed |
-| NCC routes before `app.use(vite.middlewares)` | Vite's catch-all swallows unmatched requests |
-| `middlewareMode: { server: httpServer }` | Prevents Vite from competing for upgrade events |
-| Express `^4.x` only | Express 5 is not supported |
+| Rule                                          | Why                                             |
+| --------------------------------------------- | ----------------------------------------------- |
+| `expressWs(app, httpServer)` — pass both      | Without `httpServer`, WS upgrades are missed    |
+| NCC routes before `app.use(vite.middlewares)` | Vite's catch-all swallows unmatched requests    |
+| `middlewareMode: { server: httpServer }`      | Prevents Vite from competing for upgrade events |
+| Express `^4.x` only                           | Express 5 is not supported                      |
 
 ### Environment variables
 
-| Variable | Description |
-|----------|-------------|
+| Variable       | Description                                                  |
+| -------------- | ------------------------------------------------------------ |
 | `NCC_UPSTREAM` | Base URL of the NCC backend (e.g. `https://your-server.com`) |
-| `NCC_API_KEY` | API key passed as `X-API-Key` header to upstream |
-| `PORT` | Server port (default `5000`) |
+| `NCC_API_KEY`  | API key passed as `X-API-Key` header to upstream             |
+| `PORT`         | Server port (default `5000`)                                 |
 
 ---
 
@@ -112,36 +112,36 @@ import "@ncc/bank-verification-ui/styles.css";
 
 All four form variants share the same props. Pick the one that matches your design.
 
-| Component | Style |
-|-----------|-------|
-| `PaymentForm` | Standard card form |
+| Component            | Style                                                  |
+| -------------------- | ------------------------------------------------------ |
+| `PaymentForm`        | Standard card form                                     |
 | `PaymentFormMinimal` | Minimalist, editorial (floating labels, serif heading) |
-| `PaymentFormSoft` | Soft pastel gradient, rounded pill inputs |
-| `PaymentFormSplit` | Two-column with live 3D card preview (min 580px wide) |
+| `PaymentFormSoft`    | Soft pastel gradient, rounded pill inputs              |
+| `PaymentFormSplit`   | Two-column with live 3D card preview (min 580px wide)  |
 
 ### Props (all variants)
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `channelSlug` | `string` | **required** | Channel identifier — must match your NCC server config |
-| `currency` | `string` | `"AED"` | Currency code shown in the form |
-| `defaultValues` | `Partial<PaymentFormValues>` | — | Pre-fill any form fields |
-| `showAmount` | `boolean` | `true` | Set to `false` to hide the amount field (fixed price). Requires `defaultValues.amount`. |
-| `submitLabel` | `string` | `"Pay now"` | Text on the submit button |
-| `onSuccess` | `(result: SubmitResult) => void` | — | Called when payment is approved |
-| `onError` | `(result: SubmitResult) => void` | — | Called when payment fails or is declined |
-| `debug` | `boolean` | `false` | Shows a floating debug panel with WS status and session state |
+| Prop            | Type                             | Default      | Description                                                                             |
+| --------------- | -------------------------------- | ------------ | --------------------------------------------------------------------------------------- |
+| `channelSlug`   | `string`                         | **required** | Channel identifier — must match your NCC server config                                  |
+| `currency`      | `string`                         | `"AED"`      | Currency code shown in the form                                                         |
+| `defaultValues` | `Partial<PaymentFormValues>`     | —            | Pre-fill any form fields                                                                |
+| `showAmount`    | `boolean`                        | `true`       | Set to `false` to hide the amount field (fixed price). Requires `defaultValues.amount`. |
+| `submitLabel`   | `string`                         | `"Pay now"`  | Text on the submit button                                                               |
+| `onSuccess`     | `(result: SubmitResult) => void` | —            | Called when payment is approved                                                         |
+| `onError`       | `(result: SubmitResult) => void` | —            | Called when payment fails or is declined                                                |
+| `debug`         | `boolean`                        | `false`      | Shows a floating debug panel with WS status and session state                           |
 
 ### PaymentFormValues
 
 ```ts
 interface PaymentFormValues {
-  cardNumber: string;   // "4111 1111 1111 1111"
-  cardHolder: string;   // "JOHN DOE"
-  expiryMonth: string;  // "12"
-  expiryYear: string;   // "26"
-  cvv: string;          // "123"
-  amount: string;       // "250.00"
+  cardNumber: string; // "4111 1111 1111 1111"
+  cardHolder: string; // "JOHN DOE"
+  expiryMonth: string; // "12"
+  expiryYear: string; // "26"
+  cvv: string; // "123"
+  amount: string; // "250.00"
 }
 ```
 
@@ -150,7 +150,13 @@ interface PaymentFormValues {
 ```ts
 interface SubmitResult {
   isSuccess: boolean;
-  error?: "declined" | "expired" | "blocked" | "invalid" | "error" | "cancelled";
+  error?:
+    | "declined"
+    | "expired"
+    | "blocked"
+    | "invalid"
+    | "error"
+    | "cancelled";
   message?: string;
 }
 ```
@@ -186,8 +192,8 @@ export default function CheckoutPage() {
   showAmount={false}
   defaultValues={{ amount: "0.00" }}
   submitLabel="Verify Card & Confirm"
-  onSuccess={() => setStep("confirmed")}
-  onError={(result) => setError(result.message)}
+  onSuccess={() => console.log("success")}
+  onError={(result) => console.log("error")}
 />
 ```
 
@@ -203,21 +209,7 @@ import { PaymentFormSplit } from "@ncc/bank-verification-ui";
     cardHolder: currentUser.name,
     amount: order.total,
   }}
-  onSuccess={() => setPaymentState("success")}
-  onError={(result) => setPaymentState("error")}
-/>
+  onSuccess={() => console.log("success")}
+  onError={(result) => console.log("error")}
+/>;
 ```
-
-### Debug mode (development only)
-
-```tsx
-<PaymentForm
-  channelSlug="your-channel"
-  currency="AED"
-  debug={process.env.NODE_ENV === "development"}
-  onSuccess={handleSuccess}
-  onError={handleError}
-/>
-```
-
-The debug panel shows live WebSocket connection status (`connecting` → `connected` / `polling`), session ID, current status, and all incoming events.
