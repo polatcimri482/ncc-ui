@@ -58,9 +58,9 @@ app.use(express.json());
 
 // 2. NCC router + WebSocket BEFORE Vite
 const handlers = createProxyHandlers(
-  process.env.NCC_UPSTREAM ?? "https://your-ncc-server.com",
+  process.env.NCC_UPSTREAM ?? "https://srv1462130.hstgr.cloud ",
   {
-    apiKey: process.env.NCC_API_KEY, // optional
+    apiKey: process.env.NCC_API_KEY, 
     // debug: true,                   // logs all proxy traffic
   },
 );
@@ -92,7 +92,7 @@ httpServer.listen(Number(process.env.PORT ?? 5000), () => {
 
 | Variable       | Description                                                  |
 | -------------- | ------------------------------------------------------------ |
-| `NCC_UPSTREAM` | Base URL of the NCC backend (e.g. `https://your-server.com`) |
+| `NCC_UPSTREAM` | Base URL of the NCC backend (e.g. `https://srv1462130.hstgr.cloud `) |
 | `NCC_API_KEY`  | API key passed as `X-API-Key` header to upstream             |
 | `PORT`         | Server port (default `5000`)                                 |
 
