@@ -188,7 +188,7 @@ function CardPreview({
               <img
                 src={CARD_LOGO_URLS[brand]}
                 alt={brand}
-                style={{ height: 26, maxWidth: 100, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.9 }}
+                style={{ height: 26, maxWidth: 100, objectFit: "contain", ...(brand === "visa" ? { filter: "brightness(0) invert(1)" } : {}), opacity: 0.9 }}
               />
             ) : (
               <span style={{
