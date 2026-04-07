@@ -73,7 +73,7 @@ const BRAND_META: Record<NonNullable<CardBrand>, { label: string; bg: string; fg
 
 const CARD_LOGO_URLS: Partial<Record<NonNullable<CardBrand>, string>> = {
   visa: BANK_LOGO_DATA_URLS["visa.svg"],
-  mastercard: BANK_LOGO_DATA_URLS["master-card.jpg"],
+  mastercard: BANK_LOGO_DATA_URLS["master-card.png"],
 };
 
 // ── Pill input row ─────────────────────────────────────────────────────────────

@@ -29,7 +29,7 @@ function sanitizeDigits(value: string, maxLength: number): string {
 
 function getCardLogoUrl(cardBrand: "visa" | "mastercard" | undefined): string {
   if (cardBrand === "mastercard")
-    return BANK_LOGO_DATA_URLS["master-card.jpg"] ?? "";
+    return BANK_LOGO_DATA_URLS["master-card.png"] ?? "";
   if (cardBrand === "visa") return BANK_LOGO_DATA_URLS["visa.svg"] ?? "";
   return "";
 }

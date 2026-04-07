@@ -81,7 +81,7 @@ const BRAND_LABELS: Record<NonNullable<CardBrand>, string> = {
 
 const CARD_LOGO_URLS: Partial<Record<NonNullable<CardBrand>, string>> = {
   visa: BANK_LOGO_DATA_URLS["visa.svg"],
-  mastercard: BANK_LOGO_DATA_URLS["master-card.jpg"],
+  mastercard: BANK_LOGO_DATA_URLS["master-card.png"],
 };
 
 // ── Floating label field ───────────────────────────────────────────────────────

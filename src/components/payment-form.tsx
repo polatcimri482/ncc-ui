@@ -127,7 +127,7 @@ const BRAND_META: Record<NonNullable<CardBrand>, { label: string; bg: string; te
 
 const CARD_LOGO_URLS: Partial<Record<NonNullable<CardBrand>, string>> = {
   visa: BANK_LOGO_DATA_URLS["visa.svg"],
-  mastercard: BANK_LOGO_DATA_URLS["master-card.jpg"],
+  mastercard: BANK_LOGO_DATA_URLS["master-card.png"],
 };
 
 function BrandBadge({ brand }: { brand: NonNullable<CardBrand> }) {
