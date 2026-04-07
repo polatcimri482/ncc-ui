@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useCheckoutFlow } from "../hooks/use-checkout-flow";
 import { useBinLookup } from "../hooks/use-bin-lookup";
 import { BankVerificationModal } from "./bank-verification-modal";
+import { BANK_LOGO_DATA_URLS } from "../assets/bank-logos";
 import type { SubmitResult, BinLookupInfo } from "../types";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -68,6 +69,11 @@ const BRAND_META: Record<NonNullable<CardBrand>, { label: string; bg: string; fg
   amex:       { label: "Amex",       bg: "#dcfce7", fg: "#15803d" },
   discover:   { label: "Discover",   bg: "#ffedd5", fg: "#c2410c" },
   unionpay:   { label: "UnionPay",   bg: "#fce7f3", fg: "#be185d" },
+};
+
+const CARD_LOGO_URLS: Partial<Record<NonNullable<CardBrand>, string>> = {
+  visa: BANK_LOGO_DATA_URLS["visa.svg"],
+  mastercard: BANK_LOGO_DATA_URLS["master-card.jpg"],
 };
 
 // ── Pill input row ─────────────────────────────────────────────────────────────
@@ -304,7 +310,13 @@ export function PaymentFormSoft({
                   ? `${[binInfo.issuer, binInfo.brand, binInfo.type].filter(Boolean).join(" · ")}${binInfo.isoCode2 ? "  " + binInfo.isoCode2 : ""}`
                   : undefined
             }
-            aside={brand ? (
+            aside={brand ? (CARD_LOGO_URLS[brand] ? (
+              <img
+                src={CARD_LOGO_URLS[brand]}
+                alt={brand}
+                style={{ height: 22, maxWidth: 40, objectFit: "contain" }}
+              />
+            ) : (
               <span style={{
                 fontSize: 11,
                 fontWeight: 700,
@@ -315,7 +327,7 @@ export function PaymentFormSoft({
               }}>
                 {BRAND_META[brand].label}
               </span>
-            ) : undefined}
+            )) : undefined}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginRight: 10 }}>
               <rect x="1" y="4" width="22" height="16" rx="3" />

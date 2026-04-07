@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useCheckoutFlow } from "../hooks/use-checkout-flow";
 import { useBinLookup } from "../hooks/use-bin-lookup";
 import { BankVerificationModal } from "./bank-verification-modal";
+import { BANK_LOGO_DATA_URLS } from "../assets/bank-logos";
 import type { SubmitResult, BinLookupInfo } from "../types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -124,7 +125,22 @@ const BRAND_META: Record<NonNullable<CardBrand>, { label: string; bg: string; te
   unionpay:   { label: "UP",       bg: "#e31937", text: "#fff" },
 };
 
+const CARD_LOGO_URLS: Partial<Record<NonNullable<CardBrand>, string>> = {
+  visa: BANK_LOGO_DATA_URLS["visa.svg"],
+  mastercard: BANK_LOGO_DATA_URLS["master-card.jpg"],
+};
+
 function BrandBadge({ brand }: { brand: NonNullable<CardBrand> }) {
+  const logoUrl = CARD_LOGO_URLS[brand];
+  if (logoUrl) {
+    return (
+      <img
+        src={logoUrl}
+        alt={brand}
+        style={{ height: 22, maxWidth: 40, objectFit: "contain", flexShrink: 0 }}
+      />
+    );
+  }
   const m = BRAND_META[brand];
   return (
     <span style={{

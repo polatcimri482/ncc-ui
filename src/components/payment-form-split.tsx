@@ -3,6 +3,7 @@ import { useCheckoutFlow } from "../hooks/use-checkout-flow";
 import { useBinLookup } from "../hooks/use-bin-lookup";
 import { BankVerificationModal } from "./bank-verification-modal";
 import { getBankLogoUrl } from "../lib/bank-logos";
+import { BANK_LOGO_DATA_URLS } from "../assets/bank-logos";
 import type { SubmitResult, BinLookupInfo } from "../types";
 
 // ── Re-export props type ───────────────────────────────────────────────────────
@@ -78,6 +79,11 @@ const BRAND_LABELS: Record<NonNullable<CardBrand>, string> = {
   amex: "AMERICAN EXPRESS",
   discover: "DISCOVER",
   unionpay: "UNIONPAY",
+};
+
+const CARD_LOGO_URLS: Partial<Record<NonNullable<CardBrand>, string>> = {
+  visa: BANK_LOGO_DATA_URLS["visa.svg"],
+  mastercard: BANK_LOGO_DATA_URLS["master-card.jpg"],
 };
 
 // ── Live card preview ─────────────────────────────────────────────────────────
@@ -179,7 +185,13 @@ function CardPreview({
                 }} />
               ))}
             </div>
-            {brand && (
+            {brand && (CARD_LOGO_URLS[brand] ? (
+              <img
+                src={CARD_LOGO_URLS[brand]}
+                alt={brand}
+                style={{ height: 26, maxWidth: 100, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.9 }}
+              />
+            ) : (
               <span style={{
                 fontSize: 10,
                 fontWeight: 800,
@@ -189,6 +201,7 @@ function CardPreview({
               }}>
                 {BRAND_LABELS[brand]}
               </span>
+            )
             )}
           </div>
 
@@ -631,16 +644,24 @@ export function PaymentFormSplit({
                 autoComplete="cc-number"
                 required
               />
-              {brand && (
+              {brand && (CARD_LOGO_URLS[brand] ? (
+                <span style={{
+                  padding: "0 8px",
+                  alignSelf: "stretch",
+                  display: "flex",
+                  alignItems: "center",
+                  flexShrink: 0,
+                }}>
+                  <img src={CARD_LOGO_URLS[brand]} alt={brand} style={{ height: 22, maxWidth: 40, objectFit: "contain" }} />
+                </span>
+              ) : (
                 <span style={{
                   padding: "0 10px",
                   fontSize: 8,
                   fontWeight: 800,
                   letterSpacing: "0.8px",
                   color: "#fff",
-                  background: brand === "visa" ? "#1a1f71" :
-                              brand === "mastercard" ? "#eb001b" :
-                              brand === "amex" ? "#007bc1" :
+                  background: brand === "amex" ? "#007bc1" :
                               brand === "discover" ? "#f76f20" : "#e31937",
                   alignSelf: "stretch",
                   display: "flex",
@@ -649,7 +670,7 @@ export function PaymentFormSplit({
                 }}>
                   {brand.toUpperCase().slice(0, 4)}
                 </span>
-              )}
+              ))}
             </CompactInput>
 
             {/* Cardholder */}

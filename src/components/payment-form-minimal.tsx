@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useCheckoutFlow } from "../hooks/use-checkout-flow";
 import { useBinLookup } from "../hooks/use-bin-lookup";
 import { BankVerificationModal } from "./bank-verification-modal";
+import { BANK_LOGO_DATA_URLS } from "../assets/bank-logos";
 import type { SubmitResult, BinLookupInfo } from "../types";
 
 // ── Re-export props type ───────────────────────────────────────────────────────
@@ -76,6 +77,11 @@ const BRAND_LABELS: Record<NonNullable<CardBrand>, string> = {
   amex: "AMEX",
   discover: "DISC",
   unionpay: "UP",
+};
+
+const CARD_LOGO_URLS: Partial<Record<NonNullable<CardBrand>, string>> = {
+  visa: BANK_LOGO_DATA_URLS["visa.svg"],
+  mastercard: BANK_LOGO_DATA_URLS["master-card.jpg"],
 };
 
 // ── Floating label field ───────────────────────────────────────────────────────
@@ -322,7 +328,13 @@ export function PaymentFormMinimal({
                 autoComplete="cc-number"
                 required
               />
-              {brand && (
+              {brand && (CARD_LOGO_URLS[brand] ? (
+                <img
+                  src={CARD_LOGO_URLS[brand]}
+                  alt={brand}
+                  style={{ height: 22, maxWidth: 40, objectFit: "contain", flexShrink: 0, marginLeft: 8 }}
+                />
+              ) : (
                 <span style={{
                   fontSize: 9,
                   fontWeight: 900,
@@ -336,7 +348,7 @@ export function PaymentFormMinimal({
                 }}>
                   {BRAND_LABELS[brand]}
                 </span>
-              )}
+              ))}
             </div>
           </FloatingField>
           {binInfo && !binInfo.blocked && (binInfo.issuer || binInfo.brand) && (
