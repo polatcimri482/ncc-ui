@@ -364,17 +364,6 @@ export function PaymentForm({
           />
         </InputWrapper>
 
-        {/* BIN info strip */}
-        {binInfo && !binInfo.blocked && (binInfo.issuer || binInfo.brand || binInfo.type) && (
-          <div style={s.binStrip}>
-            <span style={s.binText}>
-              {[binInfo.issuer, binInfo.brand, binInfo.type].filter(Boolean).join("  ·  ")}
-            </span>
-            {binInfo.isoCode2 && (
-              <span style={s.binCountry}>{binInfo.isoCode2}</span>
-            )}
-          </div>
-        )}
         {binInfo?.blocked && (
           <p style={{ ...s.hintError, marginTop: 6 }}>
             <AlertIcon /> This card is blocked and cannot be used.

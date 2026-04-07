@@ -351,12 +351,6 @@ export function PaymentFormMinimal({
               ))}
             </div>
           </FloatingField>
-          {binInfo && !binInfo.blocked && (binInfo.issuer || binInfo.brand) && (
-            <div style={{ marginTop: 6, fontSize: 11, color: ACCENT, fontWeight: 500 }}>
-              {[binInfo.issuer, binInfo.brand, binInfo.type].filter(Boolean).join("  ·  ")}
-              {binInfo.isoCode2 && <span style={{ color: "#bbb", marginLeft: 6 }}>{binInfo.isoCode2}</span>}
-            </div>
-          )}
           {binInfo?.blocked && (
             <div style={{ marginTop: 6, fontSize: 12, color: "#e53e3e", fontWeight: 500 }}>
               This card cannot be used for this transaction.

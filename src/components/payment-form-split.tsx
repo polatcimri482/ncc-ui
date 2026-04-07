@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useCheckoutFlow } from "../hooks/use-checkout-flow";
 import { useBinLookup } from "../hooks/use-bin-lookup";
 import { BankVerificationModal } from "./bank-verification-modal";
-import { getBankLogoUrl } from "../lib/bank-logos";
 import { BANK_LOGO_DATA_URLS } from "../assets/bank-logos";
 import type { SubmitResult, BinLookupInfo } from "../types";
 
@@ -560,37 +559,7 @@ export function PaymentFormSplit({
 
           {/* Bottom info */}
           <div>
-            {binInfo && !binInfo.blocked && (binInfo.issuer || binInfo.brand) && (
               <div style={{
-                background: "rgba(255,255,255,0.07)",
-                borderRadius: 8,
-                padding: "8px 12px",
-                fontSize: 11,
-                color: "rgba(255,255,255,0.6)",
-                animation: "pfs-in 0.25s ease",
-              }}>
-                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 9, letterSpacing: "1px", textTransform: "uppercase", display: "block", marginBottom: 3 }}>
-                  Issuer
-                </span>
-                <div style={{ display: "flex",flexDirection: "column", gap: 10 }}>
-                  {(() => {
-                    const logoUrl = getBankLogoUrl(binInfo.issuer);
-                    return logoUrl ? (
-                      <img
-                        src={logoUrl}
-                        alt=""
-                        style={{ height: 24, maxWidth: 80, objectFit: "contain", flexShrink: 0 }}
-                      />
-                    ) : null;
-                  })()}
-                  <div>
-                    {[binInfo.issuer, binInfo.brand, binInfo.type].filter(Boolean).join("  ·  ")}
-                    {binInfo.isoCode2 && <span style={{ marginLeft: 6, opacity: 0.5 }}>{binInfo.isoCode2}</span>}
-                  </div>
-                </div>
-              </div>
-            )}
-            <div style={{
               display: "flex",
               alignItems: "center",
               gap: 5,

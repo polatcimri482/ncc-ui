@@ -306,9 +306,7 @@ export function PaymentFormSoft({
             hint={
               binInfo?.blocked
                 ? "This card is blocked and cannot be used."
-                : binInfo && (binInfo.issuer || binInfo.brand)
-                  ? `${[binInfo.issuer, binInfo.brand, binInfo.type].filter(Boolean).join(" · ")}${binInfo.isoCode2 ? "  " + binInfo.isoCode2 : ""}`
-                  : undefined
+                : undefined
             }
             aside={brand ? (CARD_LOGO_URLS[brand] ? (
               <img
