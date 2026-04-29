@@ -12,12 +12,13 @@ All projects that use this package **must** match these versions exactly. Mismat
 
 | Dependency | Required version | Notes |
 |------------|-----------------|-------|
-| `express` | `^4.18.0` | **Express 5 is NOT supported** |
-| `express-ws` | `^5.0.0` | |
+| `express` | `^4.18.0` | **Express 5 is NOT supported.** Only required if using `/express` entry. |
+| `express-ws` | `^5.0.0` | Only required if using `/express` entry. |
+| `hono` | `^4.0.0` | Only required if using `/hono` entry. |
 | `react` | `^18.0.0` | |
 | `react-dom` | `^18.0.0` | |
-| `vite` | `^5.4.0 \|\| ^6.0.0 \|\| ^7.0.0` | Any of these three |
-| `ws` | `^8.0.0` | Transitive via express-ws |
+| `vite` | `^5.4.0 \|\| ^6.0.0 \|\| ^7.0.0` | Any of these three. Vite 8 also works (peer warning only — package never imports vite at runtime). |
+| `ws` | `^8.0.0` | Transitive via express-ws (Express entry only). |
 
 ## Common Commands
 
@@ -101,6 +102,40 @@ httpServer.listen(5173);
 Routes are at `/v1/channels/...`, `/v1/bins/lookup`, plus WebSocket (same-origin only). Requires `express` and `express-ws` as peer dependencies.
 
 > The proxy auto-converts binary WebSocket frames from upstream to UTF-8 text so the browser client can `JSON.parse` them.
+
+### Hono Router (Backend)
+
+For Hono + Bun backends (e.g. gift-card-marketplace), import from `@ncc/bank-verification-ui/hono`. Same routes, same upstream proxy logic, no `express` / `express-ws` / `ws` dependencies.
+
+```ts
+import { Hono } from "hono";
+import { createBunWebSocket } from "hono/bun";
+import {
+  createBankVerificationHono,
+  createHonoProxyHandlers,
+} from "@ncc/bank-verification-ui/hono";
+
+const { upgradeWebSocket, websocket } = createBunWebSocket();
+
+const handlers = createHonoProxyHandlers("https://srv1462130.hstgr.cloud", {
+  apiKey: "test",
+});
+const ncc = createBankVerificationHono({
+  handlers,
+  upgradeWebSocket,        // omit to disable WS (clients fall back to polling)
+  basePath: "/v1",
+});
+
+const app = new Hono().route("/", ncc);
+
+export default { port: 3003, fetch: app.fetch, websocket };
+```
+
+For Node + Hono, swap `createBunWebSocket` for `createNodeWebSocket` from `@hono/node-ws` and pass its `upgradeWebSocket` instead. The package itself does not import either adapter — the consumer chooses the runtime.
+
+The upstream WebSocket client uses the global `WebSocket` (Bun and Node ≥22 native). For older Node, polyfill or pin `node >= 22`.
+
+> Vite + `@hono/vite-dev-server` does **not** forward WebSocket upgrades to the Hono app in dev. For dev WebSocket support, either run the Hono process standalone behind a Vite proxy, or hook `server.httpServer.on('upgrade', ...)` from a Vite plugin. Production (Bun.serve) handles it natively via the `websocket` config.
 
 ### Key Hooks & Provider
 

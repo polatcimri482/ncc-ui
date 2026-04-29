@@ -1,6 +1,6 @@
 {
   "name": "@ncc/bank-verification-ui",
-  "version": "1.3.5",
+  "version": "1.4.0",
   "description": "Bank verification UI and hooks for checkout flows",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -16,6 +16,11 @@
       "types": "./dist/express-router.d.ts",
       "import": "./dist/express-router.js",
       "require": "./dist/express-router.cjs"
+    },
+    "./hono": {
+      "types": "./dist/hono-router.d.ts",
+      "import": "./dist/hono-router.js",
+      "require": "./dist/hono-router.cjs"
     },
     "./styles.css": "./dist/index.css"
   },
@@ -37,6 +42,7 @@
   "peerDependencies": {
     "express": "^4.18.0",
     "express-ws": "^5.0.0",
+    "hono": "^4.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },
@@ -45,6 +51,9 @@
       "optional": true
     },
     "express-ws": {
+      "optional": true
+    },
+    "hono": {
       "optional": true
     }
   },
@@ -59,6 +68,7 @@
     "@vitejs/plugin-react": "^4.3.0",
     "express": "^4.21.0",
     "express-ws": "^5.0.0",
+    "hono": "^4.12.15",
     "htmltojsx": "^0.3.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
