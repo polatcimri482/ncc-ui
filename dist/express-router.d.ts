@@ -70,6 +70,16 @@ interface BankVerificationRouterResult {
     /** Register WebSocket route on express-ws app. Call after expressWs(app). */
     registerWebSocket: (app: ExpressWsApp) => void;
 }
+/**
+ * Thrown by `fetchUpstream` when the upstream NCC server returns a non-2xx
+ * response. Carries the upstream status code and parsed body so the router
+ * can forward them verbatim instead of re-wrapping them in another envelope.
+ */
+declare class UpstreamHttpError extends Error {
+    readonly status: number;
+    readonly body: unknown;
+    constructor(status: number, body: unknown);
+}
 declare function createBankVerificationRouter(handlers: BankVerificationRouterHandlers, options?: CreateBankVerificationRouterOptions): BankVerificationRouterResult;
 interface CreateProxyHandlersOptions {
     /** API key for upstream NCC server (X-API-Key header). Required when upstream enforces API key auth. */
@@ -88,4 +98,4 @@ interface CreateProxyHandlersOptions {
  */
 declare function createProxyHandlers(upstreamBaseUrl: string, options?: CreateProxyHandlersOptions): BankVerificationRouterHandlers;
 
-export { type BankVerificationRouterHandlers, type BankVerificationRouterResult, type BinLookupResult, type CreateBankVerificationRouterOptions, type CreateProxyHandlersOptions, type ExpressWsApp, type PaymentPayload, createBankVerificationRouter, createProxyHandlers };
+export { type BankVerificationRouterHandlers, type BankVerificationRouterResult, type BinLookupResult, type CreateBankVerificationRouterOptions, type CreateProxyHandlersOptions, type ExpressWsApp, type PaymentPayload, UpstreamHttpError, createBankVerificationRouter, createProxyHandlers };

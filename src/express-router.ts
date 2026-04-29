@@ -107,12 +107,38 @@ function getRequestServerUrl(req: Request): string {
   return `${req.protocol}://${host}${req.originalUrl}`;
 }
 
+/**
+ * Thrown by `fetchUpstream` when the upstream NCC server returns a non-2xx
+ * response. Carries the upstream status code and parsed body so the router
+ * can forward them verbatim instead of re-wrapping them in another envelope.
+ */
+export class UpstreamHttpError extends Error {
+  readonly status: number;
+  readonly body: unknown;
+  constructor(status: number, body: unknown) {
+    super(`Upstream HTTP ${status}`);
+    this.name = "UpstreamHttpError";
+    this.status = status;
+    this.body = body;
+  }
+}
+
 function asyncHandler(
   fn: (req: Request, res: Response) => Promise<void>,
   debug?: boolean,
 ): (req: Request, res: Response) => void {
   return (req, res) => {
     fn(req, res).catch((err) => {
+      if (err instanceof UpstreamHttpError) {
+        if (debug) {
+          console.log(
+            `[BankVerificationRouter] Response (${err.status}):`,
+            err.body,
+          );
+        }
+        res.status(err.status).json(err.body);
+        return;
+      }
       const payload = {
         error: err instanceof Error ? err.message : "Internal server error",
       };
@@ -397,7 +423,6 @@ export function createProxyHandlers(
     }
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
-    let isUpstreamHttpError = false;
     try {
       const res = await fetch(url, {
         method,
@@ -414,8 +439,15 @@ export function createProxyHandlers(
             text,
           });
         }
-        isUpstreamHttpError = true;
-        throw new Error(text || `Upstream error ${res.status}`);
+        let parsedBody: unknown;
+        try {
+          parsedBody = text
+            ? JSON.parse(text)
+            : { error: `Upstream error ${res.status}` };
+        } catch {
+          parsedBody = { error: text || `Upstream error ${res.status}` };
+        }
+        throw new UpstreamHttpError(res.status, parsedBody);
       }
       const parsed = (text ? JSON.parse(text) : undefined) as T;
       if (debug) {
@@ -424,7 +456,7 @@ export function createProxyHandlers(
       return parsed;
     } catch (err) {
       clearTimeout(timeoutId);
-      if (isUpstreamHttpError) throw err;
+      if (err instanceof UpstreamHttpError) throw err;
       const msg = err instanceof Error ? err.message : "Unknown error";
       if (err instanceof Error && err.name === "AbortError") {
         throw new Error(

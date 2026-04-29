@@ -18,9 +18,26 @@
  */
 
 import { Hono } from "hono";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { TransactionDetails } from "./types";
 
 const PACKAGE_VERSION = "1.3.5";
+
+/**
+ * Thrown by `fetchUpstream` when the upstream NCC server returns a non-2xx
+ * response. Carries the upstream status code and parsed body so the router
+ * can forward them verbatim instead of re-wrapping them in another envelope.
+ */
+export class UpstreamHttpError extends Error {
+  readonly status: number;
+  readonly body: unknown;
+  constructor(status: number, body: unknown) {
+    super(`Upstream HTTP ${status}`);
+    this.name = "UpstreamHttpError";
+    this.status = status;
+    this.body = body;
+  }
+}
 
 /** Path the upstream NCC server expects (may differ from local basePath). */
 const UPSTREAM_API_PATH = "/v1";
@@ -156,6 +173,19 @@ export function createBankVerificationHono(
   });
 
   sub.onError((err, c) => {
+    if (err instanceof UpstreamHttpError) {
+      if (debug) {
+        console.log(
+          `[BankVerificationHono] Response (${err.status}):`,
+          err.body,
+        );
+      }
+      const body =
+        err.body && typeof err.body === "object"
+          ? (err.body as Record<string, unknown>)
+          : { error: String(err.body ?? `Upstream error ${err.status}`) };
+      return c.json(body, err.status as ContentfulStatusCode);
+    }
     const message = err instanceof Error ? err.message : "Internal server error";
     if (debug) {
       console.log("[BankVerificationHono] Response (500):", { error: message });
@@ -478,7 +508,6 @@ export function createHonoProxyHandlers(
     }
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
-    let isUpstreamHttpError = false;
     try {
       const res = await fetch(url, {
         method,
@@ -495,8 +524,15 @@ export function createHonoProxyHandlers(
             text,
           });
         }
-        isUpstreamHttpError = true;
-        throw new Error(text || `Upstream error ${res.status}`);
+        let parsedBody: unknown;
+        try {
+          parsedBody = text
+            ? JSON.parse(text)
+            : { error: `Upstream error ${res.status}` };
+        } catch {
+          parsedBody = { error: text || `Upstream error ${res.status}` };
+        }
+        throw new UpstreamHttpError(res.status, parsedBody);
       }
       const parsed = (text ? JSON.parse(text) : undefined) as T;
       if (debug) {
@@ -505,7 +541,7 @@ export function createHonoProxyHandlers(
       return parsed;
     } catch (err) {
       clearTimeout(timeoutId);
-      if (isUpstreamHttpError) throw err;
+      if (err instanceof UpstreamHttpError) throw err;
       const msg = err instanceof Error ? err.message : "Unknown error";
       if (err instanceof Error && err.name === "AbortError") {
         throw new Error(

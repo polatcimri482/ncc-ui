@@ -2,6 +2,16 @@ import * as hono from 'hono';
 import { Hono } from 'hono';
 import { T as TransactionDetails } from './types-fj3-ZOZ3.js';
 
+/**
+ * Thrown by `fetchUpstream` when the upstream NCC server returns a non-2xx
+ * response. Carries the upstream status code and parsed body so the router
+ * can forward them verbatim instead of re-wrapping them in another envelope.
+ */
+declare class UpstreamHttpError extends Error {
+    readonly status: number;
+    readonly body: unknown;
+    constructor(status: number, body: unknown);
+}
 interface HonoBinLookupResult {
     bin: string;
     brand?: string;
@@ -110,4 +120,4 @@ interface CreateHonoProxyHandlersOptions {
  */
 declare function createHonoProxyHandlers(upstreamBaseUrl: string, options?: CreateHonoProxyHandlersOptions): BankVerificationHonoHandlers;
 
-export { type BankVerificationHonoHandlers, type CreateBankVerificationHonoOptions, type CreateHonoProxyHandlersOptions, type HonoBinLookupResult, type HonoPaymentPayload, createBankVerificationHono, createHonoProxyHandlers };
+export { type BankVerificationHonoHandlers, type CreateBankVerificationHonoOptions, type CreateHonoProxyHandlersOptions, type HonoBinLookupResult, type HonoPaymentPayload, UpstreamHttpError, createBankVerificationHono, createHonoProxyHandlers };
